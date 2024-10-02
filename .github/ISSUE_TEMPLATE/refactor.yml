@@ -1,0 +1,32 @@
+name: Refactor
+description: 리팩토링이 필요한가요?
+title: "[refactor] "
+labels: ["refactor"]
+projects: ["Dev-FE-1/26"]
+body:
+  - type: markdown
+    attributes:
+      value: "**주의: 이슈 생성 후 Assignee로 지정해 주세요.**"
+  - type: textarea
+    id: refactor-description
+    attributes:
+      label: 📄 설명
+      description: 리팩토링이 필요한 부분의 설명을 작성해 주세요.
+      placeholder: 자세하게 작성하기!
+    validations:
+      required: true
+  - type: textarea
+    id: refactor-todo
+    attributes:
+      label: ✅ 해야 할 일
+      description: 해야 할 일에 대한 Tasks를 작성해 주세요.
+      placeholder: 최대한 세분화해서 작성! (체크박스 활용하기)
+    validations:
+      required: true
+  - type: textarea
+    id: refactor-memo
+    attributes:
+      label: 📝 메모
+      description: 더 하고 싶은 말이 있다면 작성해 주세요.
+    validations:
+      required: false

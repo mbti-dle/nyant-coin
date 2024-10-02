@@ -1,0 +1,24 @@
+name: Documentation
+description: 문서 추가/수정/삭제가 필요한가요?
+title: "[documentation] "
+labels: ["documentation"]
+projects: ["Dev-FE-1/26"]
+body:
+  - type: markdown
+    attributes:
+      value: "**주의: 이슈 생성 후 Assignee로 지정해 주세요.**"
+  - type: textarea
+    id: docs-description
+    attributes:
+      label: 📄 설명
+      description: 추가/수정/삭제할 내용을 작성해 주세요.
+      placeholder: ex) README.md에 팀원 소개 추가
+    validations:
+      required: true
+  - type: textarea
+    id: docs-memo
+    attributes:
+      label: 📝 메모
+      description: 더 하고 싶은 말이 있다면 작성해 주세요.
+    validations:
+      required: false
