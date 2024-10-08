@@ -19,7 +19,7 @@ const Home = () => (
           </code>
           .
         </li>
-        <li>Save and see your changes instantly.</li>
+        <li>테섭 확인중...</li>
       </ol>
 
       <div className="flex gap-4 items-center flex-col sm:flex-row">
