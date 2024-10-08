@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: nyant-coin
+    env: node
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: development
+
+previewsEnabled: true
