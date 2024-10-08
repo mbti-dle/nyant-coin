@@ -1,0 +1,24 @@
+name: Cleanup Preview Environment
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete Render Preview
+        run: |
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          PREVIEW_ID=$(curl -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+            "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys" | \
+            jq -r ".[] | select(.pullRequestId==\"$PR_NUMBER\") | .id")
+          
+          if [ ! -z "$PREVIEW_ID" ]; then
+            curl -X DELETE -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+              "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys/$PREVIEW_ID"
+            echo "Preview environment for PR #$PR_NUMBER has been deleted."
+          else
+            echo "No preview environment found for PR #$PR_NUMBER."
+          fi
