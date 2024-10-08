@@ -1,5 +1,10 @@
 previews:
+  pullRequests:
+    enabled: true
+
+services:
   - type: web
+    name: your-app-name
     env: node
     buildCommand: npm ci && npm run build
     startCommand: npm start
