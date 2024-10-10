@@ -20,9 +20,4 @@ jobs:
           diff_ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || '' }}
           pr_summary: true
           pr_summary_only: true
-
-      - name: Sourcery Analytics
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: sourcery-ai/run-sourcery-analytics-action@v1
-        with:
-          token: ${{ secrets.SOURCERY_TOKEN }}
+          run_analytics: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
