@@ -8,6 +8,9 @@ module.exports = {
     "plugin:prettier/recommended",
     "plugin:import/recommended",
     "plugin:import/typescript",
+    "next",
+    "next/core-web-vitals",
+    "eslint-config-prettier",
   ],
   ignorePatterns: ["dist", ".eslintrc.cjs"],
   parser: "@typescript-eslint/parser",
@@ -26,6 +29,7 @@ module.exports = {
     "import-order",
   ],
   rules: {
+    'prettier/prettier': 'error',
     "no-console": ["warn", { allow: ["warn", "error"] }],
     "react/function-component-definition": [
       2,
