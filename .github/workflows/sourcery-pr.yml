@@ -1,0 +1,16 @@
+name: Sourcery PR Review
+on: [pull_request]
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Sourcery PR Review
+        uses: sourcery-ai/sourcery-actions/review-pull-request@latest
+        with:
+          token: ${{ secrets.SOURCERY_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          diff_url: ${{ github.event.pull_request.diff_url }}

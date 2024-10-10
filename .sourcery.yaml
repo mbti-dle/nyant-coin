@@ -1,0 +1,9 @@
+ignore: []
+refactor: 
+  skip: []
+  rule_types:
+    - refactoring
+    - suggestion
+    - comment
+metrics:
+  quality_threshold: 25.0
