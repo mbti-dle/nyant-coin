@@ -1,0 +1,31 @@
+# 빌드 산출물
+build
+dist
+out
+
+# 의존성 디렉토리
+node_modules
+
+# 캐시 디렉토리
+.cache
+.next
+
+# 환경 설정 파일
+.env*
+
+# Next.js 공개 디렉토리
+public
+
+# TypeScript 선언 파일
+*.d.ts
+
+# 설정 파일
+next.config.js
+tailwind.config.js
+*.cjs
+*.yaml
+*.mjs
+*.yml
+
+# Markdown 파일
+*.md
