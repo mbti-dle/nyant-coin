@@ -1,6 +1,9 @@
 import type { Config } from 'tailwindcss'
 
 const config: Config = {
+  future: {
+    hoverOnlyWhenSupported: true,
+  },
   content: [
     './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
@@ -9,8 +12,6 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: 'var(--background)',
-        foreground: 'var(--foreground)',
         primary: '#00076F',
         blue: '#3369FF',
         gold: '#FFB218',
@@ -24,6 +25,10 @@ const config: Config = {
           300: '#626262',
           400: '#525F70',
         },
+      },
+      fontFamily: {
+        galmuri9: ['Galmuri9', 'sans-serif'],
+        neodgm: ['Neodgm', 'sans-serif'],
       },
     },
   },

@@ -25,3 +25,17 @@ body {
     text-wrap: balance;
   }
 }
+
+@font-face {
+  font-family: 'Galmuri9';
+  src: url('/src/app/fonts/Galmuri9.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Neodgm';
+  src: url('/src/app/fonts/Neodgm.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+}
