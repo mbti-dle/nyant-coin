@@ -1,4 +1,4 @@
-import sql from '../lib/db.js'
+import sql from '../lib/database'
 
 async function initDb() {
   try {

@@ -3,12 +3,14 @@ module.exports = {
   env: { browser: true, es2021: true, node: true },
   parser: '@typescript-eslint/parser',
   parserOptions: {
-    ecmaFeatures: {
-      jsx: true,
-    },
-    ecmaVersion: 'latest',
-    sourceType: 'module',
+  ecmaFeatures: {
+    jsx: true,
   },
+  ecmaVersion: 'latest',
+  sourceType: 'module',
+  project: './tsconfig.json',
+  tsconfigRootDir: __dirname,
+},
   extends: [
     'eslint:recommended',
     'plugin:@typescript-eslint/recommended',
@@ -23,7 +25,7 @@ module.exports = {
     'next/core-web-vitals',
     'eslint-config-prettier',
   ],
-  plugins: ['@typescript-eslint', 'react', 'react-hooks', 'jsx-a11y', 'import', 'prettier', 'import-order'],
+  plugins: ['@typescript-eslint', 'react', 'react-hooks', 'jsx-a11y', 'import', 'prettier', 'import-order', 'filenames'],
   rules: {
     // 파일명 규칙 (eslint-plugin-filenames 설치 필요)
     'filenames/match-regex': ['error', '^[a-z-]+\.[a-z]+$'],
