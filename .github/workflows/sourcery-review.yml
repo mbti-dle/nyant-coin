@@ -13,11 +13,34 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Sourcery Check
-        uses: sourcery-ai/action@v1
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
-          token: ${{ secrets.SOURCERY_TOKEN }}
-          diff_ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || '' }}
-          pr_summary: true
-          pr_summary_only: true
-          run_analytics: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          python-version: '3.x'
+
+      - name: Install Sourcery
+        run: |
+          python -m venv sourcery-venv
+          source sourcery-venv/bin/activate
+          pip install sourcery-cli
+
+      - name: Sourcery Check
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SOURCERY_TOKEN: ${{ secrets.SOURCERY_TOKEN }}
+        run: |
+          source sourcery-venv/bin/activate
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            sourcery review \
+              --diff-ref ${{ github.event.pull_request.base.sha }} \
+              --github-pr-number ${{ github.event.number }} \
+              --github-pr-title "${{ github.event.pull_request.title }}" \
+              --github-pr-labels "${{ join(github.event.pull_request.labels.*.name, ',') }}" \
+              --github-repo-url ${{ github.repository }} \
+              --github-base-branch ${{ github.base_ref }} \
+              --github-pr-head-sha ${{ github.event.pull_request.head.sha }} \
+              --pr-summary-only \
+              .
+          else
+            sourcery review .
+          fi
