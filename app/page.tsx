@@ -1,12 +1,7 @@
-import HintList from '@/components/hint-list'
-
-export const revalidate = 0
-
-const Home = () => (
+const HomePage = () => (
   <main className="p-4">
-    <h1 className="text-2xl font-bold mb-4">힌트들</h1>
-    <HintList />
+    <h1 className="text-2xl font-bold mb-4">Home</h1>
   </main>
 )
 
-export default Home
+export default HomePage
