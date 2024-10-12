@@ -41,8 +41,8 @@ jobs:
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             sourcery review \
               --diff ${{ github.event.pull_request.base.sha }} \
-              --pr-summary \
-              . || echo "Sourcery found issues but continuing workflow"
+              --summary \
+              .
           else
-            sourcery review . || echo "Sourcery found issues but continuing workflow"
+            sourcery review .
           fi
