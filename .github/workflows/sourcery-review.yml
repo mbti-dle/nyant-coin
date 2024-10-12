@@ -16,7 +16,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.9' 
+          python-version: '3.9'
 
       - name: Cache pip packages
         uses: actions/cache@v2
@@ -41,7 +41,6 @@ jobs:
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             sourcery review \
               --diff ${{ github.event.pull_request.base.sha }} \
-              --pr-url ${{ github.event.pull_request.html_url }} \
               --pr-summary \
               . || echo "Sourcery found issues but continuing workflow"
           else
