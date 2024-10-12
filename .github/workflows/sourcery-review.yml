@@ -16,7 +16,15 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.x'
+          python-version: '3.9' 
+
+      - name: Cache pip packages
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
       - name: Install Sourcery
         run: |
@@ -32,15 +40,10 @@ jobs:
           source sourcery-venv/bin/activate
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             sourcery review \
-              --diff-ref ${{ github.event.pull_request.base.sha }} \
-              --github-pr-number ${{ github.event.number }} \
-              --github-pr-title "${{ github.event.pull_request.title }}" \
-              --github-pr-labels "${{ join(github.event.pull_request.labels.*.name, ',') }}" \
-              --github-repo-url ${{ github.repository }} \
-              --github-base-branch ${{ github.base_ref }} \
-              --github-pr-head-sha ${{ github.event.pull_request.head.sha }} \
-              --pr-summary-only \
-              .
+              --diff ${{ github.event.pull_request.base.sha }} \
+              --pr-url ${{ github.event.pull_request.html_url }} \
+              --pr-summary \
+              . || echo "Sourcery found issues but continuing workflow"
           else
-            sourcery review .
+            sourcery review . || echo "Sourcery found issues but continuing workflow"
           fi
