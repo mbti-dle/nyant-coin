@@ -17,7 +17,7 @@
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-neodgm), var(--font-galmuri), sans-serif;
 }
 
 @layer utilities {
