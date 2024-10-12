@@ -168,7 +168,6 @@ module.exports = {
     'no-console': ['warn', { allow: ['warn', 'error'] }],
     'react/prop-types': 'warn',
     'react/react-in-jsx-scope': 'off',
-    'arrow-body-style': ['error', 'as-needed'],
     'prettier/prettier': ['error', { endOfLine: 'auto' }],
     'import/no-default-export': 'off',
     'import/prefer-default-export': 'off',
