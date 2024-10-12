@@ -1,11 +1,19 @@
-import { Inter } from 'next/font/google'
 import './global.css'
+import localFont from 'next/font/local'
 
-const inter = Inter({ subsets: ['latin'] })
+const neodgm = localFont({
+  src: '../public/fonts/Neodgm.woff2',
+  variable: '--font-neodgm',
+})
+
+const galmuri = localFont({
+  src: '../public/fonts/Galmuri9.woff2',
+  variable: '--font-galmuri',
+})
 
 const RootLayout = ({ children }: { children: React.ReactNode }) => (
-  <html lang="en">
-    <body className={inter.className}>{children}</body>
+  <html lang="ko">
+    <body className={`${neodgm.variable} ${galmuri.variable}`}>{children}</body>
   </html>
 )
 
