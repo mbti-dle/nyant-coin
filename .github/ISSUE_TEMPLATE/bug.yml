@@ -1,6 +1,6 @@
 name: Bug 
 description: 버그가 발생했나요?
-title: "[bug] "
+title: "[Bug] "
 labels: ["🐛 bug"]
 projects: ["Dev-FE-1/26"]
 body:
