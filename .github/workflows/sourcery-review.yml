@@ -1,8 +1,6 @@
-name: Sourcery-Review
+name: Sourcery-Review-PR
 
 on:
-  push:
-    branches: [main]
   pull_request:
 
 jobs:
@@ -13,11 +11,32 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Sourcery Check
-        uses: sourcery-ai/action@v1
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
-          token: ${{ secrets.SOURCERY_TOKEN }}
-          diff_ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || '' }}
-          pr_summary: true
-          pr_summary_only: true
-          run_analytics: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          python-version: '3.9'
+
+      - name: Cache pip packages
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install Sourcery
+        run: |
+          python -m venv sourcery-venv
+          source sourcery-venv/bin/activate
+          pip install sourcery-cli
+
+      - name: Sourcery Check
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SOURCERY_TOKEN: ${{ secrets.SOURCERY_TOKEN }}
+        run: |
+          source sourcery-venv/bin/activate
+          sourcery review \
+            --diff "git diff ${{ github.event.pull_request.base.sha }}" \
+            --summary \
+            .
