@@ -1,6 +1,6 @@
 name: Documentation
 description: 문서 추가/수정/삭제가 필요한가요?
-title: "[documentation] "
+title: "[Documentation] "
 labels: ["📚 documentation"]
 projects: ["Dev-FE-1/26"]
 body:
