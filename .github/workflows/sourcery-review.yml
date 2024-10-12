@@ -1,8 +1,6 @@
-name: Sourcery-Review
+name: Sourcery-Review-PR
 
 on:
-  push:
-    branches: [main]
   pull_request:
 
 jobs:
@@ -38,11 +36,7 @@ jobs:
           SOURCERY_TOKEN: ${{ secrets.SOURCERY_TOKEN }}
         run: |
           source sourcery-venv/bin/activate
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            sourcery review \
-              --diff ${{ github.event.pull_request.base.sha }} \
-              --summary \
-              .
-          else
-            sourcery review .
-          fi
+          sourcery review \
+            --diff "git diff ${{ github.event.pull_request.base.sha }}" \
+            --summary \
+            .
