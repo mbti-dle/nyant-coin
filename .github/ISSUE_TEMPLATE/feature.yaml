@@ -1,7 +1,7 @@
 name: Features
 description: 새로운 기능이나 명세가 있나요?
-title: "[features] "
-labels: ["features"]
+title: "[feature] "
+labels: ["✨ feature"]
 projects: ["Dev-FE-1/26"]
 body:
   - type: markdown
