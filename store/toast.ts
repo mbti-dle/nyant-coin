@@ -1,18 +1,17 @@
+import { ToastIconType } from '@/types/ui-types'
 import { create } from 'zustand'
 
-type IconType = 'coin' | 'check'
-
-interface ToastProps {
+interface ToastStoreModel {
   isVisible: boolean
   message: string
-  icon?: IconType
-  showToast: (message: string, icon?: IconType) => void
+  icon?: ToastIconType
+  showToast: (message: string, icon?: ToastIconType) => void
   hideToast: () => void
 }
 
 const TOAST_DISPLAY_DURATION = 1500 // 토스트 출력 시간 (ms)
 
-const useToastStore = create<ToastProps>((set) => ({
+const useToastStore = create<ToastStoreModel>((set) => ({
   isVisible: false,
   message: '',
   icon: null,

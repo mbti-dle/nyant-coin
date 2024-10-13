@@ -1,3 +1,4 @@
+import Toast from '@/components/ui/toast'
 import './global.css'
 import localFont from 'next/font/local'
 
@@ -13,7 +14,10 @@ const galmuri = localFont({
 
 const RootLayout = ({ children }: { children: React.ReactNode }) => (
   <html lang="ko">
-    <body className={`${neodgm.variable} ${galmuri.variable}`}>{children}</body>
+    <body className={`${neodgm.variable} ${galmuri.variable}`}>
+      {children}
+      <Toast />
+    </body>
   </html>
 )
 
