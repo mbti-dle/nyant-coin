@@ -38,7 +38,7 @@ const Toast = ({ className = '', ...props }: { className?: string }) => {
   const { isVisible, message, icon } = useToastStore()
 
   // 테일윈드 스타일
-  const toastClassName = `fixed left-1/2 top-24 flex h-12 -translate-x-1/2 items-center justify-center rounded-lg bg-gray-500 bg-opacity-80 px-4 py-3`
+  const toastClassName = `fixed left-1/2 top-24 flex h-12 -translate-x-1/2 items-center justify-center rounded-lg bg-gray-500 bg-opacity-80 px-4 py-3 max-w-[90%] whitespace-nowrap`
   const messageClassName = `font-galmuri text-base text-white`
 
   if (!isVisible) return null
