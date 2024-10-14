@@ -5,20 +5,21 @@ import { ReactNode, useState } from 'react'
 import CloseIcon from '@mui/icons-material/CloseSharp'
 
 import Button from '../ui/button'
-import ModalPortal from '../ui/modal-potal'
+
+import { createPortal } from 'react-dom'
 
 interface ModalProps {
-  title?: ReactNode
-  content?: ReactNode
-  button?: boolean
+  title?: string
+  children: ReactNode
+  hasButton?: boolean
   isShowCloseButton?: boolean
   onClose?: () => void
 }
 
 const Modal = ({
   title = '',
-  content = '',
-  button = false,
+  children = '',
+  hasButton = false,
   isShowCloseButton = false,
   onClose,
 }: ModalProps) => {
@@ -33,11 +34,15 @@ const Modal = ({
 
   if (!isModalOpen) return null
 
-  return (
-    <ModalPortal>
+  const modalRoot = document.getElementById('modal-root')
+
+  if (!modalRoot) return null
+
+  return createPortal(
+    <>
       <div className={`fixed inset-0 flex items-center justify-center bg-black/20`}>
         <div className="w-[300px] overflow-hidden rounded-lg shadow-md">
-          <div className="flex h-[40px] w-[300px] items-center justify-between bg-primary px-4">
+          <div className="flex h-[60px] w-[300px] items-center justify-between bg-primary px-4">
             <h2 className="w-full text-center text-lg text-white">{title}</h2>
             {isShowCloseButton && (
               <CloseIcon
@@ -49,8 +54,8 @@ const Modal = ({
           </div>
 
           <div className="bg-white p-4">
-            <p className="mt-2 text-sm">{content}</p>
-            {button && (
+            {children}
+            {hasButton && (
               <div className="mt-4 flex justify-center">
                 <Button onClick={handleModalClose}>결과 보러가기</Button>
               </div>
@@ -58,7 +63,8 @@ const Modal = ({
           </div>
         </div>
       </div>
-    </ModalPortal>
+    </>,
+    modalRoot
   )
 }
 

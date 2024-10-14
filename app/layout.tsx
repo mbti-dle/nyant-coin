@@ -18,8 +18,7 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => (
     <body className={`${neodgm.variable} ${galmuri.variable}`}>
       {children}
       <Toast />
-      <div id="root"></div>
-      <div id="modal"></div>
+      <div id="modal-root"></div>
     </body>
   </html>
 )
