@@ -43,12 +43,12 @@ module.exports = {
     // 변수명 규칙 (Boolean, useRef, interface, type)
     '@typescript-eslint/naming-convention': [
       'error',
-      {
-        selector: 'variable',
-        types: ['boolean'],
-        format: ['camelCase'],
-        prefix: ['is', 'has', 'should']
-      },
+      // {
+      //   selector: 'variable',
+      //   types: ['boolean'],
+      //   format: ['camelCase'],
+      //   prefix: ['is', 'has', 'should']
+      // },
       {
         selector: 'variable',
         types: ['function'],

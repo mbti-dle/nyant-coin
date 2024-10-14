@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react'
+
 import ReactDOM from 'react-dom'
 
 interface ModalPortalProps {
@@ -5,8 +7,13 @@ interface ModalPortalProps {
 }
 
 const ModalPortal = ({ children }: ModalPortalProps) => {
-  const modalRoot = document.getElementById('modal') as HTMLElement
-  return ReactDOM.createPortal(children, modalRoot)
+  const [modalRoot, setModalRoot] = useState<HTMLElement | null>(null)
+
+  useEffect(() => {
+    const root = document.getElementById('modal')
+    setModalRoot(root)
+  }, [])
+  return modalRoot ? ReactDOM.createPortal(children, modalRoot) : null
 }
 
 export default ModalPortal
