@@ -1,6 +1,7 @@
+import localFont from 'next/font/local'
+
 import Toast from '@/components/ui/toast'
 import './global.css'
-import localFont from 'next/font/local'
 
 const neodgm = localFont({
   src: '../public/fonts/Neodgm.woff2',
