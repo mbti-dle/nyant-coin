@@ -1,12 +1,10 @@
 'use client'
 
-import { ReactNode, useState } from 'react'
-
+import { ReactNode } from 'react'
 import CloseIcon from '@mui/icons-material/CloseSharp'
-
-import Button from '../ui/button'
-
+import Button from '@/components/ui/button'
 import { createPortal } from 'react-dom'
+import IconButton from '@/components/ui/icon-button'
 
 interface ModalProps {
   title?: string
@@ -34,22 +32,23 @@ const Modal = ({
     <>
       <div className={`fixed inset-0 flex items-center justify-center bg-black/20`}>
         <div className="w-[300px] overflow-hidden rounded-lg shadow-md">
-          <div className="flex h-[60px] w-[300px] items-center justify-between bg-primary px-4">
-            <h2 className="w-full text-center text-lg text-white">{title}</h2>
+          <div className="flex h-[60px] w-[300px] items-center bg-primary">
+            <div className="ml-10 flex-grow text-center text-xl text-white">{title} </div>
             {isShowCloseButton && (
-              <CloseIcon
+              <IconButton
+                Icon={CloseIcon}
                 onClick={onModalClose}
-                className="cursor-pointer text-white"
-                aria-label="닫기"
+                className="mr-2 text-white"
+                label="닫기"
               />
             )}
           </div>
 
-          <div className="bg-white p-4">
+          <div className="bg-white p-4 text-black">
             {children}
             {hasButton && (
-              <div className="mt-4 flex justify-center">
-                <Button>결과 보러가기</Button>
+              <div className="mt-4 flex justify-center text-xl">
+                <Button className="mb-8">결과 보러가기</Button>
               </div>
             )}
           </div>
