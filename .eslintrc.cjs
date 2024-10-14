@@ -45,6 +45,11 @@ module.exports = {
       'error',
       {
         selector: 'variable',
+        types: ['boolean'],
+        format: ['camelCase'],
+      },
+      {
+        selector: 'variable',
         types: ['function'],
         format: ['camelCase'],
         suffix: ['Ref'],
