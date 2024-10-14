@@ -13,7 +13,8 @@ interface ModalProps {
   children: ReactNode
   hasButton?: boolean
   isShowCloseButton?: boolean
-  onClose?: () => void
+  onModalClose?: () => void
+  isOpen: boolean
 }
 
 const Modal = ({
@@ -21,21 +22,12 @@ const Modal = ({
   children = '',
   hasButton = false,
   isShowCloseButton = false,
-  onClose,
+  onModalClose,
+  isOpen,
 }: ModalProps) => {
-  const [isModalOpen, setIsModalOpen] = useState(true)
-
-  const handleModalClose = () => {
-    setIsModalOpen(false)
-    if (onClose) {
-      onClose()
-    }
-  }
-
-  if (!isModalOpen) return null
+  if (!isOpen) return null
 
   const modalRoot = document.getElementById('modal-root')
-
   if (!modalRoot) return null
 
   return createPortal(
@@ -46,7 +38,7 @@ const Modal = ({
             <h2 className="w-full text-center text-lg text-white">{title}</h2>
             {isShowCloseButton && (
               <CloseIcon
-                onClick={handleModalClose}
+                onClick={onModalClose}
                 className="cursor-pointer text-white"
                 aria-label="닫기"
               />
@@ -57,7 +49,7 @@ const Modal = ({
             {children}
             {hasButton && (
               <div className="mt-4 flex justify-center">
-                <Button onClick={handleModalClose}>결과 보러가기</Button>
+                <Button>결과 보러가기</Button>
               </div>
             )}
           </div>
