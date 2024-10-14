@@ -3,30 +3,28 @@ module.exports = {
   env: { browser: true, es2021: true, node: true },
   parser: '@typescript-eslint/parser',
   parserOptions: {
-  ecmaFeatures: {
-    jsx: true,
+    ecmaFeatures: {
+      jsx: true,
+    },
+    ecmaVersion: 'latest',
+    sourceType: 'module',
+    project: './tsconfig.json',
+    tsconfigRootDir: __dirname,
   },
-  ecmaVersion: 'latest',
-  sourceType: 'module',
-  project: './tsconfig.json',
-  tsconfigRootDir: __dirname,
-},
   extends: [
     'eslint:recommended',
     'plugin:@typescript-eslint/recommended',
     'plugin:react/recommended',
-    'plugin:react-hooks/recommended',
     'plugin:jsx-a11y/recommended',
-    'prettier',
     'plugin:@next/next/recommended',
     'plugin:import/recommended',
     'plugin:import/typescript',
-    'next',
     'next/core-web-vitals',
-    'eslint-config-prettier',
+    'prettier',
   ],
-  plugins: ['@typescript-eslint', 'react', 'react-hooks', 'jsx-a11y', 'import', 'prettier', 'import-order', 'filenames'],
+  plugins: ['@typescript-eslint', 'react', 'jsx-a11y', 'import', 'prettier', 'import-order', 'filenames'],
   rules: {
+    "prettier/prettier": "error",
     // 파일명 규칙 (eslint-plugin-filenames 설치 필요)
     'filenames/match-regex': ['error', '^[a-z-]+\.[a-z]+$'],
 
@@ -49,7 +47,6 @@ module.exports = {
         selector: 'variable',
         types: ['boolean'],
         format: ['camelCase'],
-        prefix: ['is', 'has', 'should']
       },
       {
         selector: 'variable',
@@ -166,13 +163,12 @@ module.exports = {
 
     // 기타 규칙
     'no-console': ['warn', { allow: ['warn', 'error'] }],
-    'react/prop-types': 'warn',
+    'react/prop-types': 'off',
     'react/react-in-jsx-scope': 'off',
     'prettier/prettier': ['error', { endOfLine: 'auto' }],
     'import/no-default-export': 'off',
     'import/prefer-default-export': 'off',
     'import/no-unresolved': 'off',
-    'react-hooks/rules-of-hooks': 'error',
     'prefer-const': 'error',
     'no-var': 'error',
     'eqeqeq': 'error',
@@ -185,6 +181,10 @@ module.exports = {
     ],
     'no-useless-rename': 'error',
     'object-shorthand': 'error',
+
+    // react-hooks 규칙 추가
+    'react-hooks/rules-of-hooks': 'error',
+    'react-hooks/exhaustive-deps': 'warn',
   },
   settings: {
     react: {
