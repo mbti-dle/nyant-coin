@@ -1,3 +1,4 @@
+import { Metadata } from 'next'
 import localFont from 'next/font/local'
 
 import Toast from '@/components/ui/toast'
@@ -12,6 +13,16 @@ const galmuri = localFont({
   src: '../public/fonts/Galmuri9.woff2',
   variable: '--font-galmuri',
 })
+
+export const metadata: Metadata = {
+  title: '냥트코인',
+  description: '최고의 생선 트레이더는 누구? 생선을 사고팔아 냥코인을 모아보세요!',
+  openGraph: {
+    title: '냥트코인',
+    description: '최고의 생선 트레이더는 누구? 생선을 사고팔아 냥코인을 모아보세요!',
+    images: [{ url: '/og.png' }],
+  },
+}
 
 const RootLayout = ({ children }: { children: React.ReactNode }) => (
   <html lang="ko">
