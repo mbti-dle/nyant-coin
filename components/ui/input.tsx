@@ -14,9 +14,9 @@ const Input = ({ className, value, maxLength = 6, onChange, ...props }: InputPro
       <input
         maxLength={maxLength}
         className={twMerge(
-    'h-full w-full rounded-xl px-4 pr-16 text-lg outline-none bg-white border-2 border-primary text-black placeholder-gray-200',
-    className
-  )}
+          'h-full w-full rounded-xl border-2 border-primary bg-white px-4 pr-16 text-lg text-black placeholder-gray-200 outline-none',
+          className
+        )}
         onChange={onChange}
         value={value}
         {...props}
