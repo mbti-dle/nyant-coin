@@ -26,6 +26,7 @@ jobs:
         run: |
           sourcery review \
             --summary \
+            --comments=false \
             . || true
         continue-on-error: true
 
