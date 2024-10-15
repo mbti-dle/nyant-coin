@@ -17,10 +17,17 @@ const galmuri = localFont({
 export const metadata: Metadata = {
   title: '냥트코인',
   description: '최고의 생선 트레이더는 누구? 생선을 사고팔아 냥코인을 모아보세요!',
+  keywords: ['냥트코인', '게임', '생선 트레이드'],
   openGraph: {
     title: '냥트코인',
     description: '최고의 생선 트레이더는 누구? 생선을 사고팔아 냥코인을 모아보세요!',
-    images: [{ url: '/og.png' }],
+    url: 'https://nyantcoin.koyeb.app/',
+    images: [
+      {
+        url: '/og.png',
+        alt: '냥트코인 로고',
+      },
+    ],
   },
 }
 
