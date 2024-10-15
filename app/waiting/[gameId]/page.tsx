@@ -1,11 +1,12 @@
 'use client'
 
+import Chatting from '@/components/features/waiting/chatting'
 import GameIdCopyButton from '@/components/features/waiting/game-id-copy-button'
 import Button from '@/components/ui/button'
 import CatBox from '@/components/ui/cat-box'
 
-const WaitingPage = () => {
-  const GAME_ID = 'DJ31DK' // 예시 게임ID
+const WaitingPage = ({ params }) => {
+  const { gameId = 'N09C14' } = params
 
   const players = [
     { imageUrl: '/images/cat-1.png', nickName: '대장고양이', isLeader: true },
@@ -28,7 +29,7 @@ const WaitingPage = () => {
           />
         ))}
       </div>
-      <GameIdCopyButton gameId={GAME_ID} />
+      <GameIdCopyButton gameId={gameId} />
       <Button
         onClick={() => {
           console.log('게임 시작')
@@ -36,6 +37,8 @@ const WaitingPage = () => {
       >
         게임 시작
       </Button>
+
+      <Chatting />
     </main>
   )
 }
