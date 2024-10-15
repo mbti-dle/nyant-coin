@@ -1,11 +1,13 @@
 import LinkButton from '@/components/ui/link-button'
 
-const HomePage = () => {
+const HomePage = ({ params }) => {
+  const { gameId = 'N09C14' } = params
+
   return (
     <>
       <h1>Main Page</h1>
-      <LinkButton href="/select-days">방 만들기</LinkButton>
-      <LinkButton href="/nickname">방 입장하기</LinkButton>
+      <LinkButton href="/setup/select-days">방 만들기</LinkButton>
+      <LinkButton href={`/setup/user-info/${gameId}`}>방 입장하기</LinkButton>
       <br />
     </>
   )
