@@ -24,4 +24,20 @@ body {
   .text-balance {
     text-wrap: balance;
   }
+
+  .scrollbar-custom::-webkit-scrollbar {
+    width: 8px;
+    border-radius: 50%;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-track {
+    background: #e3e3e3;
+    border-radius: 20px;
+    margin: 8px 0;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-thumb {
+    background-color: #626262;
+    border-radius: 20px;
+  }
 }

@@ -20,7 +20,7 @@ const Chatting = () => {
   ]
 
   return (
-    <div className="flex h-[194px] w-[358px] flex-col gap-2 overflow-auto rounded-[15px] bg-white bg-opacity-10 p-2.5">
+    <div className="scrollbar-custom flex h-[194px] w-[358px] flex-col gap-2 overflow-auto rounded-[15px] bg-white bg-opacity-10 p-2.5">
       {chats.map((chat, index) => {
         return <ChatMessage key={index} chat={chat} />
       })}
