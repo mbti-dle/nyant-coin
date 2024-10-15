@@ -1,9 +1,11 @@
 'use client'
 
 import { ReactNode } from 'react'
+
 import CloseIcon from '@mui/icons-material/CloseSharp'
-import Button from '@/components/ui/button'
 import { createPortal } from 'react-dom'
+
+import Button from '@/components/ui/button'
 import IconButton from '@/components/ui/icon-button'
 
 interface ModalProps {
@@ -13,15 +15,17 @@ interface ModalProps {
   isShowCloseButton?: boolean
   onModalClose?: () => void
   isOpen: boolean
+  shouldCloseOnBackgroundClick?: boolean
 }
 
 const Modal = ({
   title = '',
-  children = '',
+  children,
   hasButton = false,
   isShowCloseButton = false,
   onModalClose,
   isOpen,
+  shouldCloseOnBackgroundClick = false,
 }: ModalProps) => {
   if (!isOpen) return null
 
@@ -30,10 +34,18 @@ const Modal = ({
 
   return createPortal(
     <>
-      <div className={`fixed inset-0 flex items-center justify-center bg-black/20`}>
-        <div className="w-[300px] overflow-hidden rounded-lg shadow-md">
-          <div className="flex h-[60px] w-[300px] items-center bg-primary">
-            <div className="ml-10 flex-grow text-center text-xl text-white">{title} </div>
+      {shouldCloseOnBackgroundClick && (
+        <div
+          role="presentation"
+          className="pointer-events-auto fixed inset-0 flex items-center justify-center bg-black/20"
+          onClick={onModalClose}
+        />
+      )}
+
+      <div className="pointer-events-none fixed inset-0 flex items-center justify-center">
+        <div className="pointer-events-auto w-[300px] overflow-hidden rounded-lg bg-white shadow-md">
+          <div className="flex h-[60px] w-full items-center bg-primary">
+            <div className="ml-10 flex-grow text-center text-xl text-white">{title}</div>
             {isShowCloseButton && (
               <IconButton
                 Icon={CloseIcon}
@@ -44,7 +56,7 @@ const Modal = ({
             )}
           </div>
 
-          <div className="bg-white p-4 text-black">
+          <div className="p-4 text-black">
             {children}
             {hasButton && (
               <div className="mt-4 flex justify-center text-xl">

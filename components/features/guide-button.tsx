@@ -4,22 +4,23 @@ import { useState } from 'react'
 
 import Modal from '@/components/ui/modal'
 
-const GuideModal = () => {
+const GuideButton = () => {
   const [isOpen, setIsOpen] = useState(false)
 
-  const handleOpenModal = () => setIsOpen(true)
-  const handleCloseModal = () => setIsOpen(false)
+  const handleModalOpen = () => setIsOpen(true)
+  const handleModalClose = () => setIsOpen(false)
 
   return (
     <>
-      <button onClick={handleOpenModal} className="text-blue-500 cursor-pointer">
+      <button onClick={handleModalOpen} className="text-blue-500 cursor-pointer">
         게임 방법을 보고 싶다면?
       </button>
       <Modal
         title="게임 방법"
         isOpen={isOpen}
-        onModalClose={handleCloseModal}
+        onModalClose={handleModalClose}
         isShowCloseButton={true}
+        shouldCloseOnBackgroundClick={true}
       >
         <div className="flex">
           <ul className="mx-1 mt-5 w-6 font-galmuri text-sm">
@@ -62,4 +63,4 @@ const GuideModal = () => {
   )
 }
 
-export default GuideModal
+export default GuideButton

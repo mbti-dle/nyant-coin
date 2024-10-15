@@ -14,15 +14,15 @@ interface ResultModalProps {
 const ResultModal = ({ coin, totalCoin }: ResultModalProps) => {
   const [isOpen, setIsOpen] = useState(false)
 
-  const handleOpenModal = () => setIsOpen(true)
-  const handleCloseModal = () => setIsOpen(false)
+  const handleModalOpen = () => setIsOpen(true)
+  const handleModalClose = () => setIsOpen(false)
 
   return (
     <>
-      <button onClick={handleOpenModal} className="text-blue-500 cursor-pointer">
+      <button onClick={handleModalOpen} className="text-blue-500 cursor-pointer">
         결과를 보고 싶다면?
       </button>
-      <Modal isOpen={isOpen} onModalClose={handleCloseModal} hasButton={true}>
+      <Modal isOpen={isOpen} onModalClose={handleModalClose} hasButton={true}>
         <div className="mt-8 text-center">
           <div className="mb-3 flex justify-center">
             <Image src="/images/fish.png" alt="생선" width={24} height={24} />
