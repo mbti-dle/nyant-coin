@@ -32,6 +32,10 @@ const config: Config = {
         galmuri: ['var(--font-galmuri)', 'sans-serif'],
         neodgm: ['var(--font-neodgm)', 'sans-serif'],
       },
+      backgroundImage: {
+        'sky-desktop': "url('/images/background-desktop-1.png')",
+        'sky-mobile': "url('/images/background-mobile-1.png')",
+      },
     },
   },
   plugins: [],
