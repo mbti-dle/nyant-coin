@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 
+import LinkButton from '@/components/ui/link-button'
 import catImage from '@/public/images/cat-404.png'
 
 const NotFoundPage = () => {
@@ -18,12 +19,9 @@ const NotFoundPage = () => {
         찾으시는 페이지가 파도를 타고 멀리 떠난 것 같아요. 괜찮아요! 아래 버튼을 눌러 게임 시작
         지점으로 안전하게 돌아가세요.
       </p>
-      <Link
-        href="/"
-        className="fixed bottom-[105px] left-[50%] flex h-[54px] w-[300px] translate-x-[-50%] items-center justify-center rounded-xl bg-primary text-lg text-white"
-      >
+      <LinkButton href="/" className="fixed bottom-[105px] left-[50%] translate-x-[-50%]">
         홈으로 돌아가기
-      </Link>
+      </LinkButton>
     </main>
   )
 }
