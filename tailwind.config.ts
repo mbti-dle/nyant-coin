@@ -32,6 +32,10 @@ const config: Config = {
         galmuri: ['var(--font-galmuri)', 'sans-serif'],
         neodgm: ['var(--font-neodgm)', 'sans-serif'],
       },
+      backgroundImage: {
+        'sea-spaceship-desktop': "url('/images/background-desktop-2.png')",
+        'sea-spaceship-mobile': "url('/images/background-mobile-2.png')",
+      },
     },
   },
   plugins: [],

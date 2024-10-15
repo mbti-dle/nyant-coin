@@ -22,7 +22,7 @@ module.exports = {
     'next/core-web-vitals',
     'prettier',
   ],
-  plugins: ['@typescript-eslint', 'react', 'jsx-a11y', 'import', 'prettier', 'import-order', 'filenames'],
+  plugins: ['@typescript-eslint', 'react', 'jsx-a11y', 'prettier', 'import', 'import-order', 'filenames'],
   rules: {
     "prettier/prettier": "error",
     // 파일명 규칙 (eslint-plugin-filenames 설치 필요)
