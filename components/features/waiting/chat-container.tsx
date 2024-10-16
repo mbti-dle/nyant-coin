@@ -1,6 +1,7 @@
+import ChatInput from '@/components/features/waiting/chat-input'
 import ChatMessage from '@/components/features/waiting/chat-message'
 
-const Chatting = () => {
+const ChatContainer = () => {
   const chats = [
     {
       imageUrl: '/images/cat-1.png',
@@ -20,12 +21,15 @@ const Chatting = () => {
   ]
 
   return (
-    <div className="scrollbar-custom flex h-[194px] w-[358px] flex-col gap-2 overflow-auto rounded-[15px] bg-white bg-opacity-10 p-2.5">
-      {chats.map((chat, index) => {
-        return <ChatMessage key={index} chat={chat} />
-      })}
+    <div className="fixed bottom-4">
+      <div className="scrollbar-custom flex h-[194px] w-[358px] flex-col gap-2 overflow-auto rounded-[15px] bg-white bg-opacity-10 p-2.5">
+        {chats.map((chat, index) => {
+          return <ChatMessage key={index} chat={chat} />
+        })}
+      </div>
+      <ChatInput />
     </div>
   )
 }
 
-export default Chatting
+export default ChatContainer
