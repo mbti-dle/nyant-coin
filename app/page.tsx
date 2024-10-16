@@ -12,24 +12,25 @@ const HomePage = ({ params }) => {
 
   return (
     <>
-      <main className="flex h-screen w-full flex-col items-center justify-center gap-8 bg-sky-mobile bg-cover bg-center md:bg-sky-desktop">
-        <Image src={logo} alt="로고" width={280} height={140} className="fixed top-[200px]" />
+      <main className="flex min-h-dvh flex-col justify-center bg-sky-mobile bg-cover bg-fixed bg-center md:bg-sky-desktop">
+        <div className="mb-20 flex justify-center">
+          <Image src={logo} alt="로고" width={280} height={140} />
+        </div>
 
-        <div className="fixed bottom-[160px]">
-          <LinkButton href="/setup/select-days" className="mb-4">
-            방 만들기
-          </LinkButton>
+        <div className="flex flex-col items-center gap-4">
+          <LinkButton href="/setup/select-days">방 만들기</LinkButton>
 
-          <div className="fixed bottom-[105px] left-[50%] translate-x-[-50%]">
+          <div className="relative">
             <Input value={''} />
             <Link href={`/setup/user-info/${gameId}`} passHref>
               <TrendingFlatIcon className="absolute right-3 top-1/2 -translate-y-1/2 transform cursor-pointer text-gray-300" />
             </Link>
           </div>
-        </div>
-        {/* 오류메세지 */}
 
-        <GuideButton></GuideButton>
+          {/* 오류메세지 */}
+
+          <GuideButton></GuideButton>
+        </div>
       </main>
     </>
   )

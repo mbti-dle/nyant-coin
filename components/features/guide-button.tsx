@@ -13,10 +13,7 @@ const GuideButton = () => {
 
   return (
     <>
-      <button
-        onClick={handleModalOpen}
-        className="absolute bottom-[58px] flex items-center font-galmuri text-sm text-blue"
-      >
+      <button onClick={handleModalOpen} className="flex">
         <span className="mr-2 flex h-5 w-5 items-center justify-center rounded-full bg-blue text-white">
           ?
         </span>
