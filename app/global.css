@@ -26,7 +26,7 @@ body {
   }
 
   .scrollbar-custom::-webkit-scrollbar {
-    width: 8px;
+    width: 12px;
     border-radius: 50%;
   }
 
@@ -39,5 +39,11 @@ body {
   .scrollbar-custom::-webkit-scrollbar-thumb {
     background-color: #626262;
     border-radius: 20px;
+  }
+
+  @screen md {
+    .scrollbar-custom::-webkit-scrollbar {
+      width: 8px;
+    }
   }
 }

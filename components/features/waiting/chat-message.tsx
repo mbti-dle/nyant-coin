@@ -1,13 +1,9 @@
 import Image from 'next/image'
 
-type ChatMessageType = {
-  imageUrl: string
-  nickName: string
-  message: string
-}
+import { ChatMessageModel } from '@/types/chat'
 
 interface ChatMessageProps {
-  chat: ChatMessageType
+  chat: ChatMessageModel
 }
 
 const ChatMessage = ({ chat }: ChatMessageProps) => {

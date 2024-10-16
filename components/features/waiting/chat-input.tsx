@@ -38,7 +38,7 @@ const ChatInput = () => {
         onChange={handleInputChange}
         onKeyPress={handleInputKeyDown}
         placeholder="채팅을 입력해 주세요."
-        className="h-12 flex-grow resize-none px-4 py-3 font-galmuri text-sm focus:outline-none"
+        className="h-12 flex-grow resize-none rounded-[0px] px-4 py-3 font-galmuri text-base focus:outline-none"
         maxLength={100}
       />
       <IconButton
