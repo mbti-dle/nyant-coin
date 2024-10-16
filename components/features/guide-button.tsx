@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline'
+
 import Modal from '@/components/ui/modal'
 import { GAME_GUIDE_STEPS, GAME_GUIDE_COMMENT } from '@/constants/game'
 
@@ -13,8 +15,8 @@ const GuideButton = () => {
 
   return (
     <>
-      <button onClick={handleModalOpen} className="flex">
-        <span className="mr-2 flex h-5 w-5 items-center justify-center rounded-full bg-blue text-white">
+      <button onClick={handleModalOpen} className="flex font-galmuri text-sm text-blue">
+        <span className="mr-2 flex h-4 w-4 items-center justify-center rounded-full bg-blue font-neodgm text-white">
           ?
         </span>
         게임방법
