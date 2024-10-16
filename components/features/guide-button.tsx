@@ -2,8 +2,6 @@
 
 import { useState } from 'react'
 
-import HelpOutlineIcon from '@mui/icons-material/HelpOutline'
-
 import Modal from '@/components/ui/modal'
 import { GAME_GUIDE_STEPS, GAME_GUIDE_COMMENT } from '@/constants/game'
 
