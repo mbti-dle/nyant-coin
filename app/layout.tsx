@@ -33,7 +33,7 @@ export const metadata: Metadata = {
 
 const RootLayout = ({ children }: { children: React.ReactNode }) => (
   <html lang="ko">
-    <body className={`${neodgm.variable} ${galmuri.variable} h-screen`}>
+    <body className={`${neodgm.variable} ${galmuri.variable}`}>
       {children}
       <Toast />
       <div id="modal-root"></div>
