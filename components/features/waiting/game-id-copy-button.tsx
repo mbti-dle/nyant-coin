@@ -24,7 +24,7 @@ const GameIdCopyButton = ({ gameId }: GameIdCopyButtonProps) => {
     // 위 로직 성공 시
     handleCopyComplete()
   }
-  // mb-4
+
   return (
     <Button variant="white" className="gap-2" onClick={handleGameIdCopyClick}>
       <span>{gameId}</span>

@@ -2,7 +2,7 @@ import ChatInput from '@/components/features/waiting/chat-input'
 import ChatMessage from '@/components/features/waiting/chat-message'
 
 const ChatContainer = () => {
-  const chats = [
+  const mockChatsData = [
     {
       imageUrl: '/images/cat-1.png',
       nickName: '대장고양이',
@@ -23,7 +23,7 @@ const ChatContainer = () => {
   return (
     <div className="fixed bottom-4 md:bottom-11 md:left-8">
       <div className="scrollbar-custom flex h-[194px] w-[358px] flex-col gap-2 overflow-auto rounded-[15px] bg-white bg-opacity-10 p-2.5">
-        {chats.map((chat, index) => {
+        {mockChatsData.map((chat, index) => {
           return <ChatMessage key={index} chat={chat} />
         })}
       </div>

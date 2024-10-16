@@ -1,6 +1,16 @@
 import Image from 'next/image'
 
-const ChatMessage = ({ chat }) => {
+type ChatMessageType = {
+  imageUrl: string
+  nickName: string
+  message: string
+}
+
+interface ChatMessageProps {
+  chat: ChatMessageType
+}
+
+const ChatMessage = ({ chat }: ChatMessageProps) => {
   return (
     <div className="flex font-galmuri">
       {chat.imageUrl ? (
