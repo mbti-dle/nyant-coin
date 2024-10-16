@@ -4,6 +4,7 @@ import ChatContainer from '@/components/features/waiting/chat-container'
 import GameIdCopyButton from '@/components/features/waiting/game-id-copy-button'
 import PlayerGrid from '@/components/features/waiting/player-grid'
 import Button from '@/components/ui/button'
+import LinkButton from '@/components/ui/link-button'
 
 const WaitingPage = ({ params }) => {
   const { gameId = 'N09C14' } = params
@@ -28,3 +29,7 @@ const WaitingPage = ({ params }) => {
 }
 
 export default WaitingPage
+
+{
+  /* <LinkButton href={`/game/${gameId}`}>게임 시작</LinkButton> */
+}
