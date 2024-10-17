@@ -14,7 +14,7 @@ const ChatInput = () => {
     setMessage(input)
   }
 
-  const handleSubmitMessage = () => {
+  const handleMessageSubmit = () => {
     if (message.trim()) {
       // 공백만 있을 경우, 전송 로직 동작 X
 
@@ -27,7 +27,7 @@ const ChatInput = () => {
   const handleInputKeyDown = (event) => {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault() // 줄바꿈 기본 동작 막음
-      handleSubmitMessage()
+      handleMessageSubmit()
     }
   }
 
@@ -45,7 +45,7 @@ const ChatInput = () => {
         Icon={SendIcon}
         label="전송"
         className="bg-blue-500 bg-white px-4 py-3 text-blue"
-        onClick={handleSubmitMessage}
+        onClick={handleMessageSubmit}
       />
     </div>
   )
