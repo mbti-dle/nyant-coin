@@ -1,8 +1,15 @@
+import { memo } from 'react'
+
 import Image from 'next/image'
 
-const GameHeader = ({ coins, fish, timer }) => {
+interface GameHeaderProps {
+  coins: number
+  fish: number
+}
+
+const GameHeader = memo(({ coins, fish }: GameHeaderProps) => {
   return (
-    <header className="mb-6 flex items-center justify-between text-[16px] text-black md:fixed md:left-0 md:right-0 md:top-0 md:z-10 md:mb-10 md:p-6">
+    <header className="md:z-9 mb-6 flex justify-between text-[16px] text-black md:fixed md:left-0 md:right-0 md:top-0 md:mb-10 md:p-6">
       <div className="flex items-center md:flex-col md:items-start md:space-y-2">
         <div className="flex items-center justify-between rounded-full border-2 border-gold bg-white px-3 py-2">
           <div className="flex items-center space-x-1">
@@ -17,11 +24,10 @@ const GameHeader = ({ coins, fish, timer }) => {
           </div>
         </div>
       </div>
-      <div className="bg-red-100 rounded-full px-2 py-1 text-sm md:fixed md:right-6 md:top-6">
-        <span className="text-[24px] text-red">{timer}</span>초
-      </div>
     </header>
   )
-}
+})
+
+GameHeader.displayName = 'GameHeader'
 
 export default GameHeader

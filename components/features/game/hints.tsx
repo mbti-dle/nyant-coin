@@ -1,6 +1,14 @@
+import { memo } from 'react'
+
 import Image from 'next/image'
 
-const Hints = ({ fishPrice, currentRound, totalRounds }) => {
+interface HintsProps {
+  fishPrice: number
+  currentRound: number
+  totalRounds: number
+}
+
+const Hints = memo(({ fishPrice, currentRound, totalRounds }: HintsProps) => {
   return (
     <div className="relative mb-6 flex flex-col items-center justify-center bg-[url('/images/paper.png')] bg-[length:100%_100%] bg-center bg-no-repeat px-4 py-2 text-sm font-light text-black md:mt-6">
       <div className="flex flex-col items-center justify-center gap-2 py-2">
@@ -21,6 +29,8 @@ const Hints = ({ fishPrice, currentRound, totalRounds }) => {
       </div>
     </div>
   )
-}
+})
+
+Hints.displayName = 'Hints'
 
 export default Hints
