@@ -9,7 +9,7 @@ const WaitingPage = ({ params }) => {
   const { gameId = 'N09C14' } = params
 
   return (
-    <main className="flex min-h-dvh w-full items-center justify-center bg-sea-spaceship-mobile bg-cover bg-fixed bg-top md:bg-sea-spaceship-desktop">
+    <main className="flex min-h-dvh w-full items-center justify-center bg-sea-spaceship-mobile bg-cover bg-fixed bg-top p-3 md:bg-sea-spaceship-desktop">
       <div className="flex flex-col items-center justify-center gap-4 pb-44 pt-6 md:static md:h-auto md:min-h-0 md:justify-center md:pt-0">
         <PlayerGrid />
         <GameIdCopyButton gameId={gameId} />

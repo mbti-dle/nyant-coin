@@ -10,16 +10,20 @@ const ChatMessage = ({ chat }: ChatMessageProps) => {
   return (
     <div className="flex font-galmuri">
       {chat.imageUrl ? (
-        <div className="relative mr-1 h-8 w-8 overflow-hidden rounded-full bg-white bg-opacity-40 p-5">
-          <div className="absolute inset-0 h-[30px] w-8 translate-x-1.5 translate-y-1.5">
-            <Image src={chat.imageUrl} alt="프로필" layout="fill" objectFit="cover" />
-          </div>
+        <div className="relative mr-1 h-8 w-8 shrink-0 overflow-hidden rounded-full bg-white bg-opacity-40 p-5">
+          <Image
+            src={chat.imageUrl}
+            alt="프로필"
+            width={32}
+            height={30}
+            className="absolute left-[5px] top-[4px]"
+          />
         </div>
       ) : (
-        <div className="relative mr-3 h-[30px] w-8"></div>
+        <div className="mr-3 w-8"></div>
       )}
 
-      <div className="flex min-w-36 max-w-[270px] flex-col rounded-[6px] bg-white px-3.5 py-2">
+      <div className="flex min-w-36 max-w-[250px] flex-col rounded-[6px] bg-white px-3.5 py-2">
         {chat.nickName && <div className="mb-1 text-xs text-gray-300">{chat.nickName}</div>}
         <div className="text-sm text-black">{chat.message}</div>
       </div>

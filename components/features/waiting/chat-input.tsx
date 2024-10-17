@@ -32,7 +32,7 @@ const ChatInput = () => {
   }
 
   return (
-    <div className="mt-4 flex h-[48px] w-[358px] items-center overflow-hidden rounded-[30px] shadow-md">
+    <div className="mt-4 flex h-[48px] items-center overflow-hidden rounded-[30px] shadow-md">
       <textarea
         value={message}
         onChange={handleInputChange}

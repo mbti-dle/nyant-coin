@@ -12,17 +12,13 @@ interface GameIdCopyButtonProps {
 const GameIdCopyButton = ({ gameId }: GameIdCopyButtonProps) => {
   const { showToast } = useToastStore()
 
-  const handleCopyComplete = () => {
-    // 게임 ID 텍스트 복사 성공 시 로직
+  const handleGameIdCopyClick = async () => {
+    if (!gameId || typeof window === 'undefined') {
+      return
+    }
 
+    navigator.clipboard.writeText(gameId) // 클립보드에 게임 ID 복사
     showToast('복사되었습니다', 'check')
-  }
-
-  const handleGameIdCopyClick = () => {
-    //게임 ID 텍스트 복사 로직
-
-    // 위 로직 성공 시
-    handleCopyComplete()
   }
 
   return (

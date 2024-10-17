@@ -8,6 +8,7 @@ import clsx from 'clsx'
 
 import ChatInput from '@/components/features/waiting/chat-input'
 import ChatMessage from '@/components/features/waiting/chat-message'
+
 const mockChatsData = [
   {
     imageUrl: '/images/cat-1.png',
@@ -33,10 +34,10 @@ const ChatContainer = () => {
     setIsChatExpanded(!isChatExpanded)
   }
   return (
-    <div className="fixed bottom-4 md:bottom-11 md:left-8">
+    <div className="fixed bottom-1 w-full max-w-[358px] p-3 md:bottom-11 md:left-8">
       <div
         className={clsx(
-          'relative w-[358px] overflow-hidden rounded-[15px] bg-white bg-opacity-10 pr-3 transition-all duration-300 ease-in-out',
+          'relative overflow-hidden rounded-[15px] bg-white bg-opacity-10 pr-3 transition-all duration-300 ease-in-out',
           {
             'h-[194px]': isChatExpanded,
             'h-[97px]': !isChatExpanded,
