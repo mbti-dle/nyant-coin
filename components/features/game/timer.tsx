@@ -8,7 +8,7 @@ interface TimerProps {
   currentRound: number
 }
 
-const Timer: React.FC<TimerProps> = memo(({ onRoundEnd, isLastRound, currentRound }) => {
+const Timer = memo(({ onRoundEnd, isLastRound, currentRound }: TimerProps) => {
   const [timer, setTimer] = useState(INITIAL_TIMER)
   const timerEndedRef = useRef(false)
 

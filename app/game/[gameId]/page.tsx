@@ -1,6 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+
+import ReactDOM from 'react-dom'
 
 import CatBoxGrid from '@/components/features/game/cat-box-grid'
 import GameFooter from '@/components/features/game/game-footer'
@@ -11,7 +13,7 @@ import ResultModal from '@/components/features/result-modal'
 import Toast from '@/components/ui/toast'
 import {
   INITIAL_COINS,
-  INITIAL_FISH,
+  INITIAL_FISH_PRICE,
   TOTAL_ROUNDS,
   FINAL_COIN,
   SIX_AVATARS,
@@ -23,12 +25,12 @@ interface GamePageProps {
   params: any // 임시
 }
 
-const GamePage: React.FC<GamePageProps> = ({ params }) => {
+const GamePage = ({ params }: GamePageProps) => {
   const { showToast } = useToastStore()
 
   const [gameState, setGameState] = useState<GameStateModel>({
     coins: INITIAL_COINS,
-    fish: INITIAL_FISH,
+    fish: INITIAL_FISH_PRICE,
     inputValue: '',
     fishPrice: 240,
     currentRound: 1,
@@ -39,6 +41,11 @@ const GamePage: React.FC<GamePageProps> = ({ params }) => {
     message: '',
     key: 0,
   })
+
+  useEffect(() => {
+    ReactDOM.preload('/images/background-mobile-3.png', { as: 'image' })
+    ReactDOM.preload('/images/background-desktop-3.png', { as: 'image' })
+  }, [])
 
   const handleRoundIncrement = () => {
     setGameState((prev) => {
@@ -82,11 +89,7 @@ const GamePage: React.FC<GamePageProps> = ({ params }) => {
 
   return (
     <>
-      <div>
-        <link rel="preload" href="/images/background-mobile-3.png" as="image" />
-        <link rel="preload" href="/images/background-desktop-3.png" as="image" />
-      </div>
-      <div className="fixed inset-0 z-[-1] bg-[url('/images/background-mobile-3.png')] bg-cover bg-center bg-no-repeat md:bg-[url('/images/background-desktop-3.png')]" />
+      <div className="fixed inset-0 z-[-1] bg-ocean-game-mobile bg-cover bg-center bg-no-repeat md:bg-ocean-game-desktop" />
       <main className="relative mx-auto flex h-screen min-h-screen w-full max-w-[375px] flex-col overflow-y-auto px-4 pt-[30px] md:pt-[50px]">
         <div className="flex items-center justify-between">
           <GameHeader coins={gameState.coins} fish={gameState.fish} />

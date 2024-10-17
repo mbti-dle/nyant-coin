@@ -8,11 +8,11 @@ export interface CatBoxGridProps {
   transactionResult: TransactionResultModel
 }
 
-const CatBoxGrid: React.FC<CatBoxGridProps> = memo(({ avatars, transactionResult }) => (
+const CatBoxGrid = memo(({ avatars, transactionResult }: CatBoxGridProps) => (
   <div className="grid grid-cols-3 grid-rows-2 gap-2">
-    {avatars.map((avatar, index) => (
+    {avatars.map((avatar) => (
       <CatBox
-        key={index}
+        key={avatar.id}
         {...avatar}
         transactionResult={avatar.nickName === '대장고양이' ? transactionResult : undefined}
       />

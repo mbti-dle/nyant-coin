@@ -2,6 +2,7 @@ export interface AvatarModel {
   imageUrl: string
   nickName: string
   isLeader?: boolean
+  id: string
 }
 
 export interface TransactionResultModel {
