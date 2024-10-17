@@ -1,4 +1,3 @@
-// gameConstants.js
 export const INITIAL_COINS = 1000
 export const INITIAL_FISH = 1000
 export const TOTAL_ROUNDS = 3

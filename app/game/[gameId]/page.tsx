@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 
-import CatBoxGrid from '@/components/features/game/catbox-grid'
+import CatBoxGrid from '@/components/features/game/cat-box-grid'
 import GameFooter from '@/components/features/game/game-footer'
 import GameHeader from '@/components/features/game/game-header'
 import Hints from '@/components/features/game/hints'
@@ -17,9 +17,16 @@ import {
   SIX_AVATARS,
 } from '@/constants/game-constant'
 import useToastStore from '@/store/toast'
+import { GameStateModel, TransactionResultModel } from '@/types/game'
 
-const GamePage = ({ params }) => {
-  const [gameState, setGameState] = useState({
+interface GamePageProps {
+  params: any // 임시
+}
+
+const GamePage: React.FC<GamePageProps> = ({ params }) => {
+  const { showToast } = useToastStore()
+
+  const [gameState, setGameState] = useState<GameStateModel>({
     coins: INITIAL_COINS,
     fish: INITIAL_FISH,
     inputValue: '',
@@ -28,12 +35,12 @@ const GamePage = ({ params }) => {
     isModalOpen: false,
   })
 
-  const [transactionResult, setTransactionResult] = useState({ message: '', key: 0 })
-  const { showToast } = useToastStore()
+  const [transactionResult, setTransactionResult] = useState<TransactionResultModel>({
+    message: '',
+    key: 0,
+  })
 
-  const totalCoin = gameState.fish * FINAL_COIN + gameState.coins
-
-  const incrementRound = () => {
+  const handleRoundIncrement = () => {
     setGameState((prev) => {
       if (prev.currentRound === TOTAL_ROUNDS) {
         return { ...prev, isModalOpen: true }
@@ -42,7 +49,7 @@ const GamePage = ({ params }) => {
     })
   }
 
-  const handleTransaction = (isBuying, amount) => {
+  const handleTransaction = (isBuying: boolean, amount: number) => {
     setGameState((prevState) => {
       const totalValue = amount * prevState.fishPrice
 
@@ -67,9 +74,11 @@ const GamePage = ({ params }) => {
     })
   }
 
-  const closeModal = () => {
+  const handleModalClose = () => {
     setGameState((prev) => ({ ...prev, isModalOpen: false }))
   }
+
+  const totalCoin = gameState.fish * FINAL_COIN + gameState.coins
 
   return (
     <>
@@ -82,7 +91,7 @@ const GamePage = ({ params }) => {
         <div className="flex items-center justify-between">
           <GameHeader coins={gameState.coins} fish={gameState.fish} />
           <Timer
-            onTimerEnd={incrementRound}
+            onRoundEnd={handleRoundIncrement}
             isLastRound={gameState.currentRound === TOTAL_ROUNDS}
             currentRound={gameState.currentRound}
           />
@@ -97,7 +106,7 @@ const GamePage = ({ params }) => {
         <Toast />
         <ResultModal
           isOpen={gameState.isModalOpen}
-          onModalClose={closeModal}
+          onModalClose={handleModalClose}
           coin={FINAL_COIN}
           totalCoin={totalCoin}
         />

@@ -3,12 +3,12 @@ import { useState, useEffect, memo, useRef } from 'react'
 import { INITIAL_TIMER } from '@/constants/game-constant'
 
 interface TimerProps {
-  onTimerEnd: () => void
+  onRoundEnd: () => void
   isLastRound: boolean
   currentRound: number
 }
 
-const Timer: React.FC<TimerProps> = memo(({ onTimerEnd, isLastRound, currentRound }) => {
+const Timer: React.FC<TimerProps> = memo(({ onRoundEnd, isLastRound, currentRound }) => {
   const [timer, setTimer] = useState(INITIAL_TIMER)
   const timerEndedRef = useRef(false)
 
@@ -26,14 +26,14 @@ const Timer: React.FC<TimerProps> = memo(({ onTimerEnd, isLastRound, currentRoun
       }, 1000)
     } else if (!timerEndedRef.current) {
       timerEndedRef.current = true
-      onTimerEnd()
+      onRoundEnd()
       if (!isLastRound) {
         setTimer(INITIAL_TIMER)
       }
     }
 
     return () => clearInterval(intervalId)
-  }, [timer, onTimerEnd, isLastRound])
+  }, [timer, onRoundEnd, isLastRound])
 
   return (
     <div className="bg-red-100 rounded-full px-2 py-1 text-sm text-black md:fixed md:right-6 md:top-6">

@@ -1,11 +1,11 @@
 import { memo } from 'react'
 
 import CatBox from '@/components/ui/cat-box'
-import { Avatar, TransactionResult } from '@/types/game'
+import { AvatarModel, TransactionResultModel } from '@/types/game'
 
 export interface CatBoxGridProps {
-  avatars: Avatar[]
-  transactionResult: TransactionResult
+  avatars: AvatarModel[]
+  transactionResult: TransactionResultModel
 }
 
 const CatBoxGrid: React.FC<CatBoxGridProps> = memo(({ avatars, transactionResult }) => (
