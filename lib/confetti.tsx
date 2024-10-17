@@ -11,7 +11,7 @@ const ConfettiComponent = () => {
   const colorArray = ['#3369FF', '#FFB218', '#FF4040']
 
   const setting: ConfettiOptions = {
-    particleCount: 10,
+    particleCount: 100,
     spread: 100,
     origin: { y: 1.5 },
     colors: colorArray,
@@ -21,26 +21,25 @@ const ConfettiComponent = () => {
     return Math.random() * (max - min) + min
   }
 
-  const handleConfetti = () => {
-    const interval: NodeJS.Timeout = setInterval(() => {
+  useEffect(() => {
+    const interval = setInterval(() => {
       const timeLeft = confettiAnimationEnd - Date.now()
 
       if (timeLeft <= 0) {
-        return clearInterval(interval)
+        clearInterval(interval)
+        return
       }
 
-      const particleCount = 25 * (timeLeft / confettiDuration)
+      const particleCount = 50 * (timeLeft / confettiDuration)
       confetti({
         ...setting,
         particleCount,
         origin: { x: getRandomInRange(0.1, 0.9), y: Math.random() - 0.2 },
       })
     }, 250)
-  }
 
-  useEffect(() => {
-    handleConfetti()
-  })
+    return () => clearInterval(interval)
+  }, [])
 
   return null
 }
