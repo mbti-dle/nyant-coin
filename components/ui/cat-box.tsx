@@ -1,6 +1,6 @@
-import { ComponentProps } from 'react'
+import { useState, useEffect, useMemo, ComponentProps } from 'react'
 
-import clsx from 'clsx'
+import Image from 'next/image'
 import { twMerge } from 'tailwind-merge'
 
 interface CatBoxProps extends ComponentProps<'div'> {
@@ -8,50 +8,73 @@ interface CatBoxProps extends ComponentProps<'div'> {
   nickName?: string
   type?: 'mobile' | 'desktop'
   isLeader?: boolean
+  transactionResult?: { message: string; key: number }
 }
 
-const CatBox = ({
+const CatBox: React.FC<CatBoxProps> = ({
   imageUrl,
   nickName,
   type = 'mobile',
   isLeader = false,
+  transactionResult,
   className,
-}: CatBoxProps) => {
+}) => {
   const isMobile = type === 'mobile'
+  const [showResult, setShowResult] = useState(false)
+  const [result, setResult] = useState('')
+  const [fadeOut, setFadeOut] = useState(false)
+
+  useEffect(() => {
+    if (transactionResult?.message) {
+      setResult(transactionResult.message)
+      setShowResult(true)
+      setFadeOut(false)
+
+      const fadeOutTimer = setTimeout(() => setFadeOut(true), 2000)
+      const hideTimer = setTimeout(() => setShowResult(false), 3000)
+
+      return () => {
+        clearTimeout(fadeOutTimer)
+        clearTimeout(hideTimer)
+      }
+    }
+  }, [transactionResult])
+
+  const containerClasses = twMerge(
+    'relative flex flex-col items-center rounded-xl bg-gray-50 bg-opacity-40 pt-3',
+    isMobile ? 'h-[106px] w-[106px]' : 'h-[135px] w-[135px]',
+    className
+  )
+
+  const imageClasses = useMemo(() => {
+    const baseClasses = 'flex-shrink-0'
+    return isMobile ? `${baseClasses} h-[60px] w-[60px]` : `${baseClasses} mt-2 h-[76px] w-[76px]`
+  }, [isMobile])
+
+  const resultClasses = useMemo(() => {
+    const baseClasses =
+      'absolute left-0 right-0 top-[-16px] overflow-hidden text-ellipsis whitespace-nowrap rounded-xl bg-white bg-opacity-80 px-1 py-0.5 text-center text-xs text-black transition-opacity duration-2000'
+    return `${baseClasses} ${fadeOut ? 'opacity-0' : 'opacity-100'}`
+  }, [fadeOut])
 
   return (
-    <div
-      className={twMerge(
-        clsx(
-          'relative flex flex-col items-center rounded-xl bg-gray-50 bg-opacity-40 pt-3',
-          {
-            'h-[106px] w-[106px]': isMobile,
-            'h-[135px] w-[135px]': !isMobile,
-          },
-          className
-        )
-      )}
-    >
+    <div className={containerClasses}>
       {isLeader && (
-        <img
+        <Image
           src="/images/crown.png"
           alt="리더 왕관"
-          className={clsx('absolute right-2 top-1', {
-            'h-4 w-4': isMobile,
-            'h-5 w-5': !isMobile,
-          })}
+          width={isMobile ? 16 : 20}
+          height={isMobile ? 16 : 20}
+          className="absolute right-2 top-1"
         />
       )}
-      <div
-        className={clsx('flex-shrink-0', {
-          'h-[60px] w-[60px]': isMobile,
-          'mt-2 h-[76px] w-[76px]': !isMobile,
-        })}
-      >
+      <div className={imageClasses}>
         {imageUrl && (
-          <img
+          <Image
             src={imageUrl}
             alt={nickName || '고양이 아바타'}
+            width={isMobile ? 60 : 76}
+            height={isMobile ? 60 : 76}
             className="ml-1 h-full w-full object-contain"
           />
         )}
@@ -63,6 +86,7 @@ const CatBox = ({
           </p>
         </div>
       )}
+      {showResult && <div className={resultClasses}>{result}</div>}
     </div>
   )
 }
