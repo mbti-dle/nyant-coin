@@ -21,21 +21,21 @@ const ResultPage = ({ params }) => {
   const { gameId = 'N09C14' } = params
   const { showToast } = useToastStore()
 
-  const handleToastShow = () => {
+  const handlebuttonclick = () => {
     const targetUserId = dummyData[0].userId
     const userRank = dummyData.findIndex((user) => user.userId === targetUserId) + 1
 
-    const resultText = `🏆 냥트코인 게임 결과 🏆
-    🥇 ${dummyData[0].userId} - ${dummyData[0].totalCoin} 냥코인
-    🥈 ${dummyData[1].userId} - ${dummyData[1].totalCoin} 냥코인
-    🥉 ${dummyData[2].userId} - ${dummyData[2].totalCoin} 냥코인
-    😺 ${dummyData[3].userId} - ${dummyData[3].totalCoin} 냥코인
-    😸 ${dummyData[4].userId} - ${dummyData[4].totalCoin} 냥코인
-    😹 ${dummyData[5].userId} - ${dummyData[5].totalCoin} 냥코인
+    const resultText = `🏆 냥트코인 게임 결과 🏆 
+🥇 ${dummyData[0].userId} - ${dummyData[0].totalCoin} 냥코인
+🥈 ${dummyData[1].userId} - ${dummyData[1].totalCoin} 냥코인
+🥉 ${dummyData[2].userId} - ${dummyData[2].totalCoin} 냥코인
+😺 ${dummyData[3].userId} - ${dummyData[3].totalCoin} 냥코인
+😸 ${dummyData[4].userId} - ${dummyData[4].totalCoin} 냥코인
+😹 ${dummyData[5].userId} - ${dummyData[5].totalCoin} 냥코인
     
-    🐱 '${targetUserId}' 님은 ${userRank}등을 차지했습니다! 🐟
-    [게임 링크] nyantcoin.koyeb.app
-    최고의 생선 트레이더는 누구? 생선을 사고팔아 냥코인을 모아보세요!`
+🐱 '${targetUserId}' 님은 ${userRank}등을 차지했습니다! 🐟
+🔗 https://nyantcoin.koyeb.app
+최고의 생선 트레이더는 누구? 생선을 사고팔아 냥코인을 모아보세요!`
 
     navigator.clipboard.writeText(resultText)
     showToast('복사 완료! 친구에게 공유해 보세요', 'check')
@@ -63,7 +63,7 @@ const ResultPage = ({ params }) => {
           대기실 이동하기
         </LinkButton>
 
-        <button onClick={handleToastShow} className="mt-4 font-galmuri text-sm text-blue">
+        <button onClick={handlebuttonclick} className="mt-4 font-galmuri text-sm text-blue">
           결과 복사하기
         </button>
         <ConfettiComponent />
