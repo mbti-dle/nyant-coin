@@ -21,7 +21,7 @@ const ResultPage = ({ params }) => {
   const { gameId = 'N09C14' } = params
   const { showToast } = useToastStore()
 
-  const handleShowCheckToast = () => {
+  const handleToastShow = () => {
     const targetUserId = dummyData[0].userId
     const userRank = dummyData.findIndex((user) => user.userId === targetUserId) + 1
 
@@ -63,7 +63,7 @@ const ResultPage = ({ params }) => {
           대기실 이동하기
         </LinkButton>
 
-        <button onClick={handleShowCheckToast} className="mt-4 font-galmuri text-sm text-blue">
+        <button onClick={handleToastShow} className="mt-4 font-galmuri text-sm text-blue">
           결과 복사하기
         </button>
         <ConfettiComponent />
