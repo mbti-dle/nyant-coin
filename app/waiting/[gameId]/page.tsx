@@ -7,10 +7,10 @@ import LinkButton from '@/components/ui/link-button'
 
 const WaitingPage = ({ params }) => {
   const { gameId = 'N09C14' } = params
-
+  // bottom-[284px]
   return (
-    <main className="relative flex h-screen min-h-dvh w-full items-center justify-center bg-sea-spaceship-mobile bg-cover bg-fixed bg-top md:bg-sea-spaceship-desktop">
-      <div className="absolute bottom-[284px] flex flex-col items-center justify-center gap-4 pt-6 md:static md:h-auto md:min-h-0 md:justify-center md:pt-0">
+    <main className="flex min-h-dvh w-full items-center justify-center bg-sea-spaceship-mobile bg-cover bg-fixed bg-top md:bg-sea-spaceship-desktop">
+      <div className="flex flex-col items-center justify-center gap-4 pb-44 pt-6 md:static md:h-auto md:min-h-0 md:justify-center md:pt-0">
         <PlayerGrid />
         <GameIdCopyButton gameId={gameId} />
         <LinkButton href={`/game/${gameId}`}>게임 시작</LinkButton>

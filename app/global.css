@@ -26,7 +26,7 @@ body {
   }
 
   .scrollbar-custom::-webkit-scrollbar {
-    width: 12px;
+    width: 8px;
     border-radius: 50%;
   }
 
@@ -34,6 +34,7 @@ body {
     background: #e3e3e3;
     border-radius: 20px;
     margin: 8px 0;
+    margin-top: 28px;
   }
 
   .scrollbar-custom::-webkit-scrollbar-thumb {

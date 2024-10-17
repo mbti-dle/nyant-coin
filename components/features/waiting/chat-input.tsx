@@ -38,13 +38,13 @@ const ChatInput = () => {
         onChange={handleInputChange}
         onKeyPress={handleInputKeyDown}
         placeholder="채팅을 입력해 주세요."
-        className="h-12 flex-grow resize-none rounded-[0px] px-4 py-3 font-galmuri text-base focus:outline-none"
+        className="h-12 flex-grow resize-none rounded-[0px] px-5 py-3 font-galmuri text-base text-black placeholder-gray-200 focus:outline-none"
         maxLength={100}
       />
       <IconButton
         Icon={SendIcon}
         label="전송"
-        className="bg-blue-500 bg-white py-3 text-blue"
+        className="bg-blue-500 bg-white px-4 py-3 text-blue"
         onClick={handleSubmitMessage}
       />
     </div>
