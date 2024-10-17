@@ -8,7 +8,6 @@ import clsx from 'clsx'
 
 import ChatInput from '@/components/features/waiting/chat-input'
 import ChatMessage from '@/components/features/waiting/chat-message'
-
 const mockChatsData = [
   {
     imageUrl: '/images/cat-1.png',

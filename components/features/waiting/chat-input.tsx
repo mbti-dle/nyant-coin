@@ -17,6 +17,7 @@ const ChatInput = () => {
   const handleMessageSubmit = () => {
     if (message.trim()) {
       // 공백만 있을 경우, 전송 로직 동작 X
+      event.preventDefault() // 줄바꿈 기본 동작 막음
 
       // 메세지 전송 로직
       console.log(message.trim())
@@ -32,7 +33,7 @@ const ChatInput = () => {
   }
 
   return (
-    <div className="mt-4 flex h-[48px] items-center overflow-hidden rounded-[30px] shadow-md">
+    <div className="mt-2 flex h-[48px] items-center overflow-hidden rounded-[30px] shadow-md">
       <textarea
         value={message}
         onChange={handleInputChange}
