@@ -33,7 +33,7 @@ const ChatContainer = () => {
     setIsChatExpanded(!isChatExpanded)
   }
   return (
-    <div className="fixed bottom-1 w-full max-w-[358px] p-3 md:bottom-11 md:left-8">
+    <div className="fixed bottom-1 w-full p-3 md:bottom-11 md:left-8 md:max-w-[358px]">
       <div
         className={clsx(
           'relative overflow-hidden rounded-[15px] bg-white bg-opacity-10 pr-3 transition-all duration-300 ease-in-out',

@@ -23,7 +23,7 @@ const ChatMessage = ({ chat }: ChatMessageProps) => {
         <div className="mr-3 w-8"></div>
       )}
 
-      <div className="flex min-w-36 max-w-[250px] flex-col rounded-[6px] bg-white px-3.5 py-2">
+      <div className="mr-3 flex min-w-36 flex-col rounded-[6px] bg-white px-3.5 py-2 md:max-w-[250px]">
         {chat.nickName && <div className="mb-1 text-xs text-gray-300">{chat.nickName}</div>}
         <div className="text-sm text-black">{chat.message}</div>
       </div>
