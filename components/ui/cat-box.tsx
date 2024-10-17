@@ -1,4 +1,4 @@
-import { useState, useEffect, ComponentProps } from 'react'
+import { useState, useEffect, ComponentProps, memo } from 'react'
 
 import clsx from 'clsx'
 import Image from 'next/image'
@@ -62,7 +62,7 @@ const CatBox = ({
             'h-5 w-5': !isMobile,
           })}
         >
-          <Image src="/images/crown.png" alt="리더 왕관" layout="fill" objectFit="contain" />
+          <Image src="/images/crown.png" alt="리더 왕관" fill className="object-contain" />
         </div>
       )}
       <div
@@ -75,13 +75,13 @@ const CatBox = ({
           <Image
             src={imageUrl}
             alt={nickName || '고양이 아바타'}
-            layout="fill"
-            objectFit="contain"
+            fill
+            className="translate-y-1.5 object-contain"
           />
         )}
       </div>
       {nickName && (
-        <div className="mt-1 flex w-full flex-grow items-center justify-center">
+        <div className="flex w-full flex-grow items-center justify-center">
           <p className="w-[80px] break-words px-1 text-center font-galmuri text-sm leading-tight text-black">
             {nickName}
           </p>
@@ -90,7 +90,7 @@ const CatBox = ({
       {showResult && (
         <div
           className={clsx(
-            'duration-2000 absolute left-0 right-0 top-[-16px] overflow-hidden text-ellipsis whitespace-nowrap rounded-xl bg-white bg-opacity-80 px-1 py-0.5 text-center text-xs text-black transition-opacity',
+            'duration-2000 absolute left-0 top-[-16px] line-clamp-2 flex w-full items-center justify-center rounded-[100px] border-[1.5px] border-gray-200 bg-white py-1 text-center text-sm text-black transition-opacity',
             {
               'opacity-0': fadeOut,
               'opacity-100': !fadeOut,
@@ -104,4 +104,4 @@ const CatBox = ({
   )
 }
 
-export default CatBox
+export default memo(CatBox)
