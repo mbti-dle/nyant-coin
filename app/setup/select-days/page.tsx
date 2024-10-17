@@ -16,7 +16,7 @@ const SelectDaysPage = () => {
 
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center">
-      <h1 className="text-center text-xl">시장에서 거래할 일수를 정해주세요.</h1>
+      <h1 className="px-3 text-center text-xl">시장에서 거래할 일수를 정해주세요.</h1>
       <RadioGroup className="my-20">
         {DAY_OPTIONS.map((day) => (
           <RadioButton
