@@ -44,16 +44,18 @@ const ResultPage = ({ params }) => {
   return (
     <>
       <main className="flex min-h-dvh flex-col items-center justify-center">
-        <div className="relative flex h-[100px] w-[100px] items-center justify-center pl-1 md:h-[150px] md:w-[150px]">
+        <div className="relative ml-1 flex h-[100px] w-[100px] items-center justify-center md:h-[150px] md:w-[150px]">
           <Image src={cat} alt="고양이" fill />
         </div>
-        <ul className="mb-10 mt-6 font-galmuri">
+        <ul className="mb-10 mt-6 w-full max-w-[300px] font-galmuri md:px-0">
           {dummyData.map((user, index) => (
-            <li key={index} className="mb-2 flex items-center">
-              <span className="mr-4 w-10 text-center font-neodgm text-gray-300">{index + 1}</span>
-              <span className="ml-2 mr-4 w-40 text-left text-gray-800">{user.userId}</span>
-              <div className="ml-2 flex w-20 items-center text-right">
-                <Image src={coin} alt="코인" width={16} height={16} className="mr-1" />
+            <li key={index} className="mb-2 flex items-center gap-3">
+              <span className="w-1/12 text-center font-neodgm text-gray-300">{index + 1}</span>
+              <span className="w-8/12 text-left text-gray-800">{user.userId}</span>
+              <div className="flex w-3/12 items-center justify-end gap-1">
+                <div className="relative h-[16px] w-[16px] shrink-0">
+                  <Image src={coin} alt="코인" fill />
+                </div>
                 <span className="text-sm text-gray-300">{user.totalCoin}</span>
               </div>
             </li>

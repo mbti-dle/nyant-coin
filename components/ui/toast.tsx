@@ -61,7 +61,7 @@ const Toast = ({ className = '' }: ToastProps) => {
       )}
     >
       {icon && <ToastIcon icon={icon} className="mr-2" />}
-      <span className="font-galmuri text-base text-white">{message}</span>
+      <span className="font-galmuri text-sm text-white min-[410px]:text-base">{message}</span>
     </div>
   )
 }
