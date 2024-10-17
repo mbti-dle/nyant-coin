@@ -47,7 +47,7 @@ const ResultPage = ({ params }) => {
         <div className="relative ml-1 flex h-[100px] w-[100px] items-center justify-center md:h-[150px] md:w-[150px]">
           <Image src={cat} alt="고양이" fill />
         </div>
-        <ul className="mb-10 mt-6 w-full max-w-[300px] font-galmuri md:px-0">
+        <ul className="mb-10 mt-6 w-full max-w-[300px] font-galmuri">
           {dummyData.map((user, index) => (
             <li key={index} className="mb-2 flex items-center gap-3">
               <span className="w-1/12 text-center font-neodgm text-gray-300">{index + 1}</span>
