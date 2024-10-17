@@ -1,6 +1,7 @@
 import { useState, useEffect, ComponentProps } from 'react'
 
 import clsx from 'clsx'
+import Image from 'next/image'
 import { twMerge } from 'tailwind-merge'
 
 interface CatBoxProps extends ComponentProps<'div'> {
@@ -55,26 +56,27 @@ const CatBox = ({
       )}
     >
       {isLeader && (
-        <img
-          src="/images/crown.png"
-          alt="리더 왕관"
+        <div
           className={clsx('absolute right-2 top-1', {
             'h-4 w-4': isMobile,
             'h-5 w-5': !isMobile,
           })}
-        />
+        >
+          <Image src="/images/crown.png" alt="리더 왕관" layout="fill" objectFit="contain" />
+        </div>
       )}
       <div
-        className={clsx('flex-shrink-0', {
+        className={clsx('relative flex-shrink-0', {
           'h-3/5 w-3/5': isMobile,
           'h-2/3 w-2/3': !isMobile,
         })}
       >
         {imageUrl && (
-          <img
+          <Image
             src={imageUrl}
             alt={nickName || '고양이 아바타'}
-            className="h-full w-full object-contain"
+            layout="fill"
+            objectFit="contain"
           />
         )}
       </div>
