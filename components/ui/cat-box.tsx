@@ -45,9 +45,10 @@ const CatBox = ({
       className={twMerge(
         clsx(
           'relative flex flex-col items-center rounded-xl bg-gray-50 bg-opacity-40 pt-3',
+          'aspect-square w-full',
           {
-            'h-[106px] w-[106px]': isMobile,
-            'h-[135px] w-[135px]': !isMobile,
+            'p-2': isMobile,
+            'p-3': !isMobile,
           },
           className
         )
@@ -65,21 +66,21 @@ const CatBox = ({
       )}
       <div
         className={clsx('flex-shrink-0', {
-          'h-[60px] w-[60px]': isMobile,
-          'mt-2 h-[76px] w-[76px]': !isMobile,
+          'h-3/5 w-3/5': isMobile,
+          'h-2/3 w-2/3': !isMobile,
         })}
       >
         {imageUrl && (
           <img
             src={imageUrl}
             alt={nickName || '고양이 아바타'}
-            className="ml-1 h-full w-full object-contain"
+            className="h-full w-full object-contain"
           />
         )}
       </div>
       {nickName && (
-        <div className="mt-[-4px] flex w-full flex-grow items-center justify-center">
-          <p className="w-[80px] break-words p-0.5 text-center font-galmuri text-sm leading-tight text-black">
+        <div className="mt-1 flex w-full flex-grow items-center justify-center">
+          <p className="w-[80px] break-words px-1 text-center font-galmuri text-sm leading-tight text-black">
             {nickName}
           </p>
         </div>

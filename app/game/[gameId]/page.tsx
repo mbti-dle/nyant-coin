@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 
+import Image from 'next/image'
+
 import Hints from '@/components/features/hints'
 import ResultModal from '@/components/features/result-modal'
 import GameFooter from '@/components/layout/game-footer'
@@ -13,7 +15,7 @@ import useToastStore from '@/store/toast'
 const INITIAL_COINS = 100000
 const INITIAL_FISH = 100000
 const TOTAL_ROUNDS = 5
-const INITIAL_TIMER = 10
+const INITIAL_TIMER = 20
 const FINAL_COIN = 100
 
 const GamePage = ({ params }) => {
@@ -93,11 +95,27 @@ const GamePage = ({ params }) => {
   }
 
   return (
-    <div className="h-screen w-full bg-[url('/images/background-mobile-3.png')] bg-cover bg-center bg-no-repeat md:bg-[url('/images/background-desktop-3.png')]">
-      <main className="mx-auto flex h-screen min-h-screen w-full max-w-[375px] flex-col overflow-y-auto px-4 pt-[30px] md:pt-[50px]">
+    <>
+      <Image
+        src="/images/background-mobile-3.png"
+        alt="모바일 해변 배경"
+        layout="fill"
+        objectFit="cover"
+        priority
+        className="block md:hidden"
+      />
+      <Image
+        src="/images/background-desktop-3.png"
+        alt="데스크탑 해변 배경"
+        layout="fill"
+        objectFit="cover"
+        priority
+        className="hidden md:block"
+      />
+      <main className="relative mx-auto flex h-screen min-h-screen w-full max-w-[375px] flex-col overflow-y-auto px-4 pt-[30px] md:pt-[50px]">
         <GameHeader coins={coins} fish={fish} timer={timer} />
         <Hints fishPrice={fishPrice} currentRound={currentRound} totalRounds={TOTAL_ROUNDS} />
-        <div className="grid grid-cols-3 grid-rows-2 gap-4">
+        <div className="grid grid-cols-3 grid-rows-2 gap-2">
           {sixAvatars.map((avatar, index) => (
             <CatBox
               key={index}
@@ -121,7 +139,7 @@ const GamePage = ({ params }) => {
           totalCoin={totalCoin}
         />
       </main>
-    </div>
+    </>
   )
 }
 

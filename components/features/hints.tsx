@@ -2,7 +2,7 @@ import Image from 'next/image'
 
 const Hints = ({ fishPrice, currentRound, totalRounds }) => {
   return (
-    <div className="relative mb-6 flex h-[180px] flex-col items-center justify-center gap-2 bg-[url('/images/paper.png')] bg-cover bg-center bg-no-repeat p-4 text-sm font-light text-black md:mt-6">
+    <div className="relative mb-6 flex flex-col items-center justify-center gap-2 bg-[url('/images/paper.png')] bg-cover bg-center bg-no-repeat px-2 py-4 text-sm font-light text-black md:mt-6">
       <p className="lh-[22px] mb-2 text-[14px] leading-[22px]">
         요리대결 프로그램 냥멍요리사대박! 생선가게에 몰려드는 팬들, 재고부족사태 올까?(🔺상승)
       </p>
