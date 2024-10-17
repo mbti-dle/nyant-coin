@@ -21,25 +21,30 @@ const CatBox = ({
 
   return (
     <div
+      // className={twMerge(
+      //   clsx(
+      //     'relative flex flex-col items-center rounded-xl bg-gray-50 bg-opacity-40 pt-3',
+      //     {
+      //       'h-[106px] w-[106px]': isMobile,
+      //       'h-[135px] w-[135px]': !isMobile,
+      //     },
+      //     className
+      //   )
+      // )}
       className={twMerge(
-        clsx(
-          'relative flex flex-col items-center rounded-xl bg-gray-50 bg-opacity-40 pt-3',
-          {
-            'h-[106px] w-[106px]': isMobile,
-            'h-[135px] w-[135px]': !isMobile,
-          },
-          className
-        )
+        'relative flex h-[106px] w-[106px] flex-col items-center rounded-xl bg-gray-50 bg-opacity-40 pt-3 md:h-[135px] md:w-[135px]',
+        className
       )}
     >
       {isLeader && (
         <img
           src="/images/crown.png"
           alt="리더 왕관"
-          className={clsx('absolute right-2 top-1', {
-            'h-4 w-4': isMobile,
-            'h-5 w-5': !isMobile,
-          })}
+          // className={clsx('absolute right-2 top-1', {
+          //   'h-4 w-4': isMobile,
+          //   'h-5 w-5': !isMobile,
+          // })}
+          className="absolute right-2 top-1 h-4 w-4 md:h-5 md:w-5"
         />
       )}
       <div

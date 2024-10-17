@@ -1,4 +1,4 @@
-import { Metadata } from 'next'
+import { Metadata, Viewport } from 'next'
 import localFont from 'next/font/local'
 
 import Toast from '@/components/ui/toast'
@@ -29,6 +29,13 @@ export const metadata: Metadata = {
       },
     ],
   },
+}
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 }
 
 const RootLayout = ({ children }: { children: React.ReactNode }) => (
