@@ -35,6 +35,8 @@ const config: Config = {
       backgroundImage: {
         'sky-desktop': "url('/images/background-desktop-1.png')",
         'sky-mobile': "url('/images/background-mobile-1.png')",
+        'ocean-game-desktop': "url('/images/background-desktop-3.png')",
+        'ocean-game-mobile': "url('/images/background-mobile-3.png')",
         'sea-spaceship-desktop': "url('/images/background-desktop-2.png')",
         'sea-spaceship-mobile': "url('/images/background-mobile-2.png')",
       },
