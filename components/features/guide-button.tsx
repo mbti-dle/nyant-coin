@@ -13,8 +13,11 @@ const GuideButton = () => {
 
   return (
     <>
-      <button onClick={handleModalOpen} className="text-blue-500 cursor-pointer">
-        게임 방법을 보고 싶다면?
+      <button onClick={handleModalOpen} className="flex font-galmuri text-sm text-blue">
+        <span className="mr-2 flex h-4 w-4 items-center justify-center rounded-full bg-blue font-neodgm text-white">
+          ?
+        </span>
+        게임방법
       </button>
       <Modal
         title="게임 방법"

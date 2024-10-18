@@ -7,21 +7,12 @@ import { twMerge } from 'tailwind-merge'
 interface CatBoxProps extends ComponentProps<'div'> {
   imageUrl?: string
   nickName?: string
-  type?: 'mobile' | 'desktop'
   isLeader?: boolean
   transactionResult?: { message: string; key: number }
 }
 
 const CatBox = memo(
-  ({
-    imageUrl,
-    nickName,
-    type = 'mobile',
-    isLeader = false,
-    transactionResult,
-    className,
-  }: CatBoxProps) => {
-    const isMobile = type === 'mobile'
+  ({ imageUrl, nickName, isLeader = false, transactionResult, className }: CatBoxProps) => {
     const [showResult, setShowResult] = useState(false)
     const [result, setResult] = useState('')
     const [fadeOut, setFadeOut] = useState(false)
@@ -45,45 +36,33 @@ const CatBox = memo(
     return (
       <div
         className={twMerge(
-          clsx(
-            'relative flex flex-col items-center rounded-xl bg-gray-50 bg-opacity-40 pt-3',
-            'aspect-square w-full',
-            {
-              'p-2': isMobile,
-              'p-3': !isMobile,
-            },
-            className
-          )
+          'relative flex h-[106px] w-[106px] flex-col items-center rounded-xl bg-gray-50 bg-opacity-40 pt-3 md:h-[135px] md:w-[135px]',
+          className
         )}
       >
         {isLeader && (
-          <div
-            className={clsx('absolute right-2 top-1', {
-              'h-4 w-4': isMobile,
-              'h-5 w-5': !isMobile,
-            })}
-          >
-            <Image src="/images/crown.png" alt="리더 왕관" fill className="object-contain" />
-          </div>
+          <Image
+            src="/images/crown.png"
+            alt="리더 왕관"
+            width={20}
+            height={20}
+            className="absolute right-2 top-1 h-4 w-4 md:h-5 md:w-5"
+          />
         )}
-        <div
-          className={clsx('relative flex-shrink-0', {
-            'h-3/5 w-3/5': isMobile,
-            'h-2/3 w-2/3': !isMobile,
-          })}
-        >
+        <div className="h-[60px] w-[60px] flex-shrink-0 md:mt-2 md:h-[76px] md:w-[76px]">
           {imageUrl && (
             <Image
               src={imageUrl}
               alt={nickName || '고양이 아바타'}
-              fill
-              className="translate-y-1.5 object-contain"
+              width={76}
+              height={76}
+              className="ml-1 h-full w-full translate-y-1 object-contain"
             />
           )}
         </div>
         {nickName && (
-          <div className="flex w-full flex-grow items-center justify-center">
-            <p className="w-[80px] break-words px-1 text-center font-galmuri text-sm leading-tight text-black">
+          <div className="mt-[-4px] flex w-full flex-grow items-center justify-center">
+            <p className="w-[80px] break-words p-0.5 text-center font-galmuri text-sm leading-tight text-black">
               {nickName}
             </p>
           </div>
@@ -109,3 +88,4 @@ const CatBox = memo(
 CatBox.displayName = 'CatBox'
 
 export default CatBox
+
