@@ -90,7 +90,7 @@ const GamePage = ({ params }: GamePageProps) => {
   return (
     <>
       <div className="fixed inset-0 z-[-1] bg-ocean-game-mobile bg-cover bg-center bg-no-repeat md:bg-ocean-game-desktop" />
-      <main className="relative mx-auto flex h-screen min-h-screen w-full max-w-[375px] flex-col overflow-y-auto px-4 pt-[30px] md:pt-[50px]">
+      <main className="relative mx-auto flex h-screen min-h-screen w-full max-w-[350px] flex-col pt-[30px] md:max-w-[420px] md:pt-[50px]">
         <div className="flex items-center justify-between">
           <GameHeader coins={gameState.coins} fish={gameState.fish} />
           <Timer

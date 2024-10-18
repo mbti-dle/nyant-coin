@@ -88,4 +88,3 @@ const CatBox = memo(
 CatBox.displayName = 'CatBox'
 
 export default CatBox
-
