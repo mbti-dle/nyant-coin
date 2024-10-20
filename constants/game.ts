@@ -9,3 +9,5 @@ export const GAME_GUIDE_STEPS = [
 export const GAME_GUIDE_COMMENT = '최적의 타이밍에 거래해서 우승을 차지하세요!'
 
 export const DAY_OPTIONS = ['10일', '15일', '20일']
+
+export const INITIAL_FISH_PRICE = 100

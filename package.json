@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "nodemon server.js",
+    "dev": "nodemon --exec node --loader ts-node/esm server.ts",
     "build": "next build",
-    "start": "NODE_ENV=production node server.js",
+    "start": "NODE_ENV=production ts-node server.ts",
     "lint": "next lint --fix",
     "prettier": "prettier --write .",
     "dependency-check": "dependency-check . 'pages/**/*.{js,ts,tsx}' 'app/**/*.{js,ts,tsx}' --no-dev --ignore-module 'next' --ignore-module 'react' --ignore-module 'react-dom' --ignore-module 'socket.io' --ignore-module 'socket.io-client' --ignore-module 'zustand' --ignore-module 'dotenv' --ignore-module 'postgres'",
@@ -27,6 +27,7 @@
   },
   "devDependencies": {
     "@next/eslint-plugin-next": "^14.2.15",
+    "@swc-node/register": "^1.10.9",
     "@types/jest": "^29.5.13",
     "@types/node": "^20.16.11",
     "@types/react": "^18.3.11",

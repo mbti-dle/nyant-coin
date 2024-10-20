@@ -7,7 +7,7 @@
     "esModuleInterop": true,
     "module": "esnext",
     "moduleResolution": "node",
-    "target": "ES6",
+    "target": "esnext",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
@@ -20,7 +20,13 @@
     "paths": {
       "@/*": ["./*"]
     },
-    "strict": false
+    "strict": false,
+    "outDir": "./dist",
+    "baseUrl": "."
+  },
+  "ts-node": {
+    "esm": true,
+    "experimentalSpecifierResolution": "node"
   },
   "include": [
     "next-env.d.ts",
@@ -32,8 +38,7 @@
     "lib/api/.gitkeep",
     "app/**/*.ts",
     "app/**/*.tsx",
-    "server.ts",
-    "server.js"
+    "server.ts"
   ],
   "exclude": ["node_modules"]
 }

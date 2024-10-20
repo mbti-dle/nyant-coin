@@ -3,8 +3,8 @@ import { createServer } from 'node:http'
 import next from 'next'
 import { Server as SocketIOServer } from 'socket.io'
 
-// import { INITIAL_FISH_PRICE } from './constants/game'
-// import { generateUniqueGameId } from './lib/utils/game'
+import { INITIAL_FISH_PRICE } from './constants/game.js'
+import { generateUniqueGameId } from './lib/utils/game.js'
 
 const dev = process.env.NODE_ENV !== 'production'
 const hostname = 'localhost'
@@ -42,7 +42,7 @@ app.prepare().then(() => {
     })
 
     socket.on('create_game', (totalRounds) => {
-      const gameId = 'ABC123' // TODO: generateUniqueGameId()로 생성
+      const gameId = generateUniqueGameId()
       const newGame = {
         gameId,
         totalRounds,
@@ -51,7 +51,7 @@ app.prepare().then(() => {
         players: [],
         gameInfo: {
           currentDay: 1,
-          currentFishPrice: 100, // TODO: INITIAL_FISH_PRICE로 변경
+          currentFishPrice: INITIAL_FISH_PRICE,
           lastRoundHintResult: '',
           nextRoundHint: '',
         },
