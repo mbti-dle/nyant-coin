@@ -30,8 +30,8 @@ const UserInfoPage = ({ params }) => {
     console.log(`You will join as: ${selectedAvatar}`)
   }
 
-  const handleNicknameChange = (e) => {
-    setNickname(e.target.value)
+  const handleNicknameChange = (event) => {
+    setNickname(event.target.value)
   }
 
   return (

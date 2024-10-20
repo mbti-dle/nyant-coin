@@ -14,8 +14,8 @@ import logo from '@/public/images/logo.png'
 const HomePage = () => {
   const [gameId, setGameId] = useState('')
 
-  const handleGameIdChange = (e) => {
-    setGameId(e.target.value)
+  const handleGameIdChange = (event) => {
+    setGameId(event.target.value)
   }
 
   return (
