@@ -5,8 +5,8 @@ import { useState, useEffect } from 'react'
 import ReactDOM from 'react-dom'
 
 import CatBoxGrid from '@/components/features/game/cat-box-grid'
+import FishCoinsAssets from '@/components/features/game/fish-coins-assets'
 import GameFooter from '@/components/features/game/game-footer'
-import GameHeader from '@/components/features/game/game-header'
 import Hints from '@/components/features/game/hints'
 import Timer from '@/components/features/game/timer'
 import ResultModal from '@/components/features/result-modal'
@@ -88,11 +88,10 @@ const GamePage = ({ params }: GamePageProps) => {
   const totalCoin = gameState.fish * FINAL_COIN + gameState.coins
 
   return (
-    <>
-      <div className="fixed inset-0 z-[-1] bg-ocean-game-mobile bg-cover bg-center bg-no-repeat md:bg-ocean-game-desktop" />
-      <main className="relative mx-auto flex h-screen min-h-screen w-full max-w-[350px] flex-col pt-[30px] md:max-w-[420px] md:pt-[50px]">
-        <div className="flex items-center justify-between">
-          <GameHeader coins={gameState.coins} fish={gameState.fish} />
+    <main className="flex min-h-dvh w-full justify-center bg-ocean-game-mobile bg-cover bg-fixed bg-top md:bg-ocean-game-desktop">
+      <div className="max-w-[420px] p-3 md:pt-[50px]">
+        <div className="my-6 flex items-center justify-between">
+          <FishCoinsAssets coins={gameState.coins} fish={gameState.fish} />
           <Timer
             onRoundEnd={handleRoundIncrement}
             isLastRound={gameState.currentRound === TOTAL_ROUNDS}
@@ -105,7 +104,6 @@ const GamePage = ({ params }: GamePageProps) => {
           totalRounds={TOTAL_ROUNDS}
         />
         <CatBoxGrid avatars={SIX_AVATARS} transactionResult={transactionResult} />
-        <GameFooter handleTransaction={handleTransaction} />
         <Toast />
         <ResultModal
           isOpen={gameState.isModalOpen}
@@ -113,8 +111,9 @@ const GamePage = ({ params }: GamePageProps) => {
           coin={FINAL_COIN}
           totalCoin={totalCoin}
         />
-      </main>
-    </>
+      </div>
+      <GameFooter handleTransaction={handleTransaction} />
+    </main>
   )
 }
 

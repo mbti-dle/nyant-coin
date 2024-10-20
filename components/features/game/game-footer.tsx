@@ -31,15 +31,15 @@ const GameFooter = memo(({ handleTransaction }: GameFooterProps) => {
   }
 
   return (
-    <div className="mb-4 mt-auto flex gap-4">
+    <div className="fixed bottom-1 flex w-full max-w-[420px] gap-2 p-3">
       <Input
-        className="w-full rounded-full border-none"
+        className="rounded-full border-none"
         value={inputValue}
         onChange={handleInputChange}
         type="text"
         pattern="\d*"
       />
-      <div className="flex w-1/2 gap-4">
+      <div className="flex w-1/2 gap-2">
         <Button
           variant="white"
           className="flex-1 text-primary"
