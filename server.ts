@@ -5,6 +5,7 @@ import { Server as SocketIOServer } from 'socket.io'
 
 import { INITIAL_FISH_PRICE } from './constants/game.js'
 import { generateUniqueGameId } from './lib/utils/game.js'
+import { GameModel, PlayerModel } from './types/game.js'
 
 const dev = process.env.NODE_ENV !== 'production'
 const hostname = 'localhost'
@@ -17,7 +18,7 @@ app.prepare().then(() => {
   const httpServer = createServer(handler)
 
   const io = new SocketIOServer(httpServer)
-  const gameRooms = new Map()
+  const gameRooms = new Map<string, GameModel>()
 
   io.on('connection', (socket) => {
     socket.on('check_game_availability', (gameId) => {
@@ -43,7 +44,7 @@ app.prepare().then(() => {
 
     socket.on('create_game', (totalRounds) => {
       const gameId = generateUniqueGameId()
-      const newGame = {
+      const newGame: GameModel = {
         gameId,
         totalRounds,
         state: 'waiting',
@@ -64,7 +65,7 @@ app.prepare().then(() => {
       const room = gameRooms.get(gameId)
 
       if (room) {
-        const newPlayer = {
+        const newPlayer: PlayerModel = {
           id: socket.id, // TODO: 보안을 위해 새로 만들기
           nickname,
           character,
