@@ -1,75 +1,89 @@
-import { ComponentProps } from 'react'
+import { useState, useEffect, ComponentProps, memo } from 'react'
 
 import clsx from 'clsx'
+import Image from 'next/image'
 import { twMerge } from 'tailwind-merge'
 
 interface CatBoxProps extends ComponentProps<'div'> {
   imageUrl?: string
   nickName?: string
-  type?: 'mobile' | 'desktop'
   isLeader?: boolean
+  transactionResult?: { message: string; key: number }
 }
 
-const CatBox = ({
-  imageUrl,
-  nickName,
-  type = 'mobile',
-  isLeader = false,
-  className,
-}: CatBoxProps) => {
-  const isMobile = type === 'mobile'
+const CatBox = memo(
+  ({ imageUrl, nickName, isLeader = false, transactionResult, className }: CatBoxProps) => {
+    const [showResult, setShowResult] = useState(false)
+    const [result, setResult] = useState('')
+    const [fadeOut, setFadeOut] = useState(false)
 
-  return (
-    <div
-      // className={twMerge(
-      //   clsx(
-      //     'relative flex flex-col items-center rounded-xl bg-gray-50 bg-opacity-40 pt-3',
-      //     {
-      //       'h-[106px] w-[106px]': isMobile,
-      //       'h-[135px] w-[135px]': !isMobile,
-      //     },
-      //     className
-      //   )
-      // )}
-      className={twMerge(
-        'relative flex h-[106px] w-[106px] flex-col items-center rounded-xl bg-gray-50 bg-opacity-40 pt-3 md:h-[135px] md:w-[135px]',
-        className
-      )}
-    >
-      {isLeader && (
-        <img
-          src="/images/crown.png"
-          alt="리더 왕관"
-          // className={clsx('absolute right-2 top-1', {
-          //   'h-4 w-4': isMobile,
-          //   'h-5 w-5': !isMobile,
-          // })}
-          className="absolute right-2 top-1 h-4 w-4 md:h-5 md:w-5"
-        />
-      )}
+    useEffect(() => {
+      if (transactionResult?.message) {
+        setResult(transactionResult.message)
+        setShowResult(true)
+        setFadeOut(false)
+
+        const fadeOutTimer = setTimeout(() => setFadeOut(true), 2000)
+        const hideTimer = setTimeout(() => setShowResult(false), 3000)
+
+        return () => {
+          clearTimeout(fadeOutTimer)
+          clearTimeout(hideTimer)
+        }
+      }
+    }, [transactionResult])
+
+    return (
       <div
-        className={clsx('flex-shrink-0', {
-          'h-[60px] w-[60px]': isMobile,
-          'mt-2 h-[76px] w-[76px]': !isMobile,
-        })}
+        className={twMerge(
+          'relative aspect-square rounded-xl bg-gray-50 bg-opacity-40 p-1',
+          className
+        )}
       >
-        {imageUrl && (
-          <img
-            src={imageUrl}
-            alt={nickName || '고양이 아바타'}
-            className="ml-1 h-full w-full object-contain"
+        {isLeader && (
+          <Image
+            src="/images/crown.png"
+            alt="리더 왕관"
+            width={20}
+            height={20}
+            className="absolute right-2 top-1 h-4 w-4 md:h-5 md:w-5"
           />
         )}
-      </div>
-      {nickName && (
-        <div className="mt-[-4px] flex w-full flex-grow items-center justify-center">
-          <p className="w-[80px] break-words p-0.5 text-center font-galmuri text-sm leading-tight text-black">
+
+        {imageUrl && (
+          <div className="relative left-1/2 top-0 mt-3 h-[40px] w-full -translate-x-1/2 pl-1 min-[360px]:h-[48px] min-[410px]:h-[56px] md:h-[64px]">
+            <Image
+              src={imageUrl}
+              alt={nickName || '고양이 아바타'}
+              fill
+              style={{ objectFit: 'contain' }}
+            />
+          </div>
+        )}
+
+        {nickName && (
+          <p className="mx-3 flex h-8 items-center justify-center text-center font-galmuri text-xs leading-tight min-[375px]:text-sm min-[410px]:mx-5 md:mx-6">
             {nickName}
           </p>
-        </div>
-      )}
-    </div>
-  )
-}
+        )}
+        {showResult && (
+          <div
+            className={clsx(
+              'duration-2000 absolute left-0 top-[-18px] w-full break-keep rounded-[100px] border-[1.5px] border-gray-100 bg-white px-2 py-1 text-center font-galmuri text-xs leading-4 text-black transition-opacity min-[360px]:text-sm',
+              {
+                'opacity-0': fadeOut,
+                'opacity-100': !fadeOut,
+              }
+            )}
+          >
+            {result}
+          </div>
+        )}
+      </div>
+    )
+  }
+)
+
+CatBox.displayName = 'CatBox'
 
 export default CatBox

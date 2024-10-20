@@ -34,15 +34,13 @@ const Modal = ({
 
   return createPortal(
     <>
-      {shouldCloseOnBackgroundClick && (
-        <div
-          role="presentation"
-          className="pointer-events-auto fixed inset-0 flex items-center justify-center bg-black/20"
-          onClick={onModalClose}
-        />
-      )}
+      <div
+        role="presentation"
+        className="pointer-events-auto fixed inset-0 z-20 flex items-center justify-center bg-black/20"
+        onClick={shouldCloseOnBackgroundClick ? onModalClose : undefined}
+      />
 
-      <div className="pointer-events-none fixed inset-0 flex items-center justify-center">
+      <div className="pointer-events-none fixed inset-0 z-30 flex items-center justify-center">
         <div className="pointer-events-auto w-[300px] overflow-hidden rounded-lg bg-white shadow-md">
           <div className="flex h-[60px] w-full items-center bg-primary">
             <div className="ml-10 flex-grow text-center text-xl text-white">{title}</div>
