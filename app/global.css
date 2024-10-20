@@ -9,8 +9,8 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #ffffff;
+    --foreground: #171717;
   }
 }
 
@@ -23,5 +23,28 @@ body {
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar {
+    width: 8px;
+    border-radius: 50%;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-track {
+    background: #e3e3e3;
+    border-radius: 20px;
+    margin: 8px 0;
+    margin-top: 28px;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-thumb {
+    background-color: #626262;
+    border-radius: 20px;
+  }
+
+  @screen md {
+    .scrollbar-custom::-webkit-scrollbar {
+      width: 8px;
+    }
   }
 }
