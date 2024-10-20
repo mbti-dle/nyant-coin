@@ -51,7 +51,7 @@ const CatBox = memo(
         )}
 
         {imageUrl && (
-          <div className="relative left-1/2 top-0 mt-3 h-[40px] w-full -translate-x-1/2 pl-1 min-[360px]:h-[48px] md:h-[64px]">
+          <div className="relative left-1/2 top-0 mt-3 h-[40px] w-full -translate-x-1/2 pl-1 min-[360px]:h-[48px] min-[410px]:h-[56px] md:h-[64px]">
             <Image
               src={imageUrl}
               alt={nickName || '고양이 아바타'}
