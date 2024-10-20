@@ -24,6 +24,7 @@
     "socket.io": "^4.8.0",
     "socket.io-client": "^4.8.0",
     "tailwind-merge": "^2.5.3",
+    "uuid": "^10.0.0",
     "zustand": "^5.0.0-rc.2"
   },
   "devDependencies": {
