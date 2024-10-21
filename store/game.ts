@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-interface PlayerStoreModel {
+interface GameStoreModel {
   isLeader: boolean
   gameId: string | null
   rounds: number
@@ -8,7 +8,7 @@ interface PlayerStoreModel {
   setIsLeader: (isLeader: boolean) => void
 }
 
-const usePlayerStore = create<PlayerStoreModel>((set) => ({
+const useGameStore = create<GameStoreModel>((set) => ({
   isLeader: false,
   gameId: null,
   rounds: 0,
@@ -16,4 +16,4 @@ const usePlayerStore = create<PlayerStoreModel>((set) => ({
   setIsLeader: (isLeader) => set({ isLeader }),
 }))
 
-export default usePlayerStore
+export default useGameStore
