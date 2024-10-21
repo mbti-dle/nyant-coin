@@ -1,5 +1,6 @@
 import { createServer } from 'node:http'
 
+import { instrument } from '@socket.io/admin-ui'
 import next from 'next'
 import { Server as SocketIOServer } from 'socket.io'
 
@@ -17,7 +18,16 @@ const handler = app.getRequestHandler()
 app.prepare().then(() => {
   const httpServer = createServer(handler)
 
-  const io = new SocketIOServer(httpServer)
+  const io = new SocketIOServer(httpServer, {
+    cors: {
+      origin: ['https://admin.socket.io'],
+      credentials: true,
+    },
+  })
+  instrument(io, {
+    auth: false,
+  })
+
   const gameRooms = new Map<string, GameModel>()
 
   io.on('connection', (socket) => {
