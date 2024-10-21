@@ -88,7 +88,7 @@ const GamePage = ({ params }: GamePageProps) => {
   const totalCoin = gameState.fish * FINAL_COIN + gameState.coins
 
   return (
-    <main className="bg-ocean-game-mobile md:bg-ocean-game-desktop flex min-h-dvh w-full justify-center bg-cover bg-fixed bg-top">
+    <main className="flex min-h-dvh w-full justify-center bg-ocean-game-mobile bg-cover bg-fixed bg-top md:bg-ocean-game-desktop">
       <div className="max-w-[420px] p-3 md:pt-[50px]">
         <div className="my-6 flex items-center justify-between">
           <FishCoinsAssets coins={gameState.coins} fish={gameState.fish} />
