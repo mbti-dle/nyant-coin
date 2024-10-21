@@ -3,7 +3,7 @@ import { createServer } from 'node:http'
 import next from 'next'
 import { Server as SocketIOServer } from 'socket.io'
 
-import { INITIAL_FISH_PRICE } from './constants/game.js'
+import { gameConfig } from './constants/game.js'
 import { generateGameId } from './lib/utils/generate-game-id.js'
 import { GameModel, PlayerModel } from './types/game.js'
 
@@ -52,7 +52,7 @@ app.prepare().then(() => {
         players: [],
         gameInfo: {
           currentDay: 1,
-          currentFishPrice: INITIAL_FISH_PRICE,
+          currentFishPrice: gameConfig.INITIAL_FISH_PRICE,
           lastRoundHintResult: '',
           nextRoundHint: '',
         },
