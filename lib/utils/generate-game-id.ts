@@ -1,6 +1,6 @@
 import { v4 as uuid } from 'uuid'
 
-import GameModel from '@/types/game'
+import { GameModel } from '@/types/game'
 
 export const generateGameId = (gameRooms: Map<string, GameModel>) => {
   let newId: string

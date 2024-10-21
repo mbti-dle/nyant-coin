@@ -4,7 +4,7 @@ import next from 'next'
 import { Server as SocketIOServer } from 'socket.io'
 
 import { INITIAL_FISH_PRICE } from './constants/game.js'
-import { generateUniqueGameId } from './lib/utils/game.js'
+import { generateGameId } from './lib/utils/generate-game-id.js'
 import { GameModel, PlayerModel } from './types/game.js'
 
 const dev = process.env.NODE_ENV !== 'production'
@@ -43,7 +43,7 @@ app.prepare().then(() => {
     })
 
     socket.on('create_game', (totalRounds) => {
-      const gameId = generateUniqueGameId()
+      const gameId = generateGameId(gameRooms)
       const newGame: GameModel = {
         gameId,
         totalRounds,

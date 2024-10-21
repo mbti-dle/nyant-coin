@@ -17,7 +17,7 @@ import {
   TOTAL_ROUNDS,
   FINAL_COIN,
   SIX_AVATARS,
-} from '@/constants/game-constant'
+} from '@/constants/game'
 import useToastStore from '@/store/toast'
 import { GameStateModel, TransactionResultModel } from '@/types/game'
 
@@ -88,7 +88,7 @@ const GamePage = ({ params }: GamePageProps) => {
   const totalCoin = gameState.fish * FINAL_COIN + gameState.coins
 
   return (
-    <main className="flex min-h-dvh w-full justify-center bg-ocean-game-mobile bg-cover bg-fixed bg-top md:bg-ocean-game-desktop">
+    <main className="bg-ocean-game-mobile md:bg-ocean-game-desktop flex min-h-dvh w-full justify-center bg-cover bg-fixed bg-top">
       <div className="max-w-[420px] p-3 md:pt-[50px]">
         <div className="my-6 flex items-center justify-between">
           <FishCoinsAssets coins={gameState.coins} fish={gameState.fish} />
