@@ -4,18 +4,21 @@ import { useState } from 'react'
 
 import { ArrowBackIosNew } from '@mui/icons-material'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation' // useRouter 가져오기
 
 import AvatarSelector from '@/components/ui/avatar-selector'
 import Button from '@/components/ui/button'
 import CountInput from '@/components/ui/count-input'
+import { validateNickname } from '@/lib/utils/validation'
 
-const AVATAR_COUNT = 6
+const UserInfoPage = () => {
+  const AVATAR_COUNT = 6
+  const router = useRouter()
 
-const UserInfoPage = ({ params }) => {
-  const { gameId = 'N09C14' } = params
-
+  const [gameId, setGameId] = useState('N09C14')
   const [currentAvatarIndex, setCurrentAvatarIndex] = useState(1)
   const [nickname, setNickname] = useState('')
+  const [errorMessage, setErrorMessage] = useState('')
 
   const handlePrevClick = () => {
     setCurrentAvatarIndex((prevIndex) => (prevIndex === 1 ? AVATAR_COUNT : prevIndex - 1))
@@ -26,12 +29,22 @@ const UserInfoPage = ({ params }) => {
   }
 
   const handleJoinClick = () => {
+    const error = validateNickname(nickname)
+    if (error) {
+      setErrorMessage(error)
+      return
+    }
+
     const selectedAvatar = `/images/cat-${currentAvatarIndex}.png`
     console.log(`You will join as: ${selectedAvatar}`)
+
+    router.push(`/waiting/${gameId}`)
   }
 
   const handleNicknameChange = (event) => {
-    setNickname(event.target.value)
+    const { value } = event.target
+    setNickname(value)
+    setErrorMessage('')
   }
 
   return (
@@ -44,18 +57,18 @@ const UserInfoPage = ({ params }) => {
         onPrevClick={handlePrevClick}
         onNextClick={handleNextClick}
       />
-      <div>
+      <div className="relative h-[84px]">
         <CountInput
           value={nickname}
           onChange={handleNicknameChange}
           placeholder="닉네임"
           className="font-galmuri"
         />
-        {/* 오류메세지 */}
+        {errorMessage && <p className="absolute bottom-0 left-0 mt-2 text-red">{errorMessage}</p>}
       </div>
-      <Link href={`/waiting/${gameId}`} className="mt-20">
-        <Button onClick={handleJoinClick}>입장하기</Button>
-      </Link>
+      <Button onClick={handleJoinClick} disabled={!nickname.trim()} className="mt-20">
+        입장하기
+      </Button>
     </main>
   )
 }
