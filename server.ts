@@ -3,10 +3,11 @@ import { createServer } from 'node:http'
 import { instrument } from '@socket.io/admin-ui'
 import next from 'next'
 import { Server as SocketIOServer } from 'socket.io'
+import { v4 as uuid } from 'uuid'
 
 import { gameConfig } from './constants/game.js'
 import { generateGameId } from './lib/utils/generate-game-id.js'
-import { GameModel, PlayerModel } from './types/game.js'
+import { GameModel, PlayerIdType, PlayerModel, SocketIdType } from './types/game.js'
 
 const dev = process.env.NODE_ENV !== 'production'
 const hostname = 'localhost'
@@ -29,6 +30,7 @@ app.prepare().then(() => {
   })
 
   const gameRooms = new Map<string, GameModel>()
+  const playersMap = new Map<SocketIdType, PlayerIdType>()
 
   io.on('connection', (socket) => {
     socket.on('check_game_availability', (gameId) => {
@@ -75,12 +77,16 @@ app.prepare().then(() => {
       const room = gameRooms.get(gameId)
 
       if (room) {
+        const playerId = uuid()
+        playersMap.set(socket.id, playerId)
+
         const newPlayer: PlayerModel = {
-          id: socket.id, // TODO: 보안을 위해 새로 만들기
+          id: playerId,
           nickname,
           character,
           score: 0,
         }
+
         room.players.push(newPlayer)
         socket.join(gameId)
         socket.to(gameId).emit('update_players', room.players)
@@ -88,17 +94,23 @@ app.prepare().then(() => {
     })
 
     socket.on('disconnect', () => {
-      gameRooms.forEach((room) => {
-        const playerIndex = room.players.findIndex((player) => player.id === socket.id)
-        if (playerIndex !== -1) {
-          room.players.splice(playerIndex, 1)
-          socket.to(room.gameId).emit('update_players', room.players)
+      const playerId = playersMap.get(socket.id)
 
-          if (room.players.length === 0) {
-            gameRooms.delete(room.gameId)
+      if (playerId) {
+        gameRooms.forEach((room) => {
+          const playerIndex = room.players.findIndex((player) => player.id === playerId)
+          if (playerIndex !== -1) {
+            room.players.splice(playerIndex, 1)
+            socket.to(room.gameId).emit('update_players', room.players)
+
+            if (room.players.length === 0) {
+              gameRooms.delete(room.gameId)
+            }
           }
-        }
-      })
+        })
+
+        playersMap.delete(socket.id)
+      }
     })
   })
 
