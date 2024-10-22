@@ -10,6 +10,7 @@ import GuideButton from '@/components/features/guide-button'
 import Input from '@/components/ui/input'
 import LinkButton from '@/components/ui/link-button'
 import { socket } from '@/lib/socket'
+import { isValidId } from '@/lib/utils/generate-game-id'
 import logo from '@/public/images/logo.png'
 
 const HomePage = () => {
@@ -48,6 +49,11 @@ const HomePage = () => {
   }
 
   const handleGameIdSubmit = () => {
+    if (!isValidId(gameId)) {
+      setErrorMessage('유효한 게임 ID를 입력해 주세요.')
+      return
+    }
+
     socket.emit('check_game_availability', gameId)
     socket.on('is_available_game', ({ isAvailable, message }) => {
       if (isAvailable) {
@@ -67,18 +73,25 @@ const HomePage = () => {
       <div className="flex flex-col items-center gap-4">
         <LinkButton href="/setup/select-rounds">방 만들기</LinkButton>
 
-        <div className="relative">
+        <div className="relative flex items-center">
           <Input value={gameId} onChange={handleGameIdChange} placeholder="N09C14" />
           <button
-            className="absolute right-3 top-1/2 -translate-y-1/2 transform cursor-pointer text-gray-300"
+            className="absolute right-3 top-[15px] cursor-pointer text-gray-300"
             onClick={handleGameIdSubmit}
           >
             <TrendingFlatIcon />
           </button>
-          {errorMessage && <p>{errorMessage}</p>}
+
+          {errorMessage && (
+            <p className="absolute left-0 top-[50px] ml-3 mt-3 font-galmuri text-red">
+              {errorMessage}
+            </p>
+          )}
         </div>
 
-        <GuideButton />
+        <div className="mt-6">
+          <GuideButton />
+        </div>
       </div>
     </main>
   )
