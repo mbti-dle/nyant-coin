@@ -10,6 +10,7 @@ import GuideButton from '@/components/features/guide-button'
 import Input from '@/components/ui/input'
 import LinkButton from '@/components/ui/link-button'
 import { socket } from '@/lib/socket'
+import { isValidId } from '@/lib/utils/generate-game-id'
 import logo from '@/public/images/logo.png'
 
 const HomePage = () => {
@@ -48,6 +49,11 @@ const HomePage = () => {
   }
 
   const handleGameIdSubmit = () => {
+    if (!isValidId(gameId)) {
+      setErrorMessage('유효한 게임 ID를 입력해 주세요.')
+      return
+    }
+
     socket.emit('check_game_availability', gameId)
     socket.on('is_available_game', ({ isAvailable, message }) => {
       if (isAvailable) {
