@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation' // useRouter 가져오기
 import AvatarSelector from '@/components/ui/avatar-selector'
 import Button from '@/components/ui/button'
 import CountInput from '@/components/ui/count-input'
-import { validateNickname } from '@/lib/utils/validation'
+import { validateNickname } from '@/lib/utils/nickname-validation'
 
 const UserInfoPage = () => {
   const AVATAR_COUNT = 6
