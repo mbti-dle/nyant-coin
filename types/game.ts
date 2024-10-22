@@ -53,3 +53,6 @@ export interface HintModel {
     low: string
   }
 }
+
+export type SocketIdType = string
+export type PlayerIdType = string
