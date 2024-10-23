@@ -5,11 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon --exec node --loader ts-node/esm server.ts",
-    "build": "next build",
-    "start": "NODE_ENV=production ts-node server.ts",
+    "build": "next build && tsc -p tsconfig.server.json",
+    "start": "NODE_ENV=production node dist/server.js",
     "lint": "next lint --fix",
     "prettier": "prettier --write .",
-    "dependency-check": "dependency-check . 'pages/**/*.{js,ts,tsx}' 'app/**/*.{js,ts,tsx}' --no-dev --ignore-module 'next' --ignore-module 'react' --ignore-module 'react-dom' --ignore-module 'socket.io' --ignore-module 'socket.io-client' --ignore-module 'zustand' --ignore-module 'dotenv' --ignore-module 'postgres'",
+    "dependency-check": "dependency-check . 'pages//.{js,ts,tsx}' 'app//.{js,ts,tsx}' --no-dev --ignore-module 'next' --ignore-module 'react' --ignore-module 'react-dom' --ignore-module 'socket.io' --ignore-module 'socket.io-client' --ignore-module 'zustand' --ignore-module 'dotenv' --ignore-module 'postgres'",
     "prepare": "husky",
     "init-db": "node --loader ts-node/esm scripts/init-db.ts"
   },

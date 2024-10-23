@@ -11,7 +11,7 @@ import { GameModel, PlayerIdType, PlayerModel, SocketIdType } from './types/game
 
 const dev = process.env.NODE_ENV !== 'production'
 const hostname = 'localhost'
-const port = 3000
+const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000
 
 const app = next({ dev, hostname, port })
 const handler = app.getRequestHandler()
@@ -54,7 +54,8 @@ app.prepare().then(() => {
       socket.emit('is_available_game', gameAvailability)
     })
 
-    socket.on('create_game', (totalRounds) => {
+    // 게임 만들기
+    socket.on('create_game', (totalRounds, joinGame) => {
       const gameId = generateGameId(gameRooms)
       const newGame: GameModel = {
         gameId,
@@ -71,8 +72,10 @@ app.prepare().then(() => {
       }
 
       gameRooms.set(gameId, newGame)
+      joinGame(gameId)
     })
 
+    // 대기실 입장하기
     socket.on('join_game', ({ gameId, nickname, character }) => {
       const room = gameRooms.get(gameId)
 
@@ -90,6 +93,18 @@ app.prepare().then(() => {
         room.players.push(newPlayer)
         socket.join(gameId)
         socket.to(gameId).emit('update_players', room.players)
+
+        socket.emit('join_success', gameId)
+      }
+    })
+
+    // 대기실 정보 가져오기
+    socket.on('request_players_info', (gameId) => {
+      const room = gameRooms.get(gameId)
+      const currentPlayerId = playersMap.get(socket.id)
+
+      if (room) {
+        socket.emit('players_info', { players: room.players, currentPlayerId })
       }
     })
 

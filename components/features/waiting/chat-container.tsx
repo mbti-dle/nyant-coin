@@ -27,7 +27,7 @@ const mockChatsData = [
 ]
 
 const ChatContainer = () => {
-  const [isChatExpanded, setIsChatExpanded] = useState(false)
+  const [isChatExpanded, setIsChatExpanded] = useState(true)
 
   const toggleChatExpansion = () => {
     setIsChatExpanded(!isChatExpanded)

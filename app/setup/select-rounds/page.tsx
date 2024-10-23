@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 import { ArrowBackIosNew } from '@mui/icons-material'
 import Link from 'next/link'
@@ -8,12 +8,25 @@ import Link from 'next/link'
 import LinkButton from '@/components/ui/link-button'
 import RadioGroup, { RadioButton } from '@/components/ui/radio'
 import { DAY_OPTIONS } from '@/constants/game'
+import useGameStore from '@/store/game'
 
 const SelectDaysPage = () => {
   const [selectedDay, setSelectedDay] = useState(DAY_OPTIONS[0])
 
+  const gameId = useGameStore((state) => state.gameId)
+  const setGameRounds = useGameStore((state) => state.setGameRounds)
+  const setIsLeader = useGameStore((state) => state.setIsLeader)
+
+  useEffect(() => {
+    if (!gameId) {
+      setIsLeader(true)
+    }
+  }, [gameId, setIsLeader])
+
   const handleChangeInput = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSelectedDay(event.target.value)
+    const rounds = event.target.value
+    setSelectedDay(rounds)
+    setGameRounds(parseInt(rounds, 10))
   }
 
   return (

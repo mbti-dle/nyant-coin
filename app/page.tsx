@@ -12,13 +12,16 @@ import LinkButton from '@/components/ui/link-button'
 import { socket } from '@/lib/socket'
 import { isValidId } from '@/lib/utils/generate-game-id'
 import logo from '@/public/images/logo.png'
+import useGameStore from '@/store/game'
 
 const HomePage = () => {
-  const [gameId, setGameId] = useState('')
+  const router = useRouter()
+
+  const [inputGameId, setInputGameId] = useState('')
   const [isConnected, setIsConnected] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
 
-  const router = useRouter()
+  const setGameId = useGameStore((state) => state.setGameId)
 
   useEffect(() => {
     const handleSocketConnect = () => {
@@ -45,18 +48,19 @@ const HomePage = () => {
   }, [])
 
   const handleGameIdChange = (event) => {
-    setGameId(event.target.value)
+    setInputGameId(event.target.value)
   }
 
   const handleGameIdSubmit = () => {
-    if (!isValidId(gameId)) {
+    if (!isValidId(inputGameId)) {
       setErrorMessage('유효한 게임 ID를 입력해 주세요.')
       return
     }
 
-    socket.emit('check_game_availability', gameId)
+    socket.emit('check_game_availability', inputGameId)
     socket.on('is_available_game', ({ isAvailable, message }) => {
       if (isAvailable) {
+        setGameId(inputGameId)
         router.push('/setup/user-info')
       } else {
         setErrorMessage(message)
@@ -74,7 +78,7 @@ const HomePage = () => {
         <LinkButton href="/setup/select-rounds">방 만들기</LinkButton>
 
         <div className="relative flex items-center">
-          <Input value={gameId} onChange={handleGameIdChange} placeholder="N09C14" />
+          <Input value={inputGameId} onChange={handleGameIdChange} placeholder="N09C14" />
           <button
             className="absolute right-3 top-[15px] cursor-pointer text-gray-300"
             onClick={handleGameIdSubmit}
