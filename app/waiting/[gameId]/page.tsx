@@ -15,12 +15,13 @@ const WaitingPage = ({ params }) => {
   const [players, setPlayers] = useState<PlayerModel[]>([])
 
   useEffect(() => {
+    // 처음 대기실 입장 시 대기실 정보 요청
     socket.emit('request_players_info', gameId)
-
     socket.on('players_info', (gamePlayers) => {
       setPlayers(gamePlayers)
     })
 
+    // 다른 플레이어 입장 시 대기실 정보 업데이트
     socket.on('update_players', (updatedPlayers) => {
       setPlayers(updatedPlayers)
     })
@@ -34,7 +35,7 @@ const WaitingPage = ({ params }) => {
   return (
     <main className="flex min-h-dvh w-full items-center justify-center bg-sea-spaceship-mobile bg-cover bg-fixed bg-top p-3 md:bg-sea-spaceship-desktop">
       <div className="flex flex-col items-center justify-center gap-4 pb-44 md:static md:h-auto md:min-h-0 md:justify-center md:pt-0">
-        <PlayerGrid />
+        <PlayerGrid players={players} />
         <GameIdCopyButton gameId={gameId} />
         <LinkButton href={`/game/${gameId}`}>게임 시작</LinkButton>
       </div>

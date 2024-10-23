@@ -1,22 +1,29 @@
 import CatBox from '@/components/ui/cat-box'
+import { PlayerModel } from '@/types/game'
 
-const PlayerGrid = () => {
-  const players = [
-    { imageUrl: '/images/cat-1.png', nickName: '대장고양이' },
-    { imageUrl: '/images/cat-2.png', nickName: '제임스' },
-    { imageUrl: '/images/cat-3.png', nickName: '레드히어로' },
-    { imageUrl: '/images/cat-4.png', nickName: '마크정식주세요제발요' },
-    { imageUrl: '', nickName: '' },
-    { imageUrl: '', nickName: '' },
-  ]
+interface PlayerGridProps {
+  players: PlayerModel[]
+}
 
+const PlayerGrid = ({ players }: PlayerGridProps) => {
+  const MAX_PLAYERS = 6
+
+  const playerSlots = Array(MAX_PLAYERS)
+    .fill(null)
+    .map((_, index) => {
+      const player = players[index] || { id: '', nickname: '', character: '', score: 0 }
+      return {
+        ...player,
+      }
+    })
+  console.log(playerSlots)
   return (
     <div className="grid grid-cols-3 gap-2 min-[440px]:max-w-[400px] md:max-w-[445px] md:gap-4">
-      {players.map((player, index) => (
+      {playerSlots.map((player, index) => (
         <CatBox
           key={index}
-          imageUrl={player.imageUrl}
-          nickName={player.nickName}
+          imageUrl={player.character && `/images/cat-${player.character}.png`}
+          nickName={player.nickname}
           isLeader={index === 0}
         />
       ))}
