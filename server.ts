@@ -54,6 +54,7 @@ app.prepare().then(() => {
       socket.emit('is_available_game', gameAvailability)
     })
 
+    // 게임 만들기
     socket.on('create_game', (totalRounds, joinGame) => {
       const gameId = generateGameId(gameRooms)
       const newGame: GameModel = {
@@ -74,6 +75,7 @@ app.prepare().then(() => {
       joinGame(gameId)
     })
 
+    // 대기실 입장하기
     socket.on('join_game', ({ gameId, nickname, character }) => {
       const room = gameRooms.get(gameId)
 
@@ -93,6 +95,15 @@ app.prepare().then(() => {
         socket.to(gameId).emit('update_players', room.players)
 
         socket.emit('join_success', gameId)
+      }
+    })
+
+    // 대기실 정보 가져오기
+    socket.on('request_players_info', (gameId) => {
+      const room = gameRooms.get(gameId)
+
+      if (room) {
+        socket.emit('players_info', room.players)
       }
     })
 

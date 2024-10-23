@@ -12,6 +12,7 @@ import useGameStore from '@/store/game'
 
 const SelectDaysPage = () => {
   const [selectedDay, setSelectedDay] = useState(DAY_OPTIONS[0])
+
   const gameId = useGameStore((state) => state.gameId)
   const setGameRounds = useGameStore((state) => state.setGameRounds)
   const setIsLeader = useGameStore((state) => state.setIsLeader)

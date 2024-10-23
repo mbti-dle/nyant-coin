@@ -52,8 +52,6 @@ const UserInfoPage = () => {
       return
     }
 
-    const selectedAvatar = `/images/cat-${currentAvatarIndex}.png`
-
     if (isLeader) {
       socket.emit('create_game', rounds, joinGame)
     } else {
@@ -77,7 +75,10 @@ const UserInfoPage = () => {
 
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center">
-      <Link href="/setup/select-rounds" className="absolute left-0 top-0 mx-4 mt-6">
+      <Link
+        href={isLeader ? '/setup/select-rounds' : '/'}
+        className="absolute left-0 top-0 mx-4 mt-6"
+      >
         <ArrowBackIosNew />
       </Link>
       <AvatarSelector
