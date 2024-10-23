@@ -11,7 +11,7 @@ import { GameModel, PlayerIdType, PlayerModel, SocketIdType } from './types/game
 
 const dev = process.env.NODE_ENV !== 'production'
 const hostname = 'localhost'
-const port = 3000
+const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000
 
 const app = next({ dev, hostname, port })
 const handler = app.getRequestHandler()
