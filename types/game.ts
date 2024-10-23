@@ -18,3 +18,41 @@ export interface GameStateModel {
   currentRound: number
   isModalOpen: boolean
 }
+
+export interface GameModel {
+  gameId: string
+  totalRounds: number
+  state: 'waiting' | 'in_progress' | 'ended'
+  hints: HintModel[]
+  gameInfo: {
+    currentDay: number
+    currentFishPrice: number
+    lastRoundHintResult: string
+    nextRoundHint: string
+  }
+  players: PlayerModel[]
+}
+
+export interface PlayerModel {
+  id: string
+  nickname: string
+  character: string
+  score: number
+}
+
+export interface HintModel {
+  id: number
+  hint: string
+  expectedChange: 'up' | 'down'
+  matchOutcome: {
+    high: string
+    low: string
+  }
+  mismatchOutcome: {
+    high: string
+    low: string
+  }
+}
+
+export type SocketIdType = string
+export type PlayerIdType = string

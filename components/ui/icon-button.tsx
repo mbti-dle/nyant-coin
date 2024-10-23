@@ -7,9 +7,10 @@ interface IconButtonProps extends ComponentProps<'button'> {
   Icon: SvgIconComponent
   label: string
   iconClassName?: string
+  sx?: { fontSize: number }
 }
 
-const IconButton = ({ Icon, label, iconClassName, className, ...props }: IconButtonProps) => {
+const IconButton = ({ Icon, label, iconClassName, className, sx, ...props }: IconButtonProps) => {
   return (
     <button
       className={twMerge('inline-flex items-center justify-center p-2 text-gray-400', className)}
@@ -17,7 +18,7 @@ const IconButton = ({ Icon, label, iconClassName, className, ...props }: IconBut
       {...props}
       aria-label={label}
     >
-      <Icon className={iconClassName} />
+      <Icon className={iconClassName} sx={sx} />
     </button>
   )
 }

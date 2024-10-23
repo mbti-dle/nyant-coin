@@ -11,13 +11,7 @@ import Hints from '@/components/features/game/hints'
 import Timer from '@/components/features/game/timer'
 import ResultModal from '@/components/features/result-modal'
 import Toast from '@/components/ui/toast'
-import {
-  INITIAL_COINS,
-  INITIAL_FISH_PRICE,
-  TOTAL_ROUNDS,
-  FINAL_COIN,
-  SIX_AVATARS,
-} from '@/constants/game-constant'
+import { gameConfig, TOTAL_ROUNDS, FINAL_COIN, SIX_AVATARS } from '@/constants/game'
 import useToastStore from '@/store/toast'
 import { GameStateModel, TransactionResultModel } from '@/types/game'
 
@@ -29,8 +23,8 @@ const GamePage = ({ params }: GamePageProps) => {
   const { showToast } = useToastStore()
 
   const [gameState, setGameState] = useState<GameStateModel>({
-    coins: INITIAL_COINS,
-    fish: INITIAL_FISH_PRICE,
+    coins: gameConfig.INITIAL_COINS,
+    fish: gameConfig.INITIAL_FISH_PRICE,
     inputValue: '',
     fishPrice: 240,
     currentRound: 1,

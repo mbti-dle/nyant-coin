@@ -20,7 +20,7 @@ const CountInput = ({
   return (
     <div className="relative h-[54px] w-[300px]">
       <Input value={value} onChange={handleInputChange} maxLength={maxLength} {...props} />
-      <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 font-bold text-gray-200">
+      <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 font-galmuri text-sm font-bold text-gray-200">
         {value?.length || 0}/{maxLength}
       </span>
     </div>

@@ -1,5 +1,3 @@
-import { Fragment } from 'react'
-
 import CatBox from '@/components/ui/cat-box'
 
 const PlayerGrid = () => {
@@ -13,11 +11,14 @@ const PlayerGrid = () => {
   ]
 
   return (
-    <div className="grid grid-cols-3 gap-2 md:max-w-[445px] md:gap-4">
+    <div className="grid grid-cols-3 gap-2 min-[440px]:max-w-[400px] md:max-w-[445px] md:gap-4">
       {players.map((player, index) => (
-        <Fragment key={index}>
-          <CatBox imageUrl={player.imageUrl} nickName={player.nickName} isLeader={index === 0} />
-        </Fragment>
+        <CatBox
+          key={index}
+          imageUrl={player.imageUrl}
+          nickName={player.nickName}
+          isLeader={index === 0}
+        />
       ))}
     </div>
   )
