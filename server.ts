@@ -101,9 +101,10 @@ app.prepare().then(() => {
     // 대기실 정보 가져오기
     socket.on('request_players_info', (gameId) => {
       const room = gameRooms.get(gameId)
+      const currentPlayerId = playersMap.get(socket.id)
 
       if (room) {
-        socket.emit('players_info', room.players)
+        socket.emit('players_info', { players: room.players, currentPlayerId })
       }
     })
 

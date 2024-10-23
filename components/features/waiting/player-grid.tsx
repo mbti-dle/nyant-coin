@@ -16,7 +16,7 @@ const PlayerGrid = ({ players }: PlayerGridProps) => {
         ...player,
       }
     })
-  console.log(playerSlots)
+
   return (
     <div className="grid grid-cols-3 gap-2 min-[440px]:max-w-[400px] md:max-w-[445px] md:gap-4">
       {playerSlots.map((player, index) => (
