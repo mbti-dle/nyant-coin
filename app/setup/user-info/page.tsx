@@ -1,24 +1,41 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 import { ArrowBackIosNew } from '@mui/icons-material'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation' // useRouter 가져오기
+import { useRouter } from 'next/navigation'
 
 import AvatarSelector from '@/components/ui/avatar-selector'
 import Button from '@/components/ui/button'
 import CountInput from '@/components/ui/count-input'
+import { socket } from '@/lib/socket'
 import { validateNickname } from '@/lib/utils/nickname-validation'
+import useGameStore from '@/store/game'
 
 const UserInfoPage = () => {
   const AVATAR_COUNT = 6
   const router = useRouter()
 
-  const [gameId, setGameId] = useState('N09C14')
   const [currentAvatarIndex, setCurrentAvatarIndex] = useState(1)
   const [nickname, setNickname] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
+
+  const gameId = useGameStore((state) => state.gameId)
+  const isLeader = useGameStore((state) => state.isLeader)
+  const rounds = useGameStore((state) => state.rounds)
+
+  useEffect(() => {
+    const handleJoinSuccess = (gameId: string) => {
+      router.push(`/waiting/${gameId}`)
+    }
+
+    socket.on('join_success', handleJoinSuccess)
+
+    return () => {
+      socket.off('join_success', handleJoinSuccess)
+    }
+  }, [])
 
   const handlePrevClick = () => {
     setCurrentAvatarIndex((prevIndex) => (prevIndex === 1 ? AVATAR_COUNT : prevIndex - 1))
@@ -36,15 +53,26 @@ const UserInfoPage = () => {
     }
 
     const selectedAvatar = `/images/cat-${currentAvatarIndex}.png`
-    console.log(`You will join as: ${selectedAvatar}`)
 
-    router.push(`/waiting/${gameId}`)
+    if (isLeader) {
+      socket.emit('create_game', rounds, joinGame)
+    } else {
+      joinGame(gameId)
+    }
   }
 
   const handleNicknameChange = (event) => {
     const { value } = event.target
     setNickname(value)
     setErrorMessage('')
+  }
+
+  const joinGame = (gameId) => {
+    socket.emit('join_game', {
+      gameId,
+      nickname,
+      character: currentAvatarIndex,
+    })
   }
 
   return (

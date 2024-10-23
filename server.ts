@@ -54,7 +54,7 @@ app.prepare().then(() => {
       socket.emit('is_available_game', gameAvailability)
     })
 
-    socket.on('create_game', (totalRounds) => {
+    socket.on('create_game', (totalRounds, joinGame) => {
       const gameId = generateGameId(gameRooms)
       const newGame: GameModel = {
         gameId,
@@ -71,6 +71,7 @@ app.prepare().then(() => {
       }
 
       gameRooms.set(gameId, newGame)
+      joinGame(gameId)
     })
 
     socket.on('join_game', ({ gameId, nickname, character }) => {
@@ -90,6 +91,8 @@ app.prepare().then(() => {
         room.players.push(newPlayer)
         socket.join(gameId)
         socket.to(gameId).emit('update_players', room.players)
+
+        socket.emit('join_success', gameId)
       }
     })
 
