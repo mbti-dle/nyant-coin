@@ -17,5 +17,5 @@ export const middleware = (request: NextRequest) => {
 }
 
 export const config = {
-  matcher: ['/waiting/:path*', '/game/:path*', '/results/:path*', '/setup/:path*'],
+  matcher: ['/waiting/:path*', '/game/:path*', '/result/:path*', '/setup/:path*'],
 }
