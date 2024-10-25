@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
@@ -8,30 +8,25 @@ import clsx from 'clsx'
 
 import ChatInput from '@/components/features/waiting/chat-input'
 import ChatMessage from '@/components/features/waiting/chat-message'
-const mockChatsData = [
-  {
-    imageUrl: '/images/cat-1.png',
-    nickName: '대장고양이',
-    message:
-      '준비되면 시작합니다.준비되면 시작합니다.준비되면 시작합니다.준비되면 시작합니다.준비되면 시작합니다.준비되면 시작합니다.',
-  },
-  { imageUrl: '', nickName: '', message: '준비됐나요?' },
-  { imageUrl: '', nickName: '', message: '일단은 그냥 시작!' },
-  { imageUrl: '/images/cat-2.png', nickName: '알엘린', message: '아직 준비 안 됐어요!' },
-  { imageUrl: '', nickName: '', message: '잠시만요!' },
-  {
-    imageUrl: '/images/cat-4.png',
-    nickName: '마크정식주세요제발요',
-    message: '마크정식주세요제발요',
-  },
-]
+import useChatStore from '@/store/chat'
 
 const ChatContainer = () => {
   const [isChatExpanded, setIsChatExpanded] = useState(true)
+  const messages = useChatStore((state) => state.messages)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
+
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages])
 
   const toggleChatExpansion = () => {
     setIsChatExpanded(!isChatExpanded)
   }
+
   return (
     <div className="fixed bottom-1 w-full p-3 md:bottom-11 md:left-8 md:max-w-[358px]">
       <div
@@ -62,9 +57,10 @@ const ChatContainer = () => {
             }
           )}
         >
-          {mockChatsData.map((chat, index) => (
+          {messages.map((chat, index) => (
             <ChatMessage key={index} chat={chat} />
           ))}
+          <div ref={messagesEndRef} />
         </div>
       </div>
       <ChatInput />
