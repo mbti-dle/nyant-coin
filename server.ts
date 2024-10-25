@@ -108,6 +108,48 @@ app.prepare().then(() => {
       }
     })
 
+    socket.on('start_game', ({ gameId }) => {
+      try {
+        const room = gameRooms.get(gameId)
+
+        if (!room) {
+          socket.emit('INITIALIZATION_ERROR')
+          return
+        }
+
+        // TODO: 힌트 소켓 이벤트 처리할 때 주석 해제
+        // 힌트 로드 검증 로직인데 구현되지 않은 상태이므로 주석 처리
+        // if (!room.hints || room.hints.length === 0) {
+        //   socket.emit('HINTS_NOT_LOADED')
+        //   return
+        // }
+
+        const connectedSockets = io.sockets.adapter.rooms.get(gameId)
+        if (!connectedSockets || connectedSockets.size !== room.players.length) {
+          io.to(gameId).emit('NETWORK_ERROR')
+          return
+        }
+
+        room.state = 'in_progress'
+        io.to(gameId).emit('game_started', { totalRounds: room.totalRounds })
+      } catch (error) {
+        console.error('Game start error:', error)
+        socket.emit('SERVER_ERROR')
+      }
+    })
+
+    socket.on('request_game_info', ({ gameId }) => {
+      const room = gameRooms.get(gameId)
+
+      if (room) {
+        socket.emit('game_info', room)
+      }
+    })
+
+    socket.on('system_message', ({ gameId, message }) => {
+      io.to(gameId).emit('receive_system_message', message)
+    })
+
     socket.on('disconnect', () => {
       const playerId = playersMap.get(socket.id)
 
