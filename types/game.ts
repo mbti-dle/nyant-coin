@@ -44,14 +44,10 @@ export interface HintModel {
   id: number
   hint: string
   expectedChange: 'up' | 'down'
-  matchOutcome: {
-    high: string
-    low: string
-  }
-  mismatchOutcome: {
-    high: string
-    low: string
-  }
+  matchOutcomeHigh: string
+  matchOutcomeLow: string
+  mismatchOutcomeHigh: string
+  mismatchOutcomeLow: string
 }
 
 export type SocketIdType = string
