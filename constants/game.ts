@@ -12,6 +12,7 @@ export const DAY_OPTIONS = ['10일', '15일', '20일']
 
 export const gameConfig = {
   INITIAL_COINS: 1000,
+  INITIAL_FISH: 0,
   INITIAL_FISH_PRICE: 100,
   INITIAL_TIMER: 20,
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
@@ -11,6 +11,7 @@ import ChatMessage from '@/components/features/waiting/chat-message'
 import { socket } from '@/lib/socket'
 import { ChatMessageModel } from '@/types/chat'
 import { PlayerModel } from '@/types/game'
+// import useChatStore from '@/store/chat'
 
 interface ChatContainerProps {
   gameId: string
@@ -39,9 +40,22 @@ const ChatContainer = ({ gameId, player }: ChatContainerProps) => {
     }
   }, [chatMessages])
 
+  // 해석
+  // const messages = useChatStore((state) => state.messages)
+  // const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  // const scrollToBottom = () => {
+  //   messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  // }
+
+  // useEffect(() => {
+  //   scrollToBottom()
+  // }, [messages])
+
   const toggleChatExpansion = () => {
     setIsChatExpanded(!isChatExpanded)
   }
+
   return (
     <div className="fixed bottom-1 w-full p-3 md:bottom-11 md:left-8 md:max-w-[358px]">
       <div
@@ -74,8 +88,10 @@ const ChatContainer = ({ gameId, player }: ChatContainerProps) => {
           )}
         >
           {chatMessages.map((chat, index) => (
+            // {messages.map((chat, index) => (
             <ChatMessage key={index} chat={chat} />
           ))}
+          {/* <div ref={messagesEndRef} /> */}
         </div>
       </div>
       <ChatInput gameId={gameId} player={player} />

@@ -4,32 +4,41 @@ import { useState, useEffect } from 'react'
 
 import ReactDOM from 'react-dom'
 
-import CatBoxGrid from '@/components/features/game/cat-box-grid'
 import FishCoinsAssets from '@/components/features/game/fish-coins-assets'
 import GameFooter from '@/components/features/game/game-footer'
 import Hints from '@/components/features/game/hints'
 import Timer from '@/components/features/game/timer'
 import ResultModal from '@/components/features/result-modal'
+import PlayerGrid from '@/components/features/waiting/player-grid'
 import Toast from '@/components/ui/toast'
-import { gameConfig, TOTAL_ROUNDS, FINAL_COIN, SIX_AVATARS } from '@/constants/game'
+import { gameConfig, FINAL_COIN } from '@/constants/game'
+import { socket } from '@/lib/socket'
+import useGameStore from '@/store/game'
 import useToastStore from '@/store/toast'
-import { GameStateModel, TransactionResultModel } from '@/types/game'
+import { GameStateModel, TransactionResultModel, PlayerModel } from '@/types/game'
 
-interface GamePageProps {
-  params: any // 임시
+const INITIAL_GAME_STATE: Omit<GameStateModel, 'players'> = {
+  coins: gameConfig.INITIAL_COINS,
+  fish: gameConfig.INITIAL_FISH,
+  inputValue: '',
+  fishPrice: gameConfig.INITIAL_FISH_PRICE,
+  currentRound: 1,
+  isModalOpen: false,
 }
 
-const GamePage = ({ params }: GamePageProps) => {
-  const { showToast } = useToastStore()
+const INITIAL_PLAYER_STATE: PlayerModel[] = []
 
-  const [gameState, setGameState] = useState<GameStateModel>({
-    coins: gameConfig.INITIAL_COINS,
-    fish: gameConfig.INITIAL_FISH_PRICE,
-    inputValue: '',
-    fishPrice: 240,
-    currentRound: 1,
-    isModalOpen: false,
-  })
+interface PlayersInfoProps {
+  players: PlayerModel[]
+  currentPlayerId: string
+}
+
+const GamePage = () => {
+  const [currentPlayerId, setCurrentPlayerId] = useState('')
+  const [gameState, setGameState] = useState<Omit<GameStateModel, 'players'>>(INITIAL_GAME_STATE)
+  const [players, setPlayers] = useState<PlayerModel[]>(INITIAL_PLAYER_STATE)
+  const { gameId, rounds: totalRounds } = useGameStore()
+  const { showToast } = useToastStore()
 
   const [transactionResult, setTransactionResult] = useState<TransactionResultModel>({
     message: '',
@@ -39,11 +48,28 @@ const GamePage = ({ params }: GamePageProps) => {
   useEffect(() => {
     ReactDOM.preload('/images/background-mobile-3.png', { as: 'image' })
     ReactDOM.preload('/images/background-desktop-3.png', { as: 'image' })
-  }, [])
+
+    const initializePlayers = ({ players, currentPlayerId }: PlayersInfoProps) => {
+      setPlayers(players)
+      setCurrentPlayerId(currentPlayerId)
+    }
+
+    socket.emit('request_players_info', gameId)
+
+    socket.on('players_info', initializePlayers)
+    socket.on('update_players', (updatedPlayers: PlayerModel[]) => {
+      setPlayers(updatedPlayers)
+    })
+
+    return () => {
+      socket.off('players_info')
+      socket.off('update_players')
+    }
+  }, [gameId])
 
   const handleRoundIncrement = () => {
     setGameState((prev) => {
-      if (prev.currentRound === TOTAL_ROUNDS) {
+      if (prev.currentRound === totalRounds) {
         return { ...prev, isModalOpen: true }
       }
       return { ...prev, currentRound: prev.currentRound + 1 }
@@ -88,16 +114,20 @@ const GamePage = ({ params }: GamePageProps) => {
           <FishCoinsAssets coins={gameState.coins} fish={gameState.fish} />
           <Timer
             onRoundEnd={handleRoundIncrement}
-            isLastRound={gameState.currentRound === TOTAL_ROUNDS}
+            isLastRound={gameState.currentRound === totalRounds}
             currentRound={gameState.currentRound}
           />
         </div>
         <Hints
           fishPrice={gameState.fishPrice}
           currentRound={gameState.currentRound}
-          totalRounds={TOTAL_ROUNDS}
+          totalRounds={totalRounds}
         />
-        <CatBoxGrid avatars={SIX_AVATARS} transactionResult={transactionResult} />
+        <PlayerGrid
+          players={players}
+          currentPlayerId={currentPlayerId}
+          transactionResult={transactionResult}
+        />
         <Toast />
         <ResultModal
           isOpen={gameState.isModalOpen}

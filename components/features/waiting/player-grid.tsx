@@ -1,11 +1,13 @@
 import CatBox from '@/components/ui/cat-box'
-import { PlayerModel } from '@/types/game'
+import { PlayerModel, TransactionResultModel } from '@/types/game'
 
 interface PlayerGridProps {
   players: PlayerModel[]
+  currentPlayerId?: string
+  transactionResult?: TransactionResultModel
 }
 
-const PlayerGrid = ({ players }: PlayerGridProps) => {
+const PlayerGrid = ({ players, currentPlayerId, transactionResult }: PlayerGridProps) => {
   const MAX_PLAYERS = 6
 
   const playerSlots = Array(MAX_PLAYERS)
@@ -25,9 +27,11 @@ const PlayerGrid = ({ players }: PlayerGridProps) => {
           imageUrl={player.character && `/images/cat-${player.character}.png`}
           nickName={player.nickname}
           isLeader={index === 0}
+          transactionResult={player.id === currentPlayerId ? transactionResult : undefined}
         />
       ))}
     </div>
   )
 }
+
 export default PlayerGrid
