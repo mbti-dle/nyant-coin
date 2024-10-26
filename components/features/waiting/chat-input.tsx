@@ -5,8 +5,9 @@ import { useState } from 'react'
 import SendIcon from '@mui/icons-material/Send'
 
 import IconButton from '@/components/ui/icon-button'
+import { socket } from '@/lib/socket'
 
-const ChatInput = () => {
+const ChatInput = ({ gameId, player }) => {
   const [message, setMessage] = useState('')
 
   const handleInputChange = (event) => {
@@ -16,18 +17,23 @@ const ChatInput = () => {
 
   const handleMessageSubmit = () => {
     if (message.trim()) {
-      // 공백만 있을 경우, 전송 로직 동작 X
-      event.preventDefault() // 줄바꿈 기본 동작 막음
+      event.preventDefault()
 
-      // 메세지 전송 로직
-      console.log(message.trim())
+      socket.emit('send_message', {
+        gameId,
+        playerId: player.id,
+        nickname: player.nickname,
+        character: player.character,
+        message,
+      })
+
       setMessage('')
     }
   }
 
   const handleInputKeyDown = (event) => {
     if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault() // 줄바꿈 기본 동작 막음
+      event.preventDefault()
       handleMessageSubmit()
     }
   }

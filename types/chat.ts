@@ -1,5 +1,5 @@
 export interface ChatMessageModel {
   imageUrl: string
-  nickName: string
+  nickname: string
   message: string
 }

@@ -13,18 +13,17 @@ const WaitingPage = ({ params }) => {
   const { gameId = 'N09C14' } = params
 
   const [players, setPlayers] = useState<PlayerModel[]>([])
-  const [currentPlayerId, setCurrentPlayerId] = useState('')
+  const [playerInfo, setPlayerInfo] = useState<PlayerModel>()
   const [isLeader, setIsLeader] = useState(false)
 
   useEffect(() => {
-    // 처음 대기실 입장 시 대기실 정보 요청
     socket.emit('request_players_info', gameId)
-    socket.on('players_info', ({ players, currentPlayerId }) => {
-      setPlayers(players)
-      setCurrentPlayerId(currentPlayerId)
-    })
 
-    // 다른 플레이어 입장 시 대기실 정보 업데이트
+    socket.on('players_info', ({ players, playerId }) => {
+      const playerInfo = players.filter((player) => player.id === playerId)[0]
+      setPlayers(players)
+      setPlayerInfo(playerInfo)
+    })
     socket.on('update_players', (updatedPlayers) => {
       setPlayers(updatedPlayers)
     })
@@ -35,12 +34,11 @@ const WaitingPage = ({ params }) => {
     }
   }, [gameId])
 
-  // players의 첫 번째 플레이어(index 0)가 리더
   useEffect(() => {
-    if (players.length > 0 && players[0].id === currentPlayerId) {
+    if (players.length > 0 && players[0].id === playerInfo.id) {
       setIsLeader(true)
     }
-  }, [players, currentPlayerId])
+  }, [players, playerInfo])
 
   return (
     <main className="flex min-h-dvh w-full items-center justify-center bg-sea-spaceship-mobile bg-cover bg-fixed bg-top p-3 md:bg-sea-spaceship-desktop">
@@ -50,7 +48,7 @@ const WaitingPage = ({ params }) => {
         {isLeader && <LinkButton href={`/game/${gameId}`}>게임 시작</LinkButton>}
       </div>
 
-      <ChatContainer />
+      <ChatContainer gameId={gameId} player={playerInfo} />
     </main>
   )
 }

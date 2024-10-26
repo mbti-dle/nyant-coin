@@ -54,7 +54,6 @@ app.prepare().then(() => {
       socket.emit('is_available_game', gameAvailability)
     })
 
-    // 게임 만들기
     socket.on('create_game', (totalRounds, joinGame) => {
       const gameId = generateGameId(gameRooms)
       const newGame: GameModel = {
@@ -75,7 +74,6 @@ app.prepare().then(() => {
       joinGame(gameId)
     })
 
-    // 대기실 입장하기
     socket.on('join_game', ({ gameId, nickname, character }) => {
       const room = gameRooms.get(gameId)
 
@@ -98,14 +96,31 @@ app.prepare().then(() => {
       }
     })
 
-    // 대기실 정보 가져오기
     socket.on('request_players_info', (gameId) => {
       const room = gameRooms.get(gameId)
-      const currentPlayerId = playersMap.get(socket.id)
+      const playerId = playersMap.get(socket.id)
 
       if (room) {
-        socket.emit('players_info', { players: room.players, currentPlayerId })
+        socket.emit('players_info', { players: room.players, playerId })
       }
+    })
+
+    socket.on('send_message', ({ gameId, playerId, nickname, character, message }) => {
+      const senderId = playersMap.get(socket.id)
+      const room = gameRooms.get(gameId)
+
+      if (!senderId || !room) return
+
+      const player = room.players.find((player) => player.id === playerId)
+      if (!player) return
+
+      const chatMessage = {
+        nickname,
+        imageUrl: `/images/cat-${character}.png`,
+        message,
+      }
+
+      io.to(gameId).emit('new_chat_message', chatMessage)
     })
 
     socket.on('disconnect', () => {
