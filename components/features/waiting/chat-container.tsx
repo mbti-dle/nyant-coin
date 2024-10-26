@@ -8,10 +8,10 @@ import clsx from 'clsx'
 
 import ChatInput from '@/components/features/waiting/chat-input'
 import ChatMessage from '@/components/features/waiting/chat-message'
+import ChatNotice from '@/components/features/waiting/chat-notice'
 import { socket } from '@/lib/socket'
-import { ChatMessageModel } from '@/types/chat'
+import { ChatType } from '@/types/chat'
 import { PlayerModel } from '@/types/game'
-// import useChatStore from '@/store/chat'
 
 interface ChatContainerProps {
   gameId: string
@@ -20,17 +20,33 @@ interface ChatContainerProps {
 
 const ChatContainer = ({ gameId, player }: ChatContainerProps) => {
   const [isChatExpanded, setIsChatExpanded] = useState(true)
-  const [chatMessages, setChatMessages] = useState<ChatMessageModel[]>([])
+  const [chats, setChats] = useState<ChatType[]>([])
 
   const chatContainerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    socket.on('new_chat_message', (chatMessage) => {
-      setChatMessages((prevChat) => [...prevChat, chatMessage])
-    })
+    const handleNewChatMessage = (newChatMessage) => {
+      setChats((prevChat) => [...prevChat, newChatMessage])
+    }
+
+    const handleNewChatNotice = (newChatNotice) => {
+      setChats((prevChat) => [...prevChat, { type: 'notice', ...newChatNotice }])
+    }
+
+    socket.on('new_chat_message', handleNewChatMessage)
+    socket.on('new_chat_notice', handleNewChatNotice)
+    socket.on('SERVER_ERROR', handleNewChatNotice)
+    socket.on('HINTS_NOT_LOADED', handleNewChatNotice)
+    socket.on('INITIALIZATION_ERROR', handleNewChatNotice)
+    socket.on('NETWORK_ERROR', handleNewChatNotice)
 
     return () => {
       socket.off('new_chat_message')
+      socket.off('new_chat_notice')
+      socket.off('SERVER_ERROR')
+      socket.off('HINTS_NOT_LOADED')
+      socket.off('INITIALIZATION_ERROR')
+      socket.off('NETWORK_ERROR')
     }
   }, [])
 
@@ -38,19 +54,7 @@ const ChatContainer = ({ gameId, player }: ChatContainerProps) => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
     }
-  }, [chatMessages])
-
-  // 해석
-  // const messages = useChatStore((state) => state.messages)
-  // const messagesEndRef = useRef<HTMLDivElement>(null)
-
-  // const scrollToBottom = () => {
-  //   messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  // }
-
-  // useEffect(() => {
-  //   scrollToBottom()
-  // }, [messages])
+  }, [chats])
 
   const toggleChatExpansion = () => {
     setIsChatExpanded(!isChatExpanded)
@@ -87,11 +91,13 @@ const ChatContainer = ({ gameId, player }: ChatContainerProps) => {
             }
           )}
         >
-          {chatMessages.map((chat, index) => (
-            // {messages.map((chat, index) => (
-            <ChatMessage key={index} chat={chat} />
-          ))}
-          {/* <div ref={messagesEndRef} /> */}
+          {chats.map((chat, index) => {
+            return chat.type === 'message' ? (
+              <ChatMessage key={index} chat={chat} />
+            ) : (
+              <ChatNotice key={index} chat={chat} />
+            )
+          })}
         </div>
       </div>
       <ChatInput gameId={gameId} player={player} />

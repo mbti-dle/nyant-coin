@@ -5,7 +5,8 @@ import next from 'next'
 import { Server as SocketIOServer } from 'socket.io'
 import { v4 as uuid } from 'uuid'
 
-import { gameConfig } from './constants/game.js'
+import { ERROR_NOTICE } from './constants/chat'
+import { gameConfig } from './constants/game'
 import { generateGameId } from './lib/utils/generate-game-id.js'
 import { GameModel, PlayerIdType, PlayerModel, SocketIdType } from './types/game.js'
 
@@ -96,12 +97,12 @@ app.prepare().then(() => {
       }
     })
 
-    socket.on('request_players_info', (gameId) => {
+    socket.on('request_player_info', (gameId) => {
       const room = gameRooms.get(gameId)
       const playerId = playersMap.get(socket.id)
 
       if (room) {
-        socket.emit('players_info', { players: room.players, playerId })
+        socket.emit('player_info', { players: room.players, playerId })
       }
     })
 
@@ -115,6 +116,7 @@ app.prepare().then(() => {
       if (!player) return
 
       const chatMessage = {
+        type: 'message',
         nickname,
         imageUrl: `/images/cat-${character}.png`,
         message,
@@ -123,33 +125,32 @@ app.prepare().then(() => {
       io.to(gameId).emit('new_chat_message', chatMessage)
     })
 
-    // 해석
-    // socket.on('system_message', ({ gameId, message }) => {
-    //   const room = gameRooms.get(gameId)
-    //   if (!room) return
+    socket.on('send_notice', ({ gameId, notice }) => {
+      const room = gameRooms.get(gameId)
+      if (!room) return
 
-    //   io.to(gameId).emit('receive_system_message', message)
-    // })
+      io.to(gameId).emit('new_chat_notice', { notice })
+    })
 
     socket.on('start_game', ({ gameId }) => {
       try {
         const room = gameRooms.get(gameId)
 
         if (!room) {
-          socket.emit('INITIALIZATION_ERROR')
+          socket.emit('INITIALIZATION_ERROR', { notice: ERROR_NOTICE.initialization_error })
           return
         }
 
         // TODO: 힌트 소켓 이벤트 처리할 때 주석 해제
         // 힌트 로드 검증 로직인데 구현되지 않은 상태이므로 주석 처리
         // if (!room.hints || room.hints.length === 0) {
-        //   socket.emit('HINTS_NOT_LOADED')
+        //   socket.emit('HINTS_NOT_LOADED', { notice: ERROR_NOTICE.hints_not_loaded })
         //   return
         // }
 
         const connectedSockets = io.sockets.adapter.rooms.get(gameId)
         if (!connectedSockets || connectedSockets.size !== room.players.length) {
-          io.to(gameId).emit('NETWORK_ERROR')
+          io.to(gameId).emit('NETWORK_ERROR', { notice: ERROR_NOTICE.network_error })
           return
         }
 
@@ -157,7 +158,7 @@ app.prepare().then(() => {
         io.to(gameId).emit('game_started', { totalRounds: room.totalRounds })
       } catch (error) {
         console.error('Game start error:', error)
-        socket.emit('SERVER_ERROR')
+        socket.emit('SERVER_ERROR', { notice: ERROR_NOTICE.server_error })
       }
     })
 
