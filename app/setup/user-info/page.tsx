@@ -16,7 +16,7 @@ import useGameStore from '@/store/game'
 const UserInfoPage = () => {
   const AVATAR_COUNT = 6
   const router = useRouter()
-  const refInput = useRef<HTMLInputElement>(null)
+  const countInputRef = useRef(null)
 
   const [currentAvatarIndex, setCurrentAvatarIndex] = useState(1)
   const [nickname, setNickname] = useState('')
@@ -50,8 +50,8 @@ const UserInfoPage = () => {
     const error = validateNickname(nickname)
     if (error) {
       setErrorMessage(error)
-      if (refInput.current) {
-        refInput.current.focus()
+      if (countInputRef.current) {
+        countInputRef.current.focus()
       }
       return
     }
@@ -92,7 +92,7 @@ const UserInfoPage = () => {
       />
       <div className="relative h-[84px]">
         <CountInput
-          ref={refInput}
+          ref={countInputRef}
           value={nickname}
           onChange={handleNicknameChange}
           placeholder="닉네임"

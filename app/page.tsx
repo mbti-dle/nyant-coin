@@ -16,7 +16,7 @@ import useGameStore from '@/store/game'
 
 const HomePage = () => {
   const router = useRouter()
-  const refInput = useRef(null)
+  const gameIdInputRef = useRef(null)
 
   const [inputGameId, setInputGameId] = useState('')
   const [isConnected, setIsConnected] = useState(false)
@@ -56,8 +56,8 @@ const HomePage = () => {
   const handleGameIdSubmit = () => {
     if (!isValidId(inputGameId)) {
       setErrorMessage('유효한 게임 ID를 입력해 주세요.')
-      if (refInput.current) {
-        refInput.current.focus()
+      if (gameIdInputRef.current) {
+        gameIdInputRef.current?.focus()
       }
       return
     }
@@ -69,8 +69,8 @@ const HomePage = () => {
         router.push('/setup/user-info')
       } else {
         setErrorMessage(message)
-        if (refInput.current) {
-          refInput.current.focus()
+        if (gameIdInputRef.current) {
+          gameIdInputRef.current?.focus()
         }
       }
     })
@@ -89,7 +89,7 @@ const HomePage = () => {
           <Input
             value={inputGameId}
             onChange={handleGameIdChange}
-            ref={refInput}
+            ref={gameIdInputRef}
             placeholder="N09C14"
             className={`border-2 ${errorMessage ? 'border-red' : ''} font-galmuri`}
           />
