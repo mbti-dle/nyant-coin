@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 
 import TrendingFlatIcon from '@mui/icons-material/TrendingFlat'
 import Image from 'next/image'
@@ -16,6 +16,7 @@ import useGameStore from '@/store/game'
 
 const HomePage = () => {
   const router = useRouter()
+  const refInput = useRef(null)
 
   const [inputGameId, setInputGameId] = useState('')
   const [isConnected, setIsConnected] = useState(false)
@@ -54,6 +55,10 @@ const HomePage = () => {
   const handleGameIdSubmit = () => {
     if (!isValidId(inputGameId)) {
       setErrorMessage('유효한 게임 ID를 입력해 주세요.')
+      if (refInput.current) {
+        console.log('인풋 포커싱 되나요?')
+        refInput.current.focus()
+      }
       return
     }
 
@@ -64,6 +69,9 @@ const HomePage = () => {
         router.push('/setup/user-info')
       } else {
         setErrorMessage(message)
+        if (refInput.current) {
+          refInput.current.focus()
+        }
       }
     })
   }
@@ -78,7 +86,13 @@ const HomePage = () => {
         <LinkButton href="/setup/select-rounds">방 만들기</LinkButton>
 
         <div className="relative flex items-center">
-          <Input value={inputGameId} onChange={handleGameIdChange} placeholder="N09C14" />
+          <Input
+            value={inputGameId}
+            onChange={handleGameIdChange}
+            ref={refInput}
+            placeholder="N09C14"
+            className={errorMessage ? 'border-2 border-red' : ''}
+          />
           <button
             className="absolute right-3 top-[15px] cursor-pointer text-gray-300"
             onClick={handleGameIdSubmit}
