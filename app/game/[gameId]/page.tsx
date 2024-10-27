@@ -15,7 +15,7 @@ import { gameConfig, FINAL_COIN } from '@/constants/game'
 import { socket } from '@/lib/socket'
 import useGameStore from '@/store/game'
 import useToastStore from '@/store/toast'
-import { GameStateModel, TransactionResultModel, PlayerModel } from '@/types/game'
+import { GameStateModel, TransactionResultModel, PlayerModel, TransactionType } from '@/types/game'
 
 const INITIAL_GAME_STATE: Omit<GameStateModel, 'players'> = {
   coins: gameConfig.INITIAL_COINS,
@@ -28,42 +28,40 @@ const INITIAL_GAME_STATE: Omit<GameStateModel, 'players'> = {
 
 const INITIAL_PLAYER_STATE: PlayerModel[] = []
 
-interface PlayersInfoProps {
-  players: PlayerModel[]
-  currentPlayerId: string
-}
-
-const GamePage = () => {
-  const [currentPlayerId, setCurrentPlayerId] = useState('')
+const GamePage = ({ params }) => {
   const [gameState, setGameState] = useState<Omit<GameStateModel, 'players'>>(INITIAL_GAME_STATE)
   const [players, setPlayers] = useState<PlayerModel[]>(INITIAL_PLAYER_STATE)
-  const { gameId, rounds: totalRounds } = useGameStore()
+  const { rounds: totalRounds } = useGameStore()
   const { showToast } = useToastStore()
+  const { gameId } = params
 
   const [transactionResult, setTransactionResult] = useState<TransactionResultModel>({
+    playerId: null,
     message: '',
-    key: 0,
   })
 
   useEffect(() => {
     ReactDOM.preload('/images/background-mobile-3.png', { as: 'image' })
     ReactDOM.preload('/images/background-desktop-3.png', { as: 'image' })
 
-    const initializePlayers = ({ players, currentPlayerId }: PlayersInfoProps) => {
+    const initializePlayer = ({ players }: { players: PlayerModel[] }) => {
       setPlayers(players)
-      setCurrentPlayerId(currentPlayerId)
     }
 
-    socket.emit('request_players_info', gameId)
+    socket.emit('request_player_info', gameId)
 
-    socket.on('players_info', initializePlayers)
+    socket.on('player_info', initializePlayer)
     socket.on('update_players', (updatedPlayers: PlayerModel[]) => {
       setPlayers(updatedPlayers)
     })
+    socket.on('trade_message', (result: TransactionResultModel) => {
+      setTransactionResult(result)
+    })
 
     return () => {
-      socket.off('players_info')
+      socket.off('player_info')
       socket.off('update_players')
+      socket.off('trade_message')
     }
   }, [gameId])
 
@@ -76,27 +74,24 @@ const GamePage = () => {
     })
   }
 
-  const handleTransaction = (isBuying: boolean, amount: number) => {
+  const handleTransaction = (action: TransactionType, amount: number) => {
     setGameState((prevState) => {
       const totalValue = amount * prevState.fishPrice
 
-      setTransactionResult({
-        message: `${amount}마리 ${isBuying ? '사요!' : '팔아요!'}`,
-        key: Date.now(),
-      })
+      socket.emit('trade_update', { gameId, action, amount })
 
-      if (isBuying && totalValue > prevState.coins) {
+      if (action === 'buy' && totalValue > prevState.coins) {
         showToast('보유 코인이 부족합니다', 'check')
         return prevState
-      } else if (!isBuying && amount > prevState.fish) {
+      } else if (action === 'sell' && amount > prevState.fish) {
         showToast('보유 생선이 부족합니다', 'check')
         return prevState
       }
 
       return {
         ...prevState,
-        coins: isBuying ? prevState.coins - totalValue : prevState.coins + totalValue,
-        fish: isBuying ? prevState.fish + amount : prevState.fish - amount,
+        coins: action === 'buy' ? prevState.coins - totalValue : prevState.coins + totalValue,
+        fish: action === 'buy' ? prevState.fish + amount : prevState.fish - amount,
       }
     })
   }
@@ -123,11 +118,7 @@ const GamePage = () => {
           currentRound={gameState.currentRound}
           totalRounds={totalRounds}
         />
-        <PlayerGrid
-          players={players}
-          currentPlayerId={currentPlayerId}
-          transactionResult={transactionResult}
-        />
+        <PlayerGrid players={players} transactionResult={transactionResult} />
         <Toast />
         <ResultModal
           isOpen={gameState.isModalOpen}
@@ -136,7 +127,7 @@ const GamePage = () => {
           totalCoin={totalCoin}
         />
       </div>
-      <GameFooter handleTransaction={handleTransaction} />
+      <GameFooter onTransaction={handleTransaction} />
     </main>
   )
 }

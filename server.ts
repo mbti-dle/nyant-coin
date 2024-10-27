@@ -5,8 +5,8 @@ import next from 'next'
 import { Server as SocketIOServer } from 'socket.io'
 import { v4 as uuid } from 'uuid'
 
-import { ERROR_NOTICE } from './constants/chat'
-import { gameConfig } from './constants/game'
+import { ERROR_NOTICE } from './constants/chat.js'
+import { gameConfig } from './constants/game.js'
 import { generateGameId } from './lib/utils/generate-game-id.js'
 import { GameModel, PlayerIdType, PlayerModel, SocketIdType } from './types/game.js'
 
@@ -168,6 +168,20 @@ app.prepare().then(() => {
       if (room) {
         socket.emit('game_info', room)
       }
+    })
+
+    socket.on('system_message', ({ gameId, message }) => {
+      io.to(gameId).emit('receive_system_message', message)
+    })
+
+    socket.on('trade_update', ({ gameId, action, amount }) => {
+      const playerId = playersMap.get(socket.id)
+      const message = `${amount}마리 ${action === 'buy' ? '사요!' : '팔아요!'}`
+
+      io.to(gameId).emit('trade_message', {
+        playerId,
+        message,
+      })
     })
 
     socket.on('disconnect', () => {
