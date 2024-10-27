@@ -3,11 +3,10 @@ import { PlayerModel, TransactionResultModel } from '@/types/game'
 
 interface PlayerGridProps {
   players: PlayerModel[]
-  currentPlayerId?: string
   transactionResult?: TransactionResultModel
 }
 
-const PlayerGrid = ({ players, currentPlayerId, transactionResult }: PlayerGridProps) => {
+const PlayerGrid = ({ players, transactionResult }: PlayerGridProps) => {
   const MAX_PLAYERS = 6
 
   const playerSlots = Array(MAX_PLAYERS)
@@ -27,7 +26,9 @@ const PlayerGrid = ({ players, currentPlayerId, transactionResult }: PlayerGridP
           imageUrl={player.character && `/images/cat-${player.character}.png`}
           nickName={player.nickname}
           isLeader={index === 0}
-          transactionResult={player.id === currentPlayerId ? transactionResult : undefined}
+          message={
+            player.id === transactionResult?.playerId ? transactionResult.message : undefined
+          }
         />
       ))}
     </div>

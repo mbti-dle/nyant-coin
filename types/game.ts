@@ -6,8 +6,8 @@ export interface AvatarModel {
 }
 
 export interface TransactionResultModel {
+  playerId: string
   message: string
-  key: number
 }
 
 export interface GameStateModel {
@@ -52,3 +52,4 @@ export interface HintModel {
 
 export type SocketIdType = string
 export type PlayerIdType = string
+export type TransactionType = 'buy' | 'sell'

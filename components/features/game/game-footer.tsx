@@ -2,12 +2,13 @@ import { useState, memo } from 'react'
 
 import Button from '@/components/ui/button'
 import Input from '@/components/ui/input'
+import { TransactionType } from '@/types/game'
 
 interface GameFooterProps {
-  handleTransaction: (isBuying: boolean, amount: number) => void
+  onTransaction: (action: TransactionType, amount: number) => void
 }
 
-const GameFooter = memo(({ handleTransaction }: GameFooterProps) => {
+const GameFooter = memo(({ onTransaction }: GameFooterProps) => {
   const [inputValue, setInputValue] = useState('')
 
   const handleInputChange = ({ target: { value } }) => {
@@ -18,14 +19,14 @@ const GameFooter = memo(({ handleTransaction }: GameFooterProps) => {
 
   const handleBuy = () => {
     if (inputValue) {
-      handleTransaction(true, parseInt(inputValue))
+      onTransaction('buy', parseInt(inputValue))
       setInputValue('')
     }
   }
 
   const handleSell = () => {
     if (inputValue) {
-      handleTransaction(false, parseInt(inputValue))
+      onTransaction('sell', parseInt(inputValue))
       setInputValue('')
     }
   }
