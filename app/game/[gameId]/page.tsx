@@ -28,7 +28,7 @@ const INITIAL_GAME_STATE: Omit<GameStateModel, 'players'> = {
 
 const INITIAL_PLAYER_STATE: PlayerModel[] = []
 
-const GamePage = () => {
+const GamePage = ({ params }) => {
   const [gameState, setGameState] = useState<Omit<GameStateModel, 'players'>>(INITIAL_GAME_STATE)
   const [players, setPlayers] = useState<PlayerModel[]>(INITIAL_PLAYER_STATE)
   const { gameId, rounds: totalRounds } = useGameStore()
@@ -43,13 +43,13 @@ const GamePage = () => {
     ReactDOM.preload('/images/background-mobile-3.png', { as: 'image' })
     ReactDOM.preload('/images/background-desktop-3.png', { as: 'image' })
 
-    const initializePlayers = ({ players }: { players: PlayerModel[] }) => {
+    const initializePlayer = ({ players }: { players: PlayerModel[] }) => {
       setPlayers(players)
     }
 
-    socket.emit('request_players_info', gameId)
+    socket.emit('request_player_info', gameId || params.gameId)
 
-    socket.on('players_info', initializePlayers)
+    socket.on('player_info', initializePlayer)
     socket.on('update_players', (updatedPlayers: PlayerModel[]) => {
       setPlayers(updatedPlayers)
     })
@@ -58,7 +58,7 @@ const GamePage = () => {
     })
 
     return () => {
-      socket.off('players_info')
+      socket.off('player_info')
       socket.off('update_players')
       socket.off('trade_message')
     }
