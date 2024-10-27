@@ -5,8 +5,8 @@ import next from 'next'
 import { Server as SocketIOServer } from 'socket.io'
 import { v4 as uuid } from 'uuid'
 
-import { ERROR_NOTICE } from './constants/chat'
-import { gameConfig } from './constants/game'
+import { ERROR_NOTICE } from './constants/chat.js'
+import { gameConfig } from './constants/game.js'
 import { generateGameId } from './lib/utils/generate-game-id.js'
 import { GameModel, PlayerIdType, PlayerModel, SocketIdType } from './types/game.js'
 
