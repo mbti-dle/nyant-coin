@@ -50,13 +50,13 @@ const HomePage = () => {
 
   const handleGameIdChange = (event) => {
     setInputGameId(event.target.value)
+    setErrorMessage('')
   }
 
   const handleGameIdSubmit = () => {
     if (!isValidId(inputGameId)) {
       setErrorMessage('유효한 게임 ID를 입력해 주세요.')
       if (refInput.current) {
-        console.log('인풋 포커싱 되나요?')
         refInput.current.focus()
       }
       return
@@ -91,7 +91,7 @@ const HomePage = () => {
             onChange={handleGameIdChange}
             ref={refInput}
             placeholder="N09C14"
-            className={errorMessage ? 'border-2 border-red' : ''}
+            className={`border-2 ${errorMessage ? 'border-red' : ''} font-galmuri`}
           />
           <button
             className="absolute right-3 top-[15px] cursor-pointer text-gray-300"
