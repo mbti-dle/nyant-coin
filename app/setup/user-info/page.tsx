@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 
 import { ArrowBackIosNew } from '@mui/icons-material'
+import clsx from 'clsx'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
@@ -96,7 +97,7 @@ const UserInfoPage = () => {
           value={nickname}
           onChange={handleNicknameChange}
           placeholder="닉네임"
-          className={`border-2 ${errorMessage ? 'border-red' : ''} font-galmuri`}
+          className={clsx('border-2 font-galmuri', errorMessage && 'border-red')}
         />
         {errorMessage && (
           <p className="absolute bottom-0 left-0 ml-2 mt-3 font-galmuri text-red">{errorMessage}</p>

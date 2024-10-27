@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react'
 
 import TrendingFlatIcon from '@mui/icons-material/TrendingFlat'
+import clsx from 'clsx'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 
@@ -91,7 +92,7 @@ const HomePage = () => {
             onChange={handleGameIdChange}
             ref={gameIdInputRef}
             placeholder="N09C14"
-            className={`border-2 ${errorMessage ? 'border-red' : ''} font-galmuri`}
+            className={clsx('border-2 font-galmuri', { 'border-red': errorMessage })}
           />
           <button
             className="absolute right-3 top-[15px] cursor-pointer text-gray-300"
