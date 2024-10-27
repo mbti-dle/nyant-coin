@@ -1,13 +1,13 @@
-export interface SystemMessageModel {
-  type: 'system'
+export interface ChatMessageModel {
+  type: 'message'
+  imageUrl: string
+  nickname: string
   message: string
 }
 
-export interface UserMessageModel {
-  type: 'user'
-  imageUrl?: string
-  nickName?: string
-  message: string
+export interface ChatNoticeModel {
+  type: 'notice'
+  notice: string
 }
 
-export type ChatMessageType = SystemMessageModel | UserMessageModel
+export type ChatType = ChatMessageModel | ChatNoticeModel

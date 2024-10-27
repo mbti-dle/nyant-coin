@@ -8,20 +8,53 @@ import clsx from 'clsx'
 
 import ChatInput from '@/components/features/waiting/chat-input'
 import ChatMessage from '@/components/features/waiting/chat-message'
-import useChatStore from '@/store/chat'
+import ChatNotice from '@/components/features/waiting/chat-notice'
+import { socket } from '@/lib/socket'
+import { ChatType } from '@/types/chat'
+import { PlayerModel } from '@/types/game'
 
-const ChatContainer = () => {
+interface ChatContainerProps {
+  gameId: string
+  player: PlayerModel
+}
+
+const ChatContainer = ({ gameId, player }: ChatContainerProps) => {
   const [isChatExpanded, setIsChatExpanded] = useState(true)
-  const messages = useChatStore((state) => state.messages)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const [chats, setChats] = useState<ChatType[]>([])
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }
+  const chatContainerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    scrollToBottom()
-  }, [messages])
+    const handleNewChatMessage = (newChatMessage) => {
+      setChats((prevChat) => [...prevChat, newChatMessage])
+    }
+
+    const handleNewChatNotice = (newChatNotice) => {
+      setChats((prevChat) => [...prevChat, { type: 'notice', ...newChatNotice }])
+    }
+
+    socket.on('new_chat_message', handleNewChatMessage)
+    socket.on('new_chat_notice', handleNewChatNotice)
+    socket.on('SERVER_ERROR', handleNewChatNotice)
+    socket.on('HINTS_NOT_LOADED', handleNewChatNotice)
+    socket.on('INITIALIZATION_ERROR', handleNewChatNotice)
+    socket.on('NETWORK_ERROR', handleNewChatNotice)
+
+    return () => {
+      socket.off('new_chat_message')
+      socket.off('new_chat_notice')
+      socket.off('SERVER_ERROR')
+      socket.off('HINTS_NOT_LOADED')
+      socket.off('INITIALIZATION_ERROR')
+      socket.off('NETWORK_ERROR')
+    }
+  }, [])
+
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
+    }
+  }, [chats])
 
   const toggleChatExpansion = () => {
     setIsChatExpanded(!isChatExpanded)
@@ -31,7 +64,7 @@ const ChatContainer = () => {
     <div className="fixed bottom-1 w-full p-3 md:bottom-11 md:left-8 md:max-w-[358px]">
       <div
         className={clsx(
-          'relative overflow-hidden rounded-[15px] bg-white bg-opacity-10 pr-3 transition-all duration-300 ease-in-out',
+          'relative overflow-hidden rounded-[15px] bg-white bg-opacity-15 pr-3 transition-all duration-300 ease-in-out hover:bg-opacity-30',
           {
             'h-[194px]': isChatExpanded,
             'h-[97px]': !isChatExpanded,
@@ -49,6 +82,7 @@ const ChatContainer = () => {
           )}
         </button>
         <div
+          ref={chatContainerRef}
           className={clsx(
             'scrollbar-custom flex flex-col gap-2 overflow-auto py-2.5 pl-1 transition-all duration-300 ease-in-out',
             {
@@ -57,13 +91,16 @@ const ChatContainer = () => {
             }
           )}
         >
-          {messages.map((chat, index) => (
-            <ChatMessage key={index} chat={chat} />
-          ))}
-          <div ref={messagesEndRef} />
+          {chats.map((chat, index) => {
+            return chat.type === 'message' ? (
+              <ChatMessage key={index} chat={chat} />
+            ) : (
+              <ChatNotice key={index} chat={chat} />
+            )
+          })}
         </div>
       </div>
-      <ChatInput />
+      <ChatInput gameId={gameId} player={player} />
     </div>
   )
 }
