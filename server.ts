@@ -170,6 +170,20 @@ app.prepare().then(() => {
       }
     })
 
+    socket.on('system_message', ({ gameId, message }) => {
+      io.to(gameId).emit('receive_system_message', message)
+    })
+
+    socket.on('trade_update', ({ gameId, action, amount }) => {
+      const playerId = playersMap.get(socket.id)
+      const message = `${amount}마리 ${action === 'buy' ? '사요!' : '팔아요!'}`
+
+      io.to(gameId).emit('trade_message', {
+        playerId,
+        message,
+      })
+    })
+
     socket.on('disconnect', () => {
       const playerId = playersMap.get(socket.id)
 
