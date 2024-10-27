@@ -31,8 +31,9 @@ const INITIAL_PLAYER_STATE: PlayerModel[] = []
 const GamePage = ({ params }) => {
   const [gameState, setGameState] = useState<Omit<GameStateModel, 'players'>>(INITIAL_GAME_STATE)
   const [players, setPlayers] = useState<PlayerModel[]>(INITIAL_PLAYER_STATE)
-  const { gameId, rounds: totalRounds } = useGameStore()
+  const { rounds: totalRounds } = useGameStore()
   const { showToast } = useToastStore()
+  const { gameId } = params
 
   const [transactionResult, setTransactionResult] = useState<TransactionResultModel>({
     playerId: null,
@@ -47,7 +48,7 @@ const GamePage = ({ params }) => {
       setPlayers(players)
     }
 
-    socket.emit('request_player_info', gameId || params.gameId)
+    socket.emit('request_player_info', gameId)
 
     socket.on('player_info', initializePlayer)
     socket.on('update_players', (updatedPlayers: PlayerModel[]) => {
