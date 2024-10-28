@@ -106,7 +106,7 @@ const UserInfoPage = () => {
       <Button
         onClick={handleJoinClick}
         disabled={!nickname.trim()}
-        className={clsx('relative mt-20', {
+        className={clsx('mt-20', {
           'hover:opacity-85': nickname.trim(),
           'cursor-not-allowed bg-gray-100 text-gray-200': !nickname.trim(),
         })}
