@@ -84,7 +84,7 @@ const UserInfoPage = () => {
         href={isLeader ? '/setup/select-rounds' : '/'}
         className="absolute left-0 top-0 mx-4 mt-6"
       >
-        <ArrowBackIosNew />
+        <ArrowBackIosNew className="text-gray-300 hover:text-gray-500" />
       </Link>
       <AvatarSelector
         currentAvatarIndex={currentAvatarIndex}
@@ -103,7 +103,14 @@ const UserInfoPage = () => {
           <p className="absolute bottom-0 left-0 ml-2 mt-3 font-galmuri text-red">{errorMessage}</p>
         )}
       </div>
-      <Button onClick={handleJoinClick} disabled={!nickname.trim()} className="mt-20">
+      <Button
+        onClick={handleJoinClick}
+        disabled={!nickname.trim()}
+        className={clsx('mt-20', {
+          '': nickname.trim(),
+          'cursor-not-allowed bg-gray-100 text-gray-200 hover:bg-gray-100': !nickname.trim(),
+        })}
+      >
         입장하기
       </Button>
     </main>

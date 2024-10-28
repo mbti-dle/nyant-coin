@@ -32,7 +32,7 @@ const SelectDaysPage = () => {
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center">
       <Link href="/" className="absolute left-0 top-0 mx-4 mt-6">
-        <ArrowBackIosNew />
+        <ArrowBackIosNew className="text-gray-300 hover:text-gray-500" />
       </Link>
       <h1 className="px-3 text-center text-xl">시장에서 거래할 일수를 정해주세요.</h1>
       <RadioGroup className="my-20">
