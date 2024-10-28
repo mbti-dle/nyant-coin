@@ -46,10 +46,7 @@ const SelectDaysPage = () => {
           />
         ))}
       </RadioGroup>
-      <LinkButton
-        href={`/setup/user-info`}
-        className="relative border-2 border-solid border-primary"
-      >
+      <LinkButton href={`/setup/user-info`} className="relative">
         다음
       </LinkButton>
     </main>

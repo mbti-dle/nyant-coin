@@ -48,7 +48,7 @@ const Modal = ({
               <IconButton
                 Icon={CloseIcon}
                 onClick={onModalClose}
-                className="mr-2 text-white hover:text-gray-200"
+                className="mr-2 text-white"
                 label="닫기"
               />
             )}
