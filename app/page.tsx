@@ -95,10 +95,10 @@ const HomePage = () => {
             className={clsx('border-2 font-galmuri', { 'border-red': errorMessage })}
           />
           <button
-            className="absolute right-3 top-[15px] cursor-pointer text-gray-300"
+            className="absolute right-3 top-[14px] cursor-pointer"
             onClick={handleGameIdSubmit}
           >
-            <TrendingFlatIcon />
+            <TrendingFlatIcon className="text-gray-300 hover:text-gray-500" />
           </button>
 
           {errorMessage && (
