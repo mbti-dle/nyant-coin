@@ -9,7 +9,7 @@ const AvatarSelector = ({ currentAvatarIndex, onPrevClick, onNextClick }) => {
       <IconButton
         Icon={ArrowLeft}
         label="왼쪽"
-        className="h-[47px] w-[47px]"
+        className="h-[47px] w-[47px] text-gray-400 hover:text-gray-200"
         onClick={onPrevClick}
         sx={{ fontSize: 48 }}
       />
@@ -19,7 +19,7 @@ const AvatarSelector = ({ currentAvatarIndex, onPrevClick, onNextClick }) => {
       <IconButton
         Icon={ArrowRight}
         label="오른쪽"
-        className="h-[47px] w-[47px]"
+        className="h-[47px] w-[47px] text-gray-400 hover:text-gray-200"
         onClick={onNextClick}
         sx={{ fontSize: 48 }}
       />

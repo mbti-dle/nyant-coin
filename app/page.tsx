@@ -84,7 +84,12 @@ const HomePage = () => {
       </h1>
 
       <div className="flex flex-col items-center gap-4">
-        <LinkButton href="/setup/select-rounds">방 만들기</LinkButton>
+        <LinkButton
+          href="/setup/select-rounds"
+          className="relative transition-colors hover:opacity-85"
+        >
+          방 만들기
+        </LinkButton>
 
         <div className="relative flex items-center">
           <Input
@@ -95,10 +100,10 @@ const HomePage = () => {
             className={clsx('border-2 font-galmuri', { 'border-red': errorMessage })}
           />
           <button
-            className="absolute right-3 top-[15px] cursor-pointer text-gray-300"
+            className="absolute right-3 top-[14px] cursor-pointer"
             onClick={handleGameIdSubmit}
           >
-            <TrendingFlatIcon />
+            <TrendingFlatIcon className="text-gray-400 hover:text-gray-200" />
           </button>
 
           {errorMessage && (

@@ -22,7 +22,11 @@ const GameIdCopyButton = ({ gameId }: GameIdCopyButtonProps) => {
   }
 
   return (
-    <Button variant="white" className="gap-2" onClick={handleGameIdCopyClick}>
+    <Button
+      variant="white"
+      className="gap-2 bg-white text-black hover:opacity-100"
+      onClick={handleGameIdCopyClick}
+    >
       <span className="font-galmuri tracking-widest">{gameId}</span>
       <CopyIcon />
     </Button>
