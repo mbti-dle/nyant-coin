@@ -98,7 +98,7 @@ const HomePage = () => {
             className="absolute right-3 top-[14px] cursor-pointer"
             onClick={handleGameIdSubmit}
           >
-            <TrendingFlatIcon className="text-gray-400 hover:text-gray-200" />
+            <TrendingFlatIcon className="text-gray-300 hover:text-gray-500" />
           </button>
 
           {errorMessage && (

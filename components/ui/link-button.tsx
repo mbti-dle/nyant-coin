@@ -14,7 +14,7 @@ const LinkButton = ({ href, children, className }: LinkButtonProps) => {
     <Link
       href={href}
       className={twMerge(
-        'flex h-[54px] w-[300px] items-center justify-center rounded-xl bg-primary text-lg text-white hover:opacity-85',
+        'hover:bg-navy flex h-[54px] w-[300px] items-center justify-center rounded-xl bg-primary text-lg text-white',
         className
       )}
     >

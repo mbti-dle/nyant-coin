@@ -84,7 +84,7 @@ const UserInfoPage = () => {
         href={isLeader ? '/setup/select-rounds' : '/'}
         className="absolute left-0 top-0 mx-4 mt-6"
       >
-        <ArrowBackIosNew className="text-gray-400 hover:text-gray-200" />
+        <ArrowBackIosNew className="text-gray-300 hover:text-gray-500" />
       </Link>
       <AvatarSelector
         currentAvatarIndex={currentAvatarIndex}
@@ -107,8 +107,8 @@ const UserInfoPage = () => {
         onClick={handleJoinClick}
         disabled={!nickname.trim()}
         className={clsx('mt-20', {
-          'hover:opacity-85': nickname.trim(),
-          'cursor-not-allowed bg-gray-100 text-gray-200': !nickname.trim(),
+          '': nickname.trim(),
+          'cursor-not-allowed bg-gray-100 text-gray-200 hover:bg-gray-100': !nickname.trim(),
         })}
       >
         입장하기

@@ -12,7 +12,7 @@ const Button = ({ variant = 'primary', className, children, disabled, ...props }
     <button
       className={twMerge(
         clsx(
-          'flex h-[54px] w-[300px] cursor-pointer items-center justify-center rounded-xl text-lg hover:opacity-85',
+          'hover:bg-navy flex h-[54px] w-[300px] cursor-pointer items-center justify-center rounded-xl text-lg',
           {
             'bg-primary text-white': variant === 'primary' && !disabled,
             'bg-white text-primary': variant === 'white' && !disabled,
