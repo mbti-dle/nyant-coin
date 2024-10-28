@@ -17,14 +17,14 @@ const GameIdCopyButton = ({ gameId }: GameIdCopyButtonProps) => {
       return
     }
 
-    navigator.clipboard.writeText(gameId) // 클립보드에 게임 ID 복사
+    navigator.clipboard.writeText(gameId)
     showToast('복사되었습니다', 'check')
   }
 
   return (
     <Button
       variant="white"
-      className="gap-2 bg-white text-black hover:opacity-100"
+      className="gap-2 bg-white text-primary hover:opacity-100"
       onClick={handleGameIdCopyClick}
     >
       <span className="font-galmuri tracking-widest">{gameId}</span>

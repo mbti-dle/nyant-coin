@@ -84,7 +84,7 @@ const HomePage = () => {
       </h1>
 
       <div className="flex flex-col items-center gap-4">
-        <LinkButton href="/setup/select-rounds" className="relative transition-colors">
+        <LinkButton href="/setup/select-rounds" className="relative">
           방 만들기
         </LinkButton>
 
