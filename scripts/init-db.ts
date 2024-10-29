@@ -1,6 +1,6 @@
 import sql from '../lib/database'
 
-async function initDb() {
+const initDb = async () => {
   try {
     await sql`DROP TABLE IF EXISTS hints`
 
