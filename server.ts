@@ -35,8 +35,6 @@ app.prepare().then(() => {
   const gameRooms = new Map<string, GameModel>()
   const playersMap = new Map<SocketIdType, PlayerIdType>()
 
-  const updateNextRoundGame = async (gameId: string) => {}
-
   io.on('connection', (socket) => {
     socket.on('check_game_availability', (gameId) => {
       const room = gameRooms.get(gameId)
