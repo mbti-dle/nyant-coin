@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 
 import TrendingFlatIcon from '@mui/icons-material/TrendingFlat'
+import clsx from 'clsx'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 
@@ -16,6 +17,7 @@ import useGameStore from '@/store/game'
 
 const HomePage = () => {
   const router = useRouter()
+  const gameIdInputRef = useRef(null)
 
   const [inputGameId, setInputGameId] = useState('')
   const [isConnected, setIsConnected] = useState(false)
@@ -49,11 +51,15 @@ const HomePage = () => {
 
   const handleGameIdChange = (event) => {
     setInputGameId(event.target.value)
+    setErrorMessage('')
   }
 
   const handleGameIdSubmit = () => {
     if (!isValidId(inputGameId)) {
       setErrorMessage('유효한 게임 ID를 입력해 주세요.')
+      if (gameIdInputRef.current) {
+        gameIdInputRef.current?.focus()
+      }
       return
     }
 
@@ -64,6 +70,9 @@ const HomePage = () => {
         router.push('/setup/user-info')
       } else {
         setErrorMessage(message)
+        if (gameIdInputRef.current) {
+          gameIdInputRef.current?.focus()
+        }
       }
     })
   }
@@ -78,12 +87,18 @@ const HomePage = () => {
         <LinkButton href="/setup/select-rounds">방 만들기</LinkButton>
 
         <div className="relative flex items-center">
-          <Input value={inputGameId} onChange={handleGameIdChange} placeholder="N09C14" />
+          <Input
+            value={inputGameId}
+            onChange={handleGameIdChange}
+            ref={gameIdInputRef}
+            placeholder="N09C14"
+            className={clsx('border-2 font-galmuri', { 'border-red': errorMessage })}
+          />
           <button
-            className="absolute right-3 top-[15px] cursor-pointer text-gray-300"
+            className="absolute right-3 top-[14px] cursor-pointer"
             onClick={handleGameIdSubmit}
           >
-            <TrendingFlatIcon />
+            <TrendingFlatIcon className="text-gray-300 hover:text-gray-500" />
           </button>
 
           {errorMessage && (

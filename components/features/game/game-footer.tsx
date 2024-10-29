@@ -43,7 +43,7 @@ const GameFooter = memo(({ onTransaction }: GameFooterProps) => {
       <div className="flex w-1/2 gap-2">
         <Button
           variant="white"
-          className="flex-1 text-primary"
+          className="flex-1 cursor-pointer bg-white text-primary hover:bg-white"
           onClick={handleBuy}
           disabled={inputValue === ''}
         >
@@ -51,7 +51,7 @@ const GameFooter = memo(({ onTransaction }: GameFooterProps) => {
         </Button>
         <Button
           variant="primary"
-          className="flex-1 text-white"
+          className="flex-1 cursor-pointer bg-primary text-white hover:bg-primary"
           onClick={handleSell}
           disabled={inputValue === ''}
         >

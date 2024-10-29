@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 import { ArrowBackIosNew } from '@mui/icons-material'
+import clsx from 'clsx'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
@@ -16,6 +17,7 @@ import useGameStore from '@/store/game'
 const UserInfoPage = () => {
   const AVATAR_COUNT = 6
   const router = useRouter()
+  const countInputRef = useRef(null)
 
   const [currentAvatarIndex, setCurrentAvatarIndex] = useState(1)
   const [nickname, setNickname] = useState('')
@@ -35,7 +37,7 @@ const UserInfoPage = () => {
     return () => {
       socket.off('join_success', handleJoinSuccess)
     }
-  }, [])
+  }, [router])
 
   const handlePrevClick = () => {
     setCurrentAvatarIndex((prevIndex) => (prevIndex === 1 ? AVATAR_COUNT : prevIndex - 1))
@@ -49,6 +51,9 @@ const UserInfoPage = () => {
     const error = validateNickname(nickname)
     if (error) {
       setErrorMessage(error)
+      if (countInputRef.current) {
+        countInputRef.current.focus()
+      }
       return
     }
 
@@ -79,7 +84,7 @@ const UserInfoPage = () => {
         href={isLeader ? '/setup/select-rounds' : '/'}
         className="absolute left-0 top-0 mx-4 mt-6"
       >
-        <ArrowBackIosNew />
+        <ArrowBackIosNew className="text-gray-300 hover:text-gray-500" />
       </Link>
       <AvatarSelector
         currentAvatarIndex={currentAvatarIndex}
@@ -88,14 +93,24 @@ const UserInfoPage = () => {
       />
       <div className="relative h-[84px]">
         <CountInput
+          ref={countInputRef}
           value={nickname}
           onChange={handleNicknameChange}
           placeholder="닉네임"
-          className="font-galmuri"
+          className={clsx('border-2 font-galmuri', errorMessage && 'border-red')}
         />
-        {errorMessage && <p className="absolute bottom-0 left-0 mt-2 text-red">{errorMessage}</p>}
+        {errorMessage && (
+          <p className="absolute bottom-0 left-0 ml-2 mt-3 font-galmuri text-red">{errorMessage}</p>
+        )}
       </div>
-      <Button onClick={handleJoinClick} disabled={!nickname.trim()} className="mt-20">
+      <Button
+        onClick={handleJoinClick}
+        disabled={!nickname.trim()}
+        className={clsx('mt-20', {
+          '': nickname.trim(),
+          'cursor-not-allowed bg-gray-100 text-gray-200 hover:bg-gray-100': !nickname.trim(),
+        })}
+      >
         입장하기
       </Button>
     </main>
