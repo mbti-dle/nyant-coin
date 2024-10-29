@@ -37,7 +37,7 @@ const GameFooter = memo(({ onTransaction }: GameFooterProps) => {
         className="rounded-full border-none"
         value={inputValue}
         onChange={handleInputChange}
-        type="text"
+        inputMode="numeric"
         pattern="\d*"
       />
       <div className="flex w-1/2 gap-2">
