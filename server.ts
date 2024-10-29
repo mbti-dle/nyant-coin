@@ -7,6 +7,8 @@ import { v4 as uuid } from 'uuid'
 
 import { ERROR_NOTICE } from './constants/chat.js'
 import { gameConfig } from './constants/game.js'
+import { loadGameHints } from './lib/api/hints.js'
+import { generateNewFishPrice, isPriceChangeHigh, shouldHintMatch } from './lib/utils/game.js'
 import { generateGameId } from './lib/utils/generate-game-id.js'
 import { GameModel, PlayerIdType, PlayerModel, SocketIdType } from './types/game.js'
 
@@ -33,6 +35,8 @@ app.prepare().then(() => {
   const gameRooms = new Map<string, GameModel>()
   const playersMap = new Map<SocketIdType, PlayerIdType>()
 
+  const updateNextRoundGame = async (gameId: string) => {}
+
   io.on('connection', (socket) => {
     socket.on('check_game_availability', (gameId) => {
       const room = gameRooms.get(gameId)
@@ -55,23 +59,26 @@ app.prepare().then(() => {
       socket.emit('is_available_game', gameAvailability)
     })
 
-    socket.on('create_game', (totalRounds, joinGame) => {
+    socket.on('create_game', async (totalRounds, joinGame) => {
       const gameId = generateGameId(gameRooms)
+      const hints = await loadGameHints(totalRounds)
+
       const newGame: GameModel = {
         gameId,
         totalRounds,
         state: 'waiting',
-        hints: [], // TODO: 데이터베이스에서 힌트 불러오기
+        hints,
         players: [],
         gameInfo: {
           currentDay: 1,
           currentFishPrice: gameConfig.INITIAL_FISH_PRICE,
           lastRoundHintResult: '',
-          nextRoundHint: '',
+          nextRoundHint: hints[0]?.hint || '',
         },
       }
 
       gameRooms.set(gameId, newGame)
+      io.to(gameId).emit('update_game_info', newGame.gameInfo)
       joinGame(gameId)
     })
 
@@ -141,20 +148,20 @@ app.prepare().then(() => {
           return
         }
 
-        // TODO: 힌트 소켓 이벤트 처리할 때 주석 해제
-        // 힌트 로드 검증 로직인데 구현되지 않은 상태이므로 주석 처리
-        // if (!room.hints || room.hints.length === 0) {
-        //   socket.emit('HINTS_NOT_LOADED', { notice: ERROR_NOTICE.hints_not_loaded })
-        //   return
-        // }
+        if (!room.hints || room.hints.length === 0) {
+          socket.emit('HINTS_NOT_LOADED', { notice: ERROR_NOTICE.hints_not_loaded })
+          return
+        }
 
         const connectedSockets = io.sockets.adapter.rooms.get(gameId)
+
         if (!connectedSockets || connectedSockets.size !== room.players.length) {
           io.to(gameId).emit('NETWORK_ERROR', { notice: ERROR_NOTICE.network_error })
           return
         }
 
         room.state = 'in_progress'
+
         io.to(gameId).emit('game_started', { totalRounds: room.totalRounds })
       } catch (error) {
         console.error('Game start error:', error)
@@ -162,19 +169,82 @@ app.prepare().then(() => {
       }
     })
 
-    socket.on('request_game_info', ({ gameId }) => {
+    socket.on('request_first_round_hint', ({ gameId }) => {
       const room = gameRooms.get(gameId)
 
       if (room) {
-        socket.emit('game_info', room)
+        socket.emit('first_round_hint', room.gameInfo)
       }
     })
 
-    socket.on('system_message', ({ gameId, message }) => {
-      io.to(gameId).emit('receive_system_message', message)
+    socket.on('change_next_round', async (gameId) => {
+      try {
+        const room = gameRooms.get(gameId)
+        const currentHint = room.hints[room.gameInfo.currentDay - 1]
+        if (!room || !currentHint) return
+
+        room.gameInfo.currentDay += 1
+
+        const isHintMatched = shouldHintMatch()
+
+        const prevHint = room.hints[room.gameInfo.currentDay - 2]
+        const priceChangeDirection = isHintMatched
+          ? prevHint.expectedChange
+          : prevHint.expectedChange === 'up'
+            ? 'down'
+            : 'up'
+
+        const oldPrice = room.gameInfo.currentFishPrice
+        const newPrice = generateNewFishPrice(oldPrice, priceChangeDirection)
+
+        const isHighChange = isPriceChangeHigh(oldPrice, newPrice)
+        let outcomeMessage = ''
+
+        if (isHintMatched) {
+          outcomeMessage = isHighChange ? prevHint.matchOutcomeHigh : prevHint.matchOutcomeLow
+        } else {
+          outcomeMessage = isHighChange ? prevHint.mismatchOutcomeHigh : prevHint.mismatchOutcomeLow
+        }
+
+        room.gameInfo = {
+          ...room.gameInfo,
+          currentFishPrice: newPrice,
+          lastRoundHintResult: outcomeMessage,
+          nextRoundHint: currentHint?.hint,
+        }
+
+        io.to(gameId).emit('update_game_info', room.gameInfo)
+      } catch (error) {
+        console.error('다음 라운드로 게임을 업데이트하는데 실패하였습니다.', error)
+      }
     })
 
-    socket.on('trade_update', ({ gameId, action, amount }) => {
+    socket.on('request_last_fish_price', (gameId) => {
+      try {
+        const room = gameRooms.get(gameId)
+        if (!room) return
+
+        const prevHint = room.hints[room.gameInfo.currentDay - 2]
+        if (!prevHint) return
+
+        const isHintMatched = shouldHintMatch()
+
+        const priceChangeDirection = isHintMatched
+          ? prevHint.expectedChange
+          : prevHint.expectedChange === 'up'
+            ? 'down'
+            : 'up'
+
+        const oldPrice = room.gameInfo.currentFishPrice
+        const newPrice = generateNewFishPrice(oldPrice, priceChangeDirection)
+
+        io.to(gameId).emit('last_fish_price', newPrice)
+      } catch (error) {
+        console.error('마지막 라운드의 생선 가격을 갖고오는데 실패하였습니다.', error)
+      }
+    })
+
+    socket.on('trade_fishes', ({ gameId, action, amount }) => {
       const playerId = playersMap.get(socket.id)
       const message = `${amount}마리 ${action === 'buy' ? '사요!' : '팔아요!'}`
 

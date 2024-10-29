@@ -40,6 +40,11 @@ export interface PlayerModel {
   score: number
 }
 
+export interface HintContentModel {
+  nextRoundHint: string
+  lastRoundHintResult: string
+}
+
 export interface HintModel {
   id: number
   hint: string

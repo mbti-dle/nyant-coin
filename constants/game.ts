@@ -17,16 +17,7 @@ export const gameConfig = {
   INITIAL_TIMER: 20,
 }
 
-// 더미 데이터
-export const TOTAL_ROUNDS = 3
-export const FINAL_COIN = 100
-
-export const AVATARS = [
-  { imageUrl: '/images/cat-1.png', nickName: '대장고양이', isLeader: true, id: '1' },
-  { imageUrl: '/images/cat-2.png', nickName: '제임스메롱', id: '2' },
-  { imageUrl: '/images/cat-3.png', nickName: '레드히어로', id: '3' },
-  { imageUrl: '/images/cat-4.png', nickName: '마크정식주세요제발요', id: '4' },
-  { imageUrl: '/images/cat-5.png', nickName: '다은최고', id: '5' },
-]
-
-export const SIX_AVATARS = [...AVATARS, ...Array(Math.max(0, 6 - AVATARS.length)).fill({})]
+export const PRICE_THRESHOLD = {
+  MIN: 1,
+  MAX: 300,
+} as const
