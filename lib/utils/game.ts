@@ -3,13 +3,14 @@ import { PRICE_THRESHOLD } from '../../constants/game.js'
 export const generateNewFishPrice = (currentPrice: number, expectedChange: 'up' | 'down') => {
   const newPrice =
     expectedChange === 'up'
-      ? Math.floor(Math.random() * (PRICE_THRESHOLD.MAX - currentPrice)) + currentPrice
-      : Math.floor(Math.random() * (currentPrice - PRICE_THRESHOLD.MIN)) + PRICE_THRESHOLD.MIN
+      ? Math.floor(Math.random() * (PRICE_THRESHOLD.MAX_PRICE - currentPrice)) + currentPrice
+      : Math.floor(Math.random() * (currentPrice - PRICE_THRESHOLD.MIN_PRICE)) +
+        PRICE_THRESHOLD.MIN_PRICE
 
-  return Math.min(Math.max(newPrice, PRICE_THRESHOLD.MIN), PRICE_THRESHOLD.MAX)
+  return Math.min(Math.max(newPrice, PRICE_THRESHOLD.MIN_PRICE), PRICE_THRESHOLD.MAX_PRICE)
 }
 
-export const shouldHintMatch = () => {
+export const shouldHintMatch = (): boolean => {
   return Math.random() < 0.6
 }
 

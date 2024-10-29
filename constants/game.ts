@@ -18,6 +18,8 @@ export const gameConfig = {
 }
 
 export const PRICE_THRESHOLD = {
-  MIN: 1,
-  MAX: 300,
-} as const
+  MAX_PRICE: 300,
+  MIN_PRICE: 1,
+  MAX_SAFE_PRICE: 293,
+  MIN_SAFE_PRICE: 7,
+}

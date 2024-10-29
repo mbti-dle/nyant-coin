@@ -6,7 +6,7 @@ import { Server as SocketIOServer } from 'socket.io'
 import { v4 as uuid } from 'uuid'
 
 import { ERROR_NOTICE } from './constants/chat.js'
-import { gameConfig } from './constants/game.js'
+import { gameConfig, PRICE_THRESHOLD } from './constants/game.js'
 import { loadGameHints } from './lib/api/hints.js'
 import { generateNewFishPrice, isPriceChangeHigh, shouldHintMatch } from './lib/utils/game.js'
 import { generateGameId } from './lib/utils/generate-game-id.js'
@@ -184,10 +184,21 @@ app.prepare().then(() => {
 
         room.gameInfo.currentDay += 1
 
-        const isHintMatched = shouldHintMatch()
+        const currentPrice = room.gameInfo.currentFishPrice
 
+        let isHintMatched = shouldHintMatch()
         const currentHint = room.hints[room.gameInfo.currentDay - 1]
         const prevHint = room.hints[room.gameInfo.currentDay - 2]
+
+        if (currentPrice <= PRICE_THRESHOLD.MIN_SAFE_PRICE && prevHint?.expectedChange === 'down') {
+          isHintMatched = false
+        } else if (
+          currentPrice >= PRICE_THRESHOLD.MAX_SAFE_PRICE &&
+          prevHint?.expectedChange === 'up'
+        ) {
+          isHintMatched = false
+        }
+
         const priceChangeDirection = isHintMatched
           ? prevHint.expectedChange
           : prevHint.expectedChange === 'up'
@@ -212,7 +223,6 @@ app.prepare().then(() => {
           lastRoundHintResult: outcomeMessage,
           nextRoundHint: currentHint?.hint,
         }
-        console.log(room.gameInfo.currentDay)
 
         io.to(gameId).emit('update_game_info', room.gameInfo)
       } catch (error) {
