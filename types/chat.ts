@@ -1,5 +1,13 @@
 export interface ChatMessageModel {
+  type: 'message'
   imageUrl: string
-  nickName: string
+  nickname: string
   message: string
 }
+
+export interface ChatNoticeModel {
+  type: 'notice'
+  notice: string
+}
+
+export type ChatType = ChatMessageModel | ChatNoticeModel

@@ -1,6 +1,6 @@
 import { useState, useEffect, memo, useRef } from 'react'
 
-import { INITIAL_TIMER } from '@/constants/game-constant'
+import { gameConfig } from '@/constants/game'
 
 interface TimerProps {
   onRoundEnd: () => void
@@ -9,11 +9,11 @@ interface TimerProps {
 }
 
 const Timer = memo(({ onRoundEnd, isLastRound, currentRound }: TimerProps) => {
-  const [timer, setTimer] = useState(INITIAL_TIMER)
+  const [timer, setTimer] = useState(gameConfig.INITIAL_TIMER)
   const timerEndedRef = useRef(false)
 
   useEffect(() => {
-    setTimer(INITIAL_TIMER)
+    setTimer(gameConfig.INITIAL_TIMER)
     timerEndedRef.current = false
   }, [currentRound])
 
@@ -28,7 +28,7 @@ const Timer = memo(({ onRoundEnd, isLastRound, currentRound }: TimerProps) => {
       timerEndedRef.current = true
       onRoundEnd()
       if (!isLastRound) {
-        setTimer(INITIAL_TIMER)
+        setTimer(gameConfig.INITIAL_TIMER)
       }
     }
 

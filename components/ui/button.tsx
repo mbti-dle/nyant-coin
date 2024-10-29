@@ -7,19 +7,21 @@ interface ButtonProps extends ComponentProps<'button'> {
   variant?: 'primary' | 'white'
 }
 
-const Button = ({ variant = 'primary', className, children, ...props }: ButtonProps) => {
+const Button = ({ variant = 'primary', className, children, disabled, ...props }: ButtonProps) => {
   return (
     <button
       className={twMerge(
         clsx(
-          'flex h-[54px] w-[300px] cursor-pointer items-center justify-center rounded-xl text-lg',
+          'flex h-[54px] w-[300px] cursor-pointer items-center justify-center rounded-xl text-lg hover:bg-navy',
           {
-            'bg-primary text-white': variant === 'primary',
-            'bg-white text-primary': variant === 'white',
+            'bg-primary text-white': variant === 'primary' && !disabled,
+            'bg-white text-primary': variant === 'white' && !disabled,
+            'cursor-not-allowed bg-gray-100 text-gray-200': disabled,
           },
           className
         )
       )}
+      disabled={disabled}
       {...props}
     >
       {children}

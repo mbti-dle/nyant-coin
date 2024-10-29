@@ -1,25 +1,38 @@
-import { Fragment } from 'react'
-
 import CatBox from '@/components/ui/cat-box'
+import { PlayerModel, TransactionResultModel } from '@/types/game'
 
-const PlayerGrid = () => {
-  const players = [
-    { imageUrl: '/images/cat-1.png', nickName: '대장고양이' },
-    { imageUrl: '/images/cat-2.png', nickName: '제임스' },
-    { imageUrl: '/images/cat-3.png', nickName: '레드히어로' },
-    { imageUrl: '/images/cat-4.png', nickName: '마크정식주세요제발요' },
-    { imageUrl: '', nickName: '' },
-    { imageUrl: '', nickName: '' },
-  ]
+interface PlayerGridProps {
+  players: PlayerModel[]
+  transactionResult?: TransactionResultModel
+}
+
+const PlayerGrid = ({ players, transactionResult }: PlayerGridProps) => {
+  const MAX_PLAYERS = 6
+
+  const playerSlots = Array(MAX_PLAYERS)
+    .fill(null)
+    .map((_, index) => {
+      const player = players[index] || { id: '', nickname: '', character: '', score: 0 }
+      return {
+        ...player,
+      }
+    })
 
   return (
-    <div className="grid grid-cols-3 gap-2 md:max-w-[445px] md:gap-4">
-      {players.map((player, index) => (
-        <Fragment key={index}>
-          <CatBox imageUrl={player.imageUrl} nickName={player.nickName} isLeader={index === 0} />
-        </Fragment>
+    <div className="grid grid-cols-3 gap-2 min-[440px]:max-w-[400px] md:max-w-[445px] md:gap-4">
+      {playerSlots.map((player, index) => (
+        <CatBox
+          key={index}
+          imageUrl={player.character && `/images/cat-${player.character}.png`}
+          nickName={player.nickname}
+          isLeader={index === 0}
+          message={
+            player.id === transactionResult?.playerId ? transactionResult.message : undefined
+          }
+        />
       ))}
     </div>
   )
 }
+
 export default PlayerGrid

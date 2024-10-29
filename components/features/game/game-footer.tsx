@@ -2,12 +2,13 @@ import { useState, memo } from 'react'
 
 import Button from '@/components/ui/button'
 import Input from '@/components/ui/input'
+import { TransactionType } from '@/types/game'
 
 interface GameFooterProps {
-  handleTransaction: (isBuying: boolean, amount: number) => void
+  onTransaction: (action: TransactionType, amount: number) => void
 }
 
-const GameFooter = memo(({ handleTransaction }: GameFooterProps) => {
+const GameFooter = memo(({ onTransaction }: GameFooterProps) => {
   const [inputValue, setInputValue] = useState('')
 
   const handleInputChange = ({ target: { value } }) => {
@@ -18,14 +19,14 @@ const GameFooter = memo(({ handleTransaction }: GameFooterProps) => {
 
   const handleBuy = () => {
     if (inputValue) {
-      handleTransaction(true, parseInt(inputValue))
+      onTransaction('buy', parseInt(inputValue))
       setInputValue('')
     }
   }
 
   const handleSell = () => {
     if (inputValue) {
-      handleTransaction(false, parseInt(inputValue))
+      onTransaction('sell', parseInt(inputValue))
       setInputValue('')
     }
   }
@@ -36,13 +37,13 @@ const GameFooter = memo(({ handleTransaction }: GameFooterProps) => {
         className="rounded-full border-none"
         value={inputValue}
         onChange={handleInputChange}
-        type="text"
+        inputMode="numeric"
         pattern="\d*"
       />
       <div className="flex w-1/2 gap-2">
         <Button
           variant="white"
-          className="flex-1 text-primary"
+          className="flex-1 cursor-pointer bg-white text-primary hover:bg-white"
           onClick={handleBuy}
           disabled={inputValue === ''}
         >
@@ -50,7 +51,7 @@ const GameFooter = memo(({ handleTransaction }: GameFooterProps) => {
         </Button>
         <Button
           variant="primary"
-          className="flex-1 text-white"
+          className="flex-1 cursor-pointer bg-primary text-white hover:bg-primary"
           onClick={handleSell}
           disabled={inputValue === ''}
         >

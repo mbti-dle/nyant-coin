@@ -9,3 +9,17 @@ export const GAME_GUIDE_STEPS = [
 export const GAME_GUIDE_COMMENT = '최적의 타이밍에 거래해서 우승을 차지하세요!'
 
 export const DAY_OPTIONS = ['10일', '15일', '20일']
+
+export const gameConfig = {
+  INITIAL_COINS: 1000,
+  INITIAL_FISH: 0,
+  INITIAL_FISH_PRICE: 100,
+  INITIAL_TIMER: 20,
+}
+
+export const PRICE_THRESHOLD = {
+  MAX_PRICE: 300,
+  MIN_PRICE: 1,
+  MAX_SAFE_PRICE: 293,
+  MIN_SAFE_PRICE: 7,
+}

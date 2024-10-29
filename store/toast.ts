@@ -1,5 +1,6 @@
-import { ToastIconType } from '@/types/ui-types'
 import { create } from 'zustand'
+
+import { ToastIconType } from '@/types/ui-types'
 
 interface ToastStoreModel {
   isVisible: boolean
