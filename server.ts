@@ -180,13 +180,13 @@ app.prepare().then(() => {
     socket.on('change_next_round', async (gameId) => {
       try {
         const room = gameRooms.get(gameId)
-        const currentHint = room.hints[room.gameInfo.currentDay - 1]
-        if (!room || !currentHint) return
+        if (!room) return
 
         room.gameInfo.currentDay += 1
 
         const isHintMatched = shouldHintMatch()
 
+        const currentHint = room.hints[room.gameInfo.currentDay - 1]
         const prevHint = room.hints[room.gameInfo.currentDay - 2]
         const priceChangeDirection = isHintMatched
           ? prevHint.expectedChange
@@ -212,6 +212,7 @@ app.prepare().then(() => {
           lastRoundHintResult: outcomeMessage,
           nextRoundHint: currentHint?.hint,
         }
+        console.log(room.gameInfo.currentDay)
 
         io.to(gameId).emit('update_game_info', room.gameInfo)
       } catch (error) {

@@ -25,7 +25,8 @@ const Hints = memo(
             <p className="mb-1 flex items-center justify-center">
               <Image src="/images/fish.png" alt="물고기" width={32} height={32} className="mr-1" />
               <span className="text-xl font-light">
-                {fishPrice} 냥코인 {fishPrice > prevFishPrice ? '📈' : '📉'}
+                {fishPrice} 냥코인{' '}
+                {currentRound === 1 ? '' : fishPrice > prevFishPrice ? '📈' : '📉'}
               </span>
             </p>
             <p className="mx-11 break-keep text-center font-galmuri text-xs text-gray-400">

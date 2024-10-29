@@ -114,12 +114,14 @@ const GamePage = ({ params }) => {
 
   const handleRoundIncrement = () => {
     setGameState((prev) => {
-      if (prev.currentRound === totalRounds) {
+      const isLastRound = prev.currentRound === totalRounds
+
+      if (isLastRound) {
         socket.emit('request_last_fish_price', gameId)
         return { ...prev, isModalOpen: true }
       }
 
-      return { ...prev, currentRound: prev.currentRound + 1 }
+      return prev
     })
 
     if (gameState.currentRound < totalRounds) {
