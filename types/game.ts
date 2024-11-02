@@ -31,13 +31,14 @@ export interface GameModel {
     nextRoundHint: string
   }
   players: PlayerModel[]
+  gameResults: GameResultModel[]
 }
 
 export interface PlayerModel {
   id: string
   nickname: string
   character: string
-  score: number
+  score?: number
 }
 
 export interface HintContentModel {
@@ -53,6 +54,13 @@ export interface HintModel {
   matchOutcomeLow: string
   mismatchOutcomeHigh: string
   mismatchOutcomeLow: string
+}
+
+export interface GameResultModel {
+  id: string
+  nickname: string
+  score: number
+  character: string
 }
 
 export type SocketIdType = string
