@@ -5,13 +5,11 @@ import { ReactNode } from 'react'
 import CloseIcon from '@mui/icons-material/CloseSharp'
 import { createPortal } from 'react-dom'
 
-import Button from '@/components/ui/button'
 import IconButton from '@/components/ui/icon-button'
 
 interface ModalProps {
   title?: string
   children: ReactNode
-  hasButton?: boolean
   isShowCloseButton?: boolean
   onModalClose?: () => void
   isOpen: boolean
@@ -21,7 +19,6 @@ interface ModalProps {
 const Modal = ({
   title = '',
   children,
-  hasButton = false,
   isShowCloseButton = false,
   onModalClose,
   isOpen,
@@ -54,14 +51,7 @@ const Modal = ({
             )}
           </div>
 
-          <div className="p-4 text-black">
-            {children}
-            {hasButton && (
-              <div className="mt-4 flex justify-center text-xl">
-                <Button className="mb-8">결과 보러가기</Button>
-              </div>
-            )}
-          </div>
+          <div className="p-4 text-black">{children}</div>
         </div>
       </div>
     </>,
