@@ -34,6 +34,7 @@ app.prepare().then(() => {
 
   const gameRooms = new Map<string, GameModel>()
   const playersMap = new Map<SocketIdType, PlayerIdType>()
+  const gameTimers = new Map<string, NodeJS.Timeout>()
 
   io.on('connection', (socket) => {
     socket.on('check_game_availability', (gameId) => {
@@ -46,11 +47,28 @@ app.prepare().then(() => {
 
       if (!room) {
         gameAvailability.message = '존재하지 않는 방 코드입니다.'
-      } else if (room.state !== 'waiting') {
+      } else if (room.state === 'in_progress') {
         gameAvailability.message = '이미 게임이 진행 중인 방입니다.'
       } else if (room.players.length >= 6) {
         gameAvailability.message = '방이 가득 찼습니다. (최대 6명)'
       } else {
+        if (room.state === 'ended') {
+          room.state = 'waiting'
+          room.gameResults = []
+          room.players = room.players.map((player) => ({
+            ...player,
+            score: 0,
+          }))
+          room.gameInfo = {
+            currentDay: 1,
+            currentFishPrice: gameConfig.INITIAL_FISH_PRICE,
+            lastRoundHintResult: '',
+            nextRoundHint: room.hints[0]?.hint || '',
+          }
+
+          io.to(gameId).emit('update_players', room.players)
+          io.to(gameId).emit('update_game_info', room.gameInfo)
+        }
         gameAvailability.isAvailable = true
       }
 
@@ -73,6 +91,7 @@ app.prepare().then(() => {
           lastRoundHintResult: '',
           nextRoundHint: hints[0]?.hint || '',
         },
+        gameResults: [],
       }
 
       gameRooms.set(gameId, newGame)
@@ -263,18 +282,111 @@ app.prepare().then(() => {
       })
     })
 
+    socket.on('request_game_results', (gameId) => {
+      try {
+        const room = gameRooms.get(gameId)
+        if (!room) return
+
+        if (room.state === 'ended' && room.gameResults) {
+          socket.emit('game_ended', {
+            results: room.gameResults,
+            gameId,
+          })
+        }
+      } catch (error) {
+        console.error('게임 결과 요청 중 오류 발생:', error)
+      }
+    })
+
+    socket.on('end_game', ({ gameId, result }) => {
+      try {
+        const room = gameRooms.get(gameId)
+        if (!room) {
+          console.error('게임룸을 찾을 수 없습니다:', gameId)
+          return
+        }
+
+        const playerIndex = room.players.findIndex((p) => p.id === result.playerId)
+        if (playerIndex !== -1) {
+          room.players[playerIndex].score = result.totalCoin
+        }
+
+        const updateGameResults = () => {
+          const submittedPlayers = room.players.filter(
+            (player) => typeof player.score === 'number' && player.score >= 0
+          )
+
+          if (submittedPlayers.length > 0) {
+            room.gameResults = submittedPlayers
+              .map((player) => ({
+                id: player.id,
+                nickname: player.nickname,
+                character: player.character,
+                score: player.score || 0,
+              }))
+              .sort((a, b) => b.score - a.score)
+
+            room.state = 'ended'
+
+            io.to(gameId).emit('game_ended', {
+              results: room.gameResults,
+              gameId,
+            })
+          }
+        }
+
+        if (!gameTimers.has(gameId)) {
+          const timer = setTimeout(() => {
+            const currentRoom = gameRooms.get(gameId)
+            if (currentRoom && currentRoom.state !== 'ended') {
+              updateGameResults()
+            }
+            gameTimers.delete(gameId)
+          }, 10000)
+
+          gameTimers.set(gameId, timer)
+        }
+
+        const allPlayersSubmitted =
+          room.players.length > 0 &&
+          room.players.every((player) => typeof player.score === 'number' && player.score >= 0)
+
+        if (allPlayersSubmitted) {
+          const timer = gameTimers.get(gameId)
+          if (timer) {
+            clearTimeout(timer)
+            gameTimers.delete(gameId)
+          }
+
+          updateGameResults()
+        } else if (room.state === 'ended') {
+          updateGameResults()
+        }
+      } catch (error) {
+        console.error('게임 결과 제출 중 오류 발생:', error)
+        socket.emit('error', { message: '게임 결과 제출 중 오류가 발생했습니다.' })
+      }
+    })
+
     socket.on('disconnect', () => {
       const playerId = playersMap.get(socket.id)
 
       if (playerId) {
-        gameRooms.forEach((room) => {
+        gameRooms.forEach((room, gameId) => {
+          if (room.state === 'ended') return
+
           const playerIndex = room.players.findIndex((player) => player.id === playerId)
           if (playerIndex !== -1) {
             room.players.splice(playerIndex, 1)
-            socket.to(room.gameId).emit('update_players', room.players)
+            socket.to(gameId).emit('update_players', room.players)
 
             if (room.players.length === 0) {
-              gameRooms.delete(room.gameId)
+              const timer = gameTimers.get(gameId)
+              if (timer) {
+                window.clearTimeout(timer)
+                gameTimers.delete(gameId)
+              }
+              gameRooms.delete(gameId)
             }
           }
         })
