@@ -108,6 +108,7 @@ const GamePage = ({ params }) => {
 
     socket.emit('request_player_info', gameId)
     socket.emit('request_first_round_hint', { gameId })
+    socket.emit('player_ready', { gameId })
 
     socket.on('player_info', handlePlayerInitialize)
     socket.on('update_players', handlePlayersUpdate)
@@ -126,17 +127,7 @@ const GamePage = ({ params }) => {
       socket.off('update_game_info')
       socket.off('game_ended')
     }
-  }, [gameId, gameState.fishPrice])
-
-  const handleRoundIncrement = () => {
-    const isLastRound = gameState.currentRound === totalRounds
-
-    if (isLastRound) {
-      socket.emit('request_last_fish_price', gameId)
-    } else {
-      socket.emit('change_next_round', gameId)
-    }
-  }
+  }, [gameId])
 
   const handleTransaction = (action: TransactionType, amount: number) => {
     setGameState((prevState) => {
@@ -180,11 +171,7 @@ const GamePage = ({ params }) => {
       <div className="max-w-[420px] p-3 md:pt-[50px]">
         <div className="my-6 flex items-center justify-between">
           <FishCoinsAssets coins={gameState.coins} fish={gameState.fish} />
-          <Timer
-            onRoundEnd={handleRoundIncrement}
-            isLastRound={gameState.currentRound === totalRounds}
-            currentRound={gameState.currentRound}
-          />
+          <Timer />
         </div>
         <Hints
           fishPrice={gameState.fishPrice}

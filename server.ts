@@ -32,9 +32,146 @@ app.prepare().then(() => {
     auth: false,
   })
 
-  const gameRooms = new Map<string, GameModel>()
+  const gameRooms = new Map<string, GameModel & { readyPlayers: Set<string> }>()
   const playersMap = new Map<SocketIdType, PlayerIdType>()
   const gameTimers = new Map<string, NodeJS.Timeout>()
+  const roundTimers = new Map<string, NodeJS.Timeout>()
+
+  const startGameTimer = (gameId: string, room: GameModel & { readyPlayers: Set<string> }) => {
+    if (!room || room.state !== 'in_progress') {
+      console.error('게임을 시작할 수 없는 상태입니다')
+      return
+    }
+
+    if (room.gameInfo.currentDay < 1 || room.gameInfo.currentDay > room.totalRounds) {
+      console.error('유효하지 않은 라운드입니다')
+      room.gameInfo.currentDay = Math.max(1, Math.min(room.totalRounds, room.gameInfo.currentDay))
+    }
+
+    const existingTimer = roundTimers.get(gameId)
+    if (existingTimer) {
+      clearInterval(existingTimer)
+      roundTimers.delete(gameId)
+    }
+
+    let timer = gameConfig.INITIAL_TIMER
+    const intervalId = setInterval(() => {
+      const currentRoom = gameRooms.get(gameId)
+      if (!currentRoom || currentRoom.state !== 'in_progress') {
+        clearInterval(intervalId)
+        roundTimers.delete(gameId)
+        return
+      }
+
+      timer -= 1
+      io.to(gameId).emit('timer_update', timer)
+
+      if (timer === 0) {
+        clearInterval(intervalId)
+        roundTimers.delete(gameId)
+
+        try {
+          const isLastRound = currentRoom.gameInfo.currentDay === currentRoom.totalRounds
+
+          if (isLastRound) {
+            try {
+              const prevHint = currentRoom.hints[currentRoom.gameInfo.currentDay - 2]
+              if (!prevHint) return
+
+              const isHintMatched = shouldHintMatch()
+              const priceChangeDirection = isHintMatched
+                ? prevHint.expectedChange
+                : prevHint.expectedChange === 'up'
+                  ? 'down'
+                  : 'up'
+
+              const oldPrice = currentRoom.gameInfo.currentFishPrice
+              const newPrice = generateNewFishPrice(oldPrice, priceChangeDirection)
+
+              io.to(gameId).emit('last_fish_price', newPrice)
+            } catch (error) {
+              console.error('마지막 라운드의 생선 가격을 계산하는데 실패하였습니다.', error)
+            }
+          } else {
+            try {
+              if (currentRoom.gameInfo.currentDay >= currentRoom.totalRounds) {
+                console.error('현재 라운드가 전체 라운드 수를 초과하였습니다.')
+                return
+              }
+
+              currentRoom.gameInfo.currentDay += 1
+
+              if (currentRoom.gameInfo.currentDay > currentRoom.totalRounds) {
+                console.error('라운드 수가 전체 라운드 수를 초과하였습니다.')
+                currentRoom.gameInfo.currentDay = currentRoom.totalRounds
+              }
+
+              const currentPrice = currentRoom.gameInfo.currentFishPrice
+
+              let isHintMatched = shouldHintMatch()
+              const currentHint = currentRoom.hints[currentRoom.gameInfo.currentDay - 1]
+              const prevHint = currentRoom.hints[currentRoom.gameInfo.currentDay - 2]
+
+              if (
+                currentPrice <= PRICE_THRESHOLD.MIN_SAFE_PRICE &&
+                prevHint?.expectedChange === 'down'
+              ) {
+                isHintMatched = false
+              } else if (
+                currentPrice >= PRICE_THRESHOLD.MAX_SAFE_PRICE &&
+                prevHint?.expectedChange === 'up'
+              ) {
+                isHintMatched = false
+              }
+
+              const priceChangeDirection = isHintMatched
+                ? prevHint.expectedChange
+                : prevHint.expectedChange === 'up'
+                  ? 'down'
+                  : 'up'
+
+              const oldPrice = currentRoom.gameInfo.currentFishPrice
+              const newPrice = generateNewFishPrice(oldPrice, priceChangeDirection)
+
+              const isHighChange = isPriceChangeHigh(oldPrice, newPrice)
+              let outcomeMessage = ''
+
+              if (isHintMatched) {
+                outcomeMessage = isHighChange ? prevHint.matchOutcomeHigh : prevHint.matchOutcomeLow
+              } else {
+                outcomeMessage = isHighChange
+                  ? prevHint.mismatchOutcomeHigh
+                  : prevHint.mismatchOutcomeLow
+              }
+
+              currentRoom.gameInfo = {
+                ...currentRoom.gameInfo,
+                currentFishPrice: newPrice,
+                lastRoundHintResult: outcomeMessage,
+                nextRoundHint: currentHint?.hint || '',
+              }
+
+              io.to(gameId).emit('update_game_info', currentRoom.gameInfo)
+
+              startGameTimer(gameId, currentRoom)
+            } catch (error) {
+              console.error('다음 라운드로 게임을 업데이트하는데 실패하였습니다.', error)
+              if (currentRoom) {
+                io.to(gameId).emit('update_game_info', currentRoom.gameInfo)
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Round update error:', error)
+          if (currentRoom) {
+            io.to(gameId).emit('update_game_info', currentRoom.gameInfo)
+          }
+        }
+      }
+    }, 1000)
+
+    roundTimers.set(gameId, intervalId)
+  }
 
   io.on('connection', (socket) => {
     socket.on('check_game_availability', (gameId) => {
@@ -79,7 +216,7 @@ app.prepare().then(() => {
       const gameId = generateGameId(gameRooms)
       const hints = await loadGameHints(totalRounds)
 
-      const newGame: GameModel = {
+      const newGame: GameModel & { readyPlayers: Set<string> } = {
         gameId,
         totalRounds,
         state: 'waiting',
@@ -92,6 +229,7 @@ app.prepare().then(() => {
           nextRoundHint: hints[0]?.hint || '',
         },
         gameResults: [],
+        readyPlayers: new Set(),
       }
 
       gameRooms.set(gameId, newGame)
@@ -178,6 +316,7 @@ app.prepare().then(() => {
         }
 
         room.state = 'in_progress'
+        room.readyPlayers.clear()
 
         io.to(gameId).emit('game_started', { totalRounds: room.totalRounds })
       } catch (error) {
@@ -186,89 +325,26 @@ app.prepare().then(() => {
       }
     })
 
+    socket.on('player_ready', ({ gameId }) => {
+      const room = gameRooms.get(gameId)
+      if (!room || room.state !== 'in_progress') return
+
+      const playerId = playersMap.get(socket.id)
+      if (!playerId) return
+
+      room.readyPlayers.add(playerId)
+
+      if (room.readyPlayers.size === room.players.length) {
+        startGameTimer(gameId, room)
+        io.to(gameId).emit('all_players_ready')
+      }
+    })
+
     socket.on('request_first_round_hint', ({ gameId }) => {
       const room = gameRooms.get(gameId)
 
       if (room) {
         socket.emit('first_round_hint', room.gameInfo)
-      }
-    })
-
-    socket.on('change_next_round', async (gameId) => {
-      try {
-        const room = gameRooms.get(gameId)
-        if (!room) return
-
-        room.gameInfo.currentDay += 1
-
-        const currentPrice = room.gameInfo.currentFishPrice
-
-        let isHintMatched = shouldHintMatch()
-        const currentHint = room.hints[room.gameInfo.currentDay - 1]
-        const prevHint = room.hints[room.gameInfo.currentDay - 2]
-
-        if (currentPrice <= PRICE_THRESHOLD.MIN_SAFE_PRICE && prevHint?.expectedChange === 'down') {
-          isHintMatched = false
-        } else if (
-          currentPrice >= PRICE_THRESHOLD.MAX_SAFE_PRICE &&
-          prevHint?.expectedChange === 'up'
-        ) {
-          isHintMatched = false
-        }
-
-        const priceChangeDirection = isHintMatched
-          ? prevHint.expectedChange
-          : prevHint.expectedChange === 'up'
-            ? 'down'
-            : 'up'
-
-        const oldPrice = room.gameInfo.currentFishPrice
-        const newPrice = generateNewFishPrice(oldPrice, priceChangeDirection)
-
-        const isHighChange = isPriceChangeHigh(oldPrice, newPrice)
-        let outcomeMessage = ''
-
-        if (isHintMatched) {
-          outcomeMessage = isHighChange ? prevHint.matchOutcomeHigh : prevHint.matchOutcomeLow
-        } else {
-          outcomeMessage = isHighChange ? prevHint.mismatchOutcomeHigh : prevHint.mismatchOutcomeLow
-        }
-
-        room.gameInfo = {
-          ...room.gameInfo,
-          currentFishPrice: newPrice,
-          lastRoundHintResult: outcomeMessage,
-          nextRoundHint: currentHint?.hint,
-        }
-
-        io.to(gameId).emit('update_game_info', room.gameInfo)
-      } catch (error) {
-        console.error('다음 라운드로 게임을 업데이트하는데 실패하였습니다.', error)
-      }
-    })
-
-    socket.on('request_last_fish_price', (gameId) => {
-      try {
-        const room = gameRooms.get(gameId)
-        if (!room) return
-
-        const prevHint = room.hints[room.gameInfo.currentDay - 2]
-        if (!prevHint) return
-
-        const isHintMatched = shouldHintMatch()
-
-        const priceChangeDirection = isHintMatched
-          ? prevHint.expectedChange
-          : prevHint.expectedChange === 'up'
-            ? 'down'
-            : 'up'
-
-        const oldPrice = room.gameInfo.currentFishPrice
-        const newPrice = generateNewFishPrice(oldPrice, priceChangeDirection)
-
-        io.to(gameId).emit('last_fish_price', newPrice)
-      } catch (error) {
-        console.error('마지막 라운드의 생선 가격을 갖고오는데 실패하였습니다.', error)
       }
     })
 
@@ -342,7 +418,7 @@ app.prepare().then(() => {
               updateGameResults()
             }
             gameTimers.delete(gameId)
-          }, 10000)
+          }, 5000)
 
           gameTimers.set(gameId, timer)
         }
@@ -378,13 +454,20 @@ app.prepare().then(() => {
           const playerIndex = room.players.findIndex((player) => player.id === playerId)
           if (playerIndex !== -1) {
             room.players.splice(playerIndex, 1)
+            room.readyPlayers.delete(playerId)
             socket.to(gameId).emit('update_players', room.players)
 
             if (room.players.length === 0) {
               const timer = gameTimers.get(gameId)
               if (timer) {
-                window.clearTimeout(timer)
+                clearTimeout(timer)
                 gameTimers.delete(gameId)
+              }
+
+              const roundTimer = roundTimers.get(gameId)
+              if (roundTimer) {
+                clearInterval(roundTimer)
+                roundTimers.delete(gameId)
               }
               gameRooms.delete(gameId)
             }
