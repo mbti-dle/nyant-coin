@@ -21,6 +21,7 @@ import {
   PlayerModel,
   TransactionType,
   HintContentModel,
+  GameResultModel,
 } from '@/types/game'
 
 const GamePage = ({ params }) => {
@@ -42,20 +43,28 @@ const GamePage = ({ params }) => {
     playerId: null,
     message: '',
   })
+  const [playerId, setPlayerId] = useState<string | null>(null)
   const [prevFishPrice, setPrevFishPrice] = useState(gameConfig.INITIAL_FISH_PRICE)
   const [lastFishCoin, setLastFishCoin] = useState(0)
+  const [gameResults, setGameResults] = useState<GameResultModel[] | null>(null)
 
   const { rounds: totalRounds } = useGameStore()
   const { showToast } = useToastStore()
-
   const { gameId } = params
 
   useEffect(() => {
     ReactDOM.preload('/images/background-mobile-3.png', { as: 'image' })
     ReactDOM.preload('/images/background-desktop-3.png', { as: 'image' })
 
-    const handlePlayerInitialize = ({ players }: { players: PlayerModel[] }) => {
+    const handlePlayerInitialize = ({
+      players,
+      playerId,
+    }: {
+      players: PlayerModel[]
+      playerId: string
+    }) => {
       setPlayers(players)
+      setPlayerId(playerId)
     }
 
     const handlePlayersUpdate = (updatedPlayers: PlayerModel[]) => {
@@ -73,6 +82,7 @@ const GamePage = ({ params }) => {
 
     const handleLastFishPrice = (newPrice) => {
       setLastFishCoin(newPrice)
+      setGameState((prev) => ({ ...prev, isModalOpen: true }))
     }
 
     const handleTradeMessage = (result: TransactionResultModel) => {
@@ -92,8 +102,13 @@ const GamePage = ({ params }) => {
       })
     }
 
+    const handleGameEnded = ({ results }: { results: GameResultModel[] }) => {
+      setGameResults(results)
+    }
+
     socket.emit('request_player_info', gameId)
     socket.emit('request_first_round_hint', { gameId })
+    socket.emit('player_ready', { gameId })
 
     socket.on('player_info', handlePlayerInitialize)
     socket.on('update_players', handlePlayersUpdate)
@@ -101,6 +116,7 @@ const GamePage = ({ params }) => {
     socket.on('last_fish_price', handleLastFishPrice)
     socket.on('trade_message', handleTradeMessage)
     socket.on('update_game_info', handleGameInfoUpdate)
+    socket.on('game_ended', handleGameEnded)
 
     return () => {
       socket.off('player_info')
@@ -109,25 +125,9 @@ const GamePage = ({ params }) => {
       socket.off('last_fish_price')
       socket.off('trade_message')
       socket.off('update_game_info')
+      socket.off('game_ended')
     }
-  }, [gameId, gameState.fishPrice])
-
-  const handleRoundIncrement = () => {
-    setGameState((prev) => {
-      const isLastRound = prev.currentRound === totalRounds
-
-      if (isLastRound) {
-        socket.emit('request_last_fish_price', gameId)
-        return { ...prev, isModalOpen: true }
-      }
-
-      return prev
-    })
-
-    if (gameState.currentRound < totalRounds) {
-      socket.emit('change_next_round', gameId)
-    }
-  }
+  }, [gameId])
 
   const handleTransaction = (action: TransactionType, amount: number) => {
     setGameState((prevState) => {
@@ -155,6 +155,15 @@ const GamePage = ({ params }) => {
     setGameState((prev) => ({ ...prev, isModalOpen: false }))
   }
 
+  const handleGameEnd = () => {
+    const finalScore = {
+      playerId,
+      totalCoin,
+    }
+
+    socket.emit('end_game', { gameId, result: finalScore })
+  }
+
   const totalCoin = gameState.fish * lastFishCoin + gameState.coins
 
   return (
@@ -162,11 +171,7 @@ const GamePage = ({ params }) => {
       <div className="max-w-[420px] p-3 md:pt-[50px]">
         <div className="my-6 flex items-center justify-between">
           <FishCoinsAssets coins={gameState.coins} fish={gameState.fish} />
-          <Timer
-            onRoundEnd={handleRoundIncrement}
-            isLastRound={gameState.currentRound === totalRounds}
-            currentRound={gameState.currentRound}
-          />
+          <Timer />
         </div>
         <Hints
           fishPrice={gameState.fishPrice}
@@ -183,6 +188,9 @@ const GamePage = ({ params }) => {
           onModalClose={handleModalClose}
           coin={lastFishCoin}
           totalCoin={totalCoin}
+          onGameEnd={handleGameEnd}
+          gameId={gameId}
+          gameResults={gameResults}
         />
       </div>
       <GameFooter onTransaction={handleTransaction} />
