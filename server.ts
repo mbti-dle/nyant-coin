@@ -32,8 +32,146 @@ app.prepare().then(() => {
     auth: false,
   })
 
-  const gameRooms = new Map<string, GameModel>()
+  const gameRooms = new Map<string, GameModel & { readyPlayers: Set<string> }>()
   const playersMap = new Map<SocketIdType, PlayerIdType>()
+  const gameTimers = new Map<string, NodeJS.Timeout>()
+  const roundTimers = new Map<string, NodeJS.Timeout>()
+
+  const startGameTimer = (gameId: string, room: GameModel & { readyPlayers: Set<string> }) => {
+    if (!room || room.state !== 'in_progress') {
+      console.error('게임을 시작할 수 없는 상태입니다')
+      return
+    }
+
+    if (room.gameInfo.currentDay < 1 || room.gameInfo.currentDay > room.totalRounds) {
+      console.error('유효하지 않은 라운드입니다')
+      room.gameInfo.currentDay = Math.max(1, Math.min(room.totalRounds, room.gameInfo.currentDay))
+    }
+
+    const existingTimer = roundTimers.get(gameId)
+    if (existingTimer) {
+      clearInterval(existingTimer)
+      roundTimers.delete(gameId)
+    }
+
+    let timer = gameConfig.INITIAL_TIMER
+    const intervalId = setInterval(() => {
+      const currentRoom = gameRooms.get(gameId)
+      if (!currentRoom || currentRoom.state !== 'in_progress') {
+        clearInterval(intervalId)
+        roundTimers.delete(gameId)
+        return
+      }
+
+      timer -= 1
+      io.to(gameId).emit('timer_update', timer)
+
+      if (timer === 0) {
+        clearInterval(intervalId)
+        roundTimers.delete(gameId)
+
+        try {
+          const isLastRound = currentRoom.gameInfo.currentDay === currentRoom.totalRounds
+
+          if (isLastRound) {
+            try {
+              const prevHint = currentRoom.hints[currentRoom.gameInfo.currentDay - 2]
+              if (!prevHint) return
+
+              const isHintMatched = shouldHintMatch()
+              const priceChangeDirection = isHintMatched
+                ? prevHint.expectedChange
+                : prevHint.expectedChange === 'up'
+                  ? 'down'
+                  : 'up'
+
+              const oldPrice = currentRoom.gameInfo.currentFishPrice
+              const newPrice = generateNewFishPrice(oldPrice, priceChangeDirection)
+
+              io.to(gameId).emit('last_fish_price', newPrice)
+            } catch (error) {
+              console.error('마지막 라운드의 생선 가격을 계산하는데 실패하였습니다.', error)
+            }
+          } else {
+            try {
+              if (currentRoom.gameInfo.currentDay >= currentRoom.totalRounds) {
+                console.error('현재 라운드가 전체 라운드 수를 초과하였습니다.')
+                return
+              }
+
+              currentRoom.gameInfo.currentDay += 1
+
+              if (currentRoom.gameInfo.currentDay > currentRoom.totalRounds) {
+                console.error('라운드 수가 전체 라운드 수를 초과하였습니다.')
+                currentRoom.gameInfo.currentDay = currentRoom.totalRounds
+              }
+
+              const currentPrice = currentRoom.gameInfo.currentFishPrice
+
+              let isHintMatched = shouldHintMatch()
+              const currentHint = currentRoom.hints[currentRoom.gameInfo.currentDay - 1]
+              const prevHint = currentRoom.hints[currentRoom.gameInfo.currentDay - 2]
+
+              if (
+                currentPrice <= PRICE_THRESHOLD.MIN_SAFE_PRICE &&
+                prevHint?.expectedChange === 'down'
+              ) {
+                isHintMatched = false
+              } else if (
+                currentPrice >= PRICE_THRESHOLD.MAX_SAFE_PRICE &&
+                prevHint?.expectedChange === 'up'
+              ) {
+                isHintMatched = false
+              }
+
+              const priceChangeDirection = isHintMatched
+                ? prevHint.expectedChange
+                : prevHint.expectedChange === 'up'
+                  ? 'down'
+                  : 'up'
+
+              const oldPrice = currentRoom.gameInfo.currentFishPrice
+              const newPrice = generateNewFishPrice(oldPrice, priceChangeDirection)
+
+              const isHighChange = isPriceChangeHigh(oldPrice, newPrice)
+              let outcomeMessage = ''
+
+              if (isHintMatched) {
+                outcomeMessage = isHighChange ? prevHint.matchOutcomeHigh : prevHint.matchOutcomeLow
+              } else {
+                outcomeMessage = isHighChange
+                  ? prevHint.mismatchOutcomeHigh
+                  : prevHint.mismatchOutcomeLow
+              }
+
+              currentRoom.gameInfo = {
+                ...currentRoom.gameInfo,
+                currentFishPrice: newPrice,
+                lastRoundHintResult: outcomeMessage,
+                nextRoundHint: currentHint?.hint || '',
+              }
+
+              io.to(gameId).emit('update_game_info', currentRoom.gameInfo)
+
+              startGameTimer(gameId, currentRoom)
+            } catch (error) {
+              console.error('다음 라운드로 게임을 업데이트하는데 실패하였습니다.', error)
+              if (currentRoom) {
+                io.to(gameId).emit('update_game_info', currentRoom.gameInfo)
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Round update error:', error)
+          if (currentRoom) {
+            io.to(gameId).emit('update_game_info', currentRoom.gameInfo)
+          }
+        }
+      }
+    }, 1000)
+
+    roundTimers.set(gameId, intervalId)
+  }
 
   io.on('connection', (socket) => {
     socket.on('check_game_availability', (gameId) => {
@@ -46,11 +184,28 @@ app.prepare().then(() => {
 
       if (!room) {
         gameAvailability.message = '존재하지 않는 방 코드입니다.'
-      } else if (room.state !== 'waiting') {
+      } else if (room.state === 'in_progress') {
         gameAvailability.message = '이미 게임이 진행 중인 방입니다.'
       } else if (room.players.length >= 6) {
         gameAvailability.message = '방이 가득 찼습니다. (최대 6명)'
       } else {
+        if (room.state === 'ended') {
+          room.state = 'waiting'
+          room.gameResults = []
+          room.players = room.players.map((player) => ({
+            ...player,
+            score: 0,
+          }))
+          room.gameInfo = {
+            currentDay: 1,
+            currentFishPrice: gameConfig.INITIAL_FISH_PRICE,
+            lastRoundHintResult: '',
+            nextRoundHint: room.hints[0]?.hint || '',
+          }
+
+          io.to(gameId).emit('update_players', room.players)
+          io.to(gameId).emit('update_game_info', room.gameInfo)
+        }
         gameAvailability.isAvailable = true
       }
 
@@ -61,7 +216,7 @@ app.prepare().then(() => {
       const gameId = generateGameId(gameRooms)
       const hints = await loadGameHints(totalRounds)
 
-      const newGame: GameModel = {
+      const newGame: GameModel & { readyPlayers: Set<string> } = {
         gameId,
         totalRounds,
         state: 'waiting',
@@ -73,6 +228,8 @@ app.prepare().then(() => {
           lastRoundHintResult: '',
           nextRoundHint: hints[0]?.hint || '',
         },
+        gameResults: [],
+        readyPlayers: new Set(),
       }
 
       gameRooms.set(gameId, newGame)
@@ -159,6 +316,7 @@ app.prepare().then(() => {
         }
 
         room.state = 'in_progress'
+        room.readyPlayers.clear()
 
         io.to(gameId).emit('game_started', { totalRounds: room.totalRounds })
       } catch (error) {
@@ -167,89 +325,26 @@ app.prepare().then(() => {
       }
     })
 
+    socket.on('player_ready', ({ gameId }) => {
+      const room = gameRooms.get(gameId)
+      if (!room || room.state !== 'in_progress') return
+
+      const playerId = playersMap.get(socket.id)
+      if (!playerId) return
+
+      room.readyPlayers.add(playerId)
+
+      if (room.readyPlayers.size === room.players.length) {
+        startGameTimer(gameId, room)
+        io.to(gameId).emit('all_players_ready')
+      }
+    })
+
     socket.on('request_first_round_hint', ({ gameId }) => {
       const room = gameRooms.get(gameId)
 
       if (room) {
         socket.emit('first_round_hint', room.gameInfo)
-      }
-    })
-
-    socket.on('change_next_round', async (gameId) => {
-      try {
-        const room = gameRooms.get(gameId)
-        if (!room) return
-
-        room.gameInfo.currentDay += 1
-
-        const currentPrice = room.gameInfo.currentFishPrice
-
-        let isHintMatched = shouldHintMatch()
-        const currentHint = room.hints[room.gameInfo.currentDay - 1]
-        const prevHint = room.hints[room.gameInfo.currentDay - 2]
-
-        if (currentPrice <= PRICE_THRESHOLD.MIN_SAFE_PRICE && prevHint?.expectedChange === 'down') {
-          isHintMatched = false
-        } else if (
-          currentPrice >= PRICE_THRESHOLD.MAX_SAFE_PRICE &&
-          prevHint?.expectedChange === 'up'
-        ) {
-          isHintMatched = false
-        }
-
-        const priceChangeDirection = isHintMatched
-          ? prevHint.expectedChange
-          : prevHint.expectedChange === 'up'
-            ? 'down'
-            : 'up'
-
-        const oldPrice = room.gameInfo.currentFishPrice
-        const newPrice = generateNewFishPrice(oldPrice, priceChangeDirection)
-
-        const isHighChange = isPriceChangeHigh(oldPrice, newPrice)
-        let outcomeMessage = ''
-
-        if (isHintMatched) {
-          outcomeMessage = isHighChange ? prevHint.matchOutcomeHigh : prevHint.matchOutcomeLow
-        } else {
-          outcomeMessage = isHighChange ? prevHint.mismatchOutcomeHigh : prevHint.mismatchOutcomeLow
-        }
-
-        room.gameInfo = {
-          ...room.gameInfo,
-          currentFishPrice: newPrice,
-          lastRoundHintResult: outcomeMessage,
-          nextRoundHint: currentHint?.hint,
-        }
-
-        io.to(gameId).emit('update_game_info', room.gameInfo)
-      } catch (error) {
-        console.error('다음 라운드로 게임을 업데이트하는데 실패하였습니다.', error)
-      }
-    })
-
-    socket.on('request_last_fish_price', (gameId) => {
-      try {
-        const room = gameRooms.get(gameId)
-        if (!room) return
-
-        const prevHint = room.hints[room.gameInfo.currentDay - 2]
-        if (!prevHint) return
-
-        const isHintMatched = shouldHintMatch()
-
-        const priceChangeDirection = isHintMatched
-          ? prevHint.expectedChange
-          : prevHint.expectedChange === 'up'
-            ? 'down'
-            : 'up'
-
-        const oldPrice = room.gameInfo.currentFishPrice
-        const newPrice = generateNewFishPrice(oldPrice, priceChangeDirection)
-
-        io.to(gameId).emit('last_fish_price', newPrice)
-      } catch (error) {
-        console.error('마지막 라운드의 생선 가격을 갖고오는데 실패하였습니다.', error)
       }
     })
 
@@ -263,18 +358,118 @@ app.prepare().then(() => {
       })
     })
 
+    socket.on('request_game_results', (gameId) => {
+      try {
+        const room = gameRooms.get(gameId)
+        if (!room) return
+
+        if (room.state === 'ended' && room.gameResults) {
+          socket.emit('game_ended', {
+            results: room.gameResults,
+            gameId,
+          })
+        }
+      } catch (error) {
+        console.error('게임 결과 요청 중 오류 발생:', error)
+      }
+    })
+
+    socket.on('end_game', ({ gameId, result }) => {
+      try {
+        const room = gameRooms.get(gameId)
+        if (!room) {
+          console.error('게임룸을 찾을 수 없습니다:', gameId)
+          return
+        }
+
+        const playerIndex = room.players.findIndex((p) => p.id === result.playerId)
+        if (playerIndex !== -1) {
+          room.players[playerIndex].score = result.totalCoin
+        }
+
+        const updateGameResults = () => {
+          const submittedPlayers = room.players.filter(
+            (player) => typeof player.score === 'number' && player.score >= 0
+          )
+
+          if (submittedPlayers.length > 0) {
+            room.gameResults = submittedPlayers
+              .map((player) => ({
+                id: player.id,
+                nickname: player.nickname,
+                character: player.character,
+                score: player.score || 0,
+              }))
+              .sort((a, b) => b.score - a.score)
+
+            room.state = 'ended'
+
+            io.to(gameId).emit('game_ended', {
+              results: room.gameResults,
+              gameId,
+            })
+          }
+        }
+
+        if (!gameTimers.has(gameId)) {
+          const timer = setTimeout(() => {
+            const currentRoom = gameRooms.get(gameId)
+            if (currentRoom && currentRoom.state !== 'ended') {
+              updateGameResults()
+            }
+            gameTimers.delete(gameId)
+          }, 5000)
+
+          gameTimers.set(gameId, timer)
+        }
+
+        const allPlayersSubmitted =
+          room.players.length > 0 &&
+          room.players.every((player) => typeof player.score === 'number' && player.score >= 0)
+
+        if (allPlayersSubmitted) {
+          const timer = gameTimers.get(gameId)
+          if (timer) {
+            clearTimeout(timer)
+            gameTimers.delete(gameId)
+          }
+
+          updateGameResults()
+        } else if (room.state === 'ended') {
+          updateGameResults()
+        }
+      } catch (error) {
+        console.error('게임 결과 제출 중 오류 발생:', error)
+        socket.emit('error', { message: '게임 결과 제출 중 오류가 발생했습니다.' })
+      }
+    })
+
     socket.on('disconnect', () => {
       const playerId = playersMap.get(socket.id)
 
       if (playerId) {
-        gameRooms.forEach((room) => {
+        gameRooms.forEach((room, gameId) => {
+          if (room.state === 'ended') return
+
           const playerIndex = room.players.findIndex((player) => player.id === playerId)
           if (playerIndex !== -1) {
             room.players.splice(playerIndex, 1)
-            socket.to(room.gameId).emit('update_players', room.players)
+            room.readyPlayers.delete(playerId)
+            socket.to(gameId).emit('update_players', room.players)
 
             if (room.players.length === 0) {
-              gameRooms.delete(room.gameId)
+              const timer = gameTimers.get(gameId)
+              if (timer) {
+                clearTimeout(timer)
+                gameTimers.delete(gameId)
+              }
+
+              const roundTimer = roundTimers.get(gameId)
+              if (roundTimer) {
+                clearInterval(roundTimer)
+                roundTimers.delete(gameId)
+              }
+              gameRooms.delete(gameId)
             }
           }
         })
