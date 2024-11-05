@@ -19,22 +19,20 @@ const ResultPage = ({ params }) => {
   const [currentUser, setCurrentUser] = useState<GameResultModel | null>(null)
 
   useEffect(() => {
-    const handleGameResults = ({ results }) => {
+    socket.emit('request_game_results', { gameId })
+
+    const handleGameResults = ({ results, currentPlayerId }) => {
       setResults(results)
-      const currentPlayer = results.find((r) => r.socketId === socket.id) || null
+      const currentPlayer = results.find((result) => result.id === currentPlayerId) || null
       setCurrentUser(currentPlayer)
     }
 
-    socket.on('game_ended', handleGameResults)
-
-    if (results.length === 0) {
-      socket.emit('request_game_results', gameId)
-    }
+    socket.on('game_results', handleGameResults)
 
     return () => {
-      socket.off('game_ended')
+      socket.off('game_results')
     }
-  }, [gameId, results.length])
+  }, [gameId])
 
   const handleButtonClick = () => {
     const resultText = `🏆 냥트코인 게임 결과 🏆 
@@ -45,7 +43,7 @@ ${results
   })
   .join('\n')}
     
-🐱 '${currentUser?.nickname}' 님은 ${results.findIndex((r) => r.id === currentUser?.id) + 1}등을 차지했습니다! 🐟
+🐱 '${currentUser?.nickname}' 님은 ${results.findIndex((result) => result.id === currentUser?.id) + 1}등을 차지했습니다! 🐟
 🔗 https://nyantcoin.koyeb.app
 최고의 생선 트레이더는 누구? 생선을 사고팔아 냥코인을 모아보세요!`
 
