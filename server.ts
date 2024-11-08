@@ -2,7 +2,7 @@ import { createServer } from 'node:http'
 
 import { instrument } from '@socket.io/admin-ui'
 import next from 'next'
-import { Server as SocketIOServer } from 'socket.io'
+import { Server as SocketIOServer, Socket } from 'socket.io'
 import { v4 as uuid } from 'uuid'
 
 import { ERROR_NOTICE } from './constants/chat.js'
@@ -171,6 +171,64 @@ app.prepare().then(() => {
     }, 1000)
 
     roundTimers.set(gameId, intervalId)
+  }
+
+  const clearGameTimers = (gameId: string) => {
+    const gameTimer = gameTimers.get(gameId)
+    if (gameTimer) {
+      clearTimeout(gameTimer)
+      gameTimers.delete(gameId)
+    }
+
+    const roundTimer = roundTimers.get(gameId)
+    if (roundTimer) {
+      clearInterval(roundTimer)
+      roundTimers.delete(gameId)
+    }
+  }
+
+  const removePlayerFromRoom = (
+    socket: Socket,
+    playerId: string,
+    room: GameModel & { readyPlayers: Set<string> },
+    gameId: string
+  ) => {
+    const playerIndex = room.players.findIndex((player) => player.id === playerId)
+    if (playerIndex === -1) {
+      return false
+    }
+
+    room.players.splice(playerIndex, 1)
+    room.readyPlayers.delete(playerId)
+    socket.to(gameId).emit('update_players', room.players)
+
+    if (room.players.length === 0) {
+      clearGameTimers(gameId)
+      gameRooms.delete(gameId)
+    }
+
+    return true
+  }
+
+  const handlePlayerLeave = (socket: Socket, playerId: string, leaveGameId?: string) => {
+    if (leaveGameId) {
+      const room = gameRooms.get(leaveGameId)
+      if (!room || room.state === 'ended') {
+        return
+      }
+
+      if (removePlayerFromRoom(socket, playerId, room, leaveGameId)) {
+        playersMap.delete(socket.id)
+      }
+      return
+    }
+
+    gameRooms.forEach((room, gameId) => {
+      if (room.state !== 'ended') {
+        removePlayerFromRoom(socket, playerId, room, gameId)
+      }
+    })
+    playersMap.delete(socket.id)
   }
 
   io.on('connection', (socket) => {
@@ -439,77 +497,16 @@ app.prepare().then(() => {
 
     socket.on('leave_game', ({ gameId }) => {
       const playerId = playersMap.get(socket.id)
-      if (!playerId) {
-        return
-      }
+      if (!playerId) return
 
-      const room = gameRooms.get(gameId)
-      if (!room || room.state === 'ended') {
-        return
-      }
-
-      const playerIndex = room.players.findIndex((player) => player.id === playerId)
-      if (playerIndex === -1) {
-        return
-      }
-
-      room.players.splice(playerIndex, 1)
-      room.readyPlayers.delete(playerId)
-
-      socket.to(gameId).emit('update_players', room.players)
-
-      if (room.players.length !== 0) {
-        return
-      }
-
-      const gameTimer = gameTimers.get(gameId)
-      if (gameTimer) {
-        clearTimeout(gameTimer)
-        gameTimers.delete(gameId)
-      }
-
-      const roundTimer = roundTimers.get(gameId)
-      if (roundTimer) {
-        clearInterval(roundTimer)
-        roundTimers.delete(gameId)
-      }
-
-      gameRooms.delete(gameId)
-      playersMap.delete(socket.id)
+      handlePlayerLeave(socket, playerId, gameId)
     })
 
     socket.on('disconnect', () => {
       const playerId = playersMap.get(socket.id)
+      if (!playerId) return
 
-      if (playerId) {
-        gameRooms.forEach((room, gameId) => {
-          if (room.state === 'ended') return
-
-          const playerIndex = room.players.findIndex((player) => player.id === playerId)
-          if (playerIndex !== -1) {
-            room.players.splice(playerIndex, 1)
-            room.readyPlayers.delete(playerId)
-            socket.to(gameId).emit('update_players', room.players)
-
-            if (room.players.length === 0) {
-              const timer = gameTimers.get(gameId)
-              if (timer) {
-                clearTimeout(timer)
-                gameTimers.delete(gameId)
-              }
-
-              const roundTimer = roundTimers.get(gameId)
-              if (roundTimer) {
-                clearInterval(roundTimer)
-                roundTimers.delete(gameId)
-              }
-              gameRooms.delete(gameId)
-            }
-          }
-        })
-
-        playersMap.delete(socket.id)
-      }
+      handlePlayerLeave(socket, playerId)
     })
   })
 
