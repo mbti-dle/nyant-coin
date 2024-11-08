@@ -170,7 +170,7 @@ const GamePage = ({ params }) => {
   const totalCoin = gameState.fish * lastFishCoin + gameState.coins
 
   return (
-    <main className="md:max-w- relative mx-auto flex h-screen min-h-screen w-full max-w-[350px] flex-col pt-[30px]">
+    <main className="relative mx-auto flex h-screen min-h-screen w-full flex-col bg-ocean-game-mobile bg-cover bg-fixed p-3 pt-[30px]">
       <div className="max-w-[420px] p-3 md:pt-[50px]">
         <div className="my-6 flex items-center justify-between">
           <FishCoinsAssets coins={gameState.coins} fish={gameState.fish} />
@@ -196,7 +196,9 @@ const GamePage = ({ params }) => {
           gameResults={gameResults}
         />
       </div>
-      <GameFooter onTransaction={handleTransaction} />
+      <div className="fixed bottom-0 left-0 mx-auto w-full max-w-[420px]">
+        <GameFooter onTransaction={handleTransaction} />
+      </div>
     </main>
   )
 }
