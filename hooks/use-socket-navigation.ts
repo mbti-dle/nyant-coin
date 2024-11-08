@@ -1,4 +1,3 @@
-// lib/hooks/useSocketNavigation.ts
 import { useCallback, useEffect } from 'react'
 
 import { useRouter } from 'next/navigation'
@@ -25,8 +24,8 @@ export const useSocketNavigation = (gameId) => {
 
     window.history.pushState(null, '', window.location.pathname)
 
-    const handlePopState = (e: PopStateEvent) => {
-      e.preventDefault()
+    const handlePopState = (event: PopStateEvent) => {
+      event.preventDefault()
       cleanupAndRedirect()
     }
 
