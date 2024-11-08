@@ -4,10 +4,10 @@ import { useEffect, useState } from 'react'
 
 import Image from 'next/image'
 
-import LoadingPage from '@/app/loading'
 import LinkButton from '@/components/ui/link-button'
 import ConfettiComponent from '@/lib/confetti'
 import { socket } from '@/lib/socket'
+import cat from '@/public/images/cat-4.png'
 import coin from '@/public/images/coin.png'
 import useToastStore from '@/store/toast'
 import { GameResultModel } from '@/types/game'
@@ -19,22 +19,25 @@ const ResultPage = ({ params }) => {
   const [currentUser, setCurrentUser] = useState<GameResultModel | null>(null)
 
   useEffect(() => {
-    socket.emit('request_game_results', { gameId })
-
-    const handleGameResults = ({ results, currentPlayerId }) => {
+    const handleGameResults = ({ results }) => {
       setResults(results)
-      const currentPlayer = results.find((result) => result.id === currentPlayerId) || null
+      const currentPlayer = results.find((r) => r.socketId === socket.id) || null
       setCurrentUser(currentPlayer)
     }
 
-    socket.on('game_results', handleGameResults)
+    socket.on('game_ended', handleGameResults)
+
+    if (results.length === 0) {
+      socket.emit('request_game_results', gameId)
+    }
 
     return () => {
-      socket.off('game_results')
+      socket.off('game_ended')
     }
-  }, [gameId])
+  }, [gameId, results.length])
 
   const handleButtonClick = () => {
+    const userNickname = results[0]?.nickname
     const resultText = `🏆 냥트코인 게임 결과 🏆 
 ${results
   .map((user, index) => {
@@ -43,22 +46,19 @@ ${results
   })
   .join('\n')}
     
-🐱 '${currentUser?.nickname}' 님은 ${results.findIndex((result) => result.id === currentUser?.id) + 1}등을 차지했습니다! 🐟
+🐱 '${userNickname}' 님은 ${results.findIndex((r) => r.id === currentUser?.id) + 1}등을 차지했습니다! 🐟
 🔗 https://nyantcoin.koyeb.app
-최고의 생선 트레이더는 누구? 생선을 사고팔아 냥코인을 모아보세요!`
+최고
+    의 생선 트레이더는 누구? 생선을 사고팔아 냥코인을 모아보세요!`
 
     navigator.clipboard.writeText(resultText)
     showToast('복사 완료! 친구에게 공유해 보세요', 'check')
   }
 
-  if (!results.length) {
-    return <LoadingPage />
-  }
-
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center">
       <div className="relative ml-1 flex h-[100px] w-[100px] items-center justify-center md:h-[150px] md:w-[150px]">
-        <Image src={`/images/cat-${results[0].character}.png`} alt="고양이" fill />
+        <Image src={cat} alt="고양이" fill />
       </div>
       <ul className="mb-10 mt-6 w-full max-w-[300px] font-galmuri">
         {results.map((user, index) => (
