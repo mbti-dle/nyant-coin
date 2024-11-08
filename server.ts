@@ -437,6 +437,47 @@ app.prepare().then(() => {
       }
     })
 
+    socket.on('leave_game', ({ gameId }) => {
+      const playerId = playersMap.get(socket.id)
+      if (!playerId) {
+        return
+      }
+
+      const room = gameRooms.get(gameId)
+      if (!room || room.state === 'ended') {
+        return
+      }
+
+      const playerIndex = room.players.findIndex((player) => player.id === playerId)
+      if (playerIndex === -1) {
+        return
+      }
+
+      room.players.splice(playerIndex, 1)
+      room.readyPlayers.delete(playerId)
+
+      socket.to(gameId).emit('update_players', room.players)
+
+      if (room.players.length !== 0) {
+        return
+      }
+
+      const gameTimer = gameTimers.get(gameId)
+      if (gameTimer) {
+        clearTimeout(gameTimer)
+        gameTimers.delete(gameId)
+      }
+
+      const roundTimer = roundTimers.get(gameId)
+      if (roundTimer) {
+        clearInterval(roundTimer)
+        roundTimers.delete(gameId)
+      }
+
+      gameRooms.delete(gameId)
+      playersMap.delete(socket.id)
+    })
+
     socket.on('disconnect', () => {
       const playerId = playersMap.get(socket.id)
 
