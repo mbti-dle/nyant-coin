@@ -358,20 +358,14 @@ app.prepare().then(() => {
       })
     })
 
-    socket.on('request_game_results', (gameId) => {
-      try {
-        const room = gameRooms.get(gameId)
-        if (!room) return
+    socket.on('request_game_results', ({ gameId }) => {
+      const room = gameRooms.get(gameId)
 
-        if (room.state === 'ended' && room.gameResults) {
-          socket.emit('game_ended', {
-            results: room.gameResults,
-            gameId,
-          })
-        }
-      } catch (error) {
-        console.error('게임 결과 요청 중 오류 발생:', error)
-      }
+      const playerId = playersMap.get(socket.id)
+      socket.emit('game_results', {
+        results: room.gameResults,
+        currentPlayerId: playerId,
+      })
     })
 
     socket.on('end_game', ({ gameId, result }) => {
@@ -406,7 +400,6 @@ app.prepare().then(() => {
 
             io.to(gameId).emit('game_ended', {
               results: room.gameResults,
-              gameId,
             })
           }
         }
