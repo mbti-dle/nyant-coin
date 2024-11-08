@@ -71,16 +71,18 @@ const WaitingPage = ({ params }) => {
       socket.emit('start_game', { gameId })
     }, 2000)
   }
-
   return (
-    <main className="flex min-h-dvh w-full items-center justify-center bg-sea-spaceship-mobile bg-cover bg-fixed bg-top p-3 md:bg-sea-spaceship-desktop">
-      <div className="flex flex-col items-center justify-center gap-4 pb-44 md:static md:h-auto md:min-h-0 md:justify-center md:pt-0">
+    <main className="relative mx-auto min-h-screen w-full bg-ocean-game-mobile bg-sea-spaceship-mobile bg-cover bg-fixed bg-top p-3 pt-[30px] md:bg-sea-spaceship-desktop">
+      <div className="mx-auto mt-20 max-w-[420px] flex-col items-center justify-center gap-4 p-3 pb-44 md:pt-[50px]">
         <PlayerGrid players={players} />
-        <GameIdCopyButton gameId={gameId} />
-        {isLeader && <Button onClick={handleStartClick}>게임 시작</Button>}
+        <div className="mt-5 flex flex-col items-center justify-center gap-4">
+          <GameIdCopyButton gameId={gameId} />
+          {isLeader && <Button onClick={handleStartClick}>게임 시작</Button>}
+        </div>
       </div>
-
-      <ChatContainer gameId={gameId} player={playerInfo} />
+      <div className="fixed bottom-0 left-0 mx-auto w-full max-w-[420px]">
+        <ChatContainer gameId={gameId} player={playerInfo} />
+      </div>
     </main>
   )
 }
