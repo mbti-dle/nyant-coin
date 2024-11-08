@@ -8,6 +8,7 @@ import ChatContainer from '@/components/features/waiting/chat-container'
 import GameIdCopyButton from '@/components/features/waiting/game-id-copy-button'
 import PlayerGrid from '@/components/features/waiting/player-grid'
 import Button from '@/components/ui/button'
+import { useSocketNavigation } from '@/hooks/use-socket-navigation'
 import { socket } from '@/lib/socket'
 import useGameStore from '@/store/game'
 import { PlayerModel } from '@/types/game'
@@ -21,6 +22,8 @@ const WaitingPage = ({ params }) => {
   const [isLeader, setIsLeader] = useState(false)
 
   const setGameRounds = useGameStore((state) => state.setGameRounds)
+
+  useSocketNavigation(gameId)
 
   useEffect(() => {
     const handlePlayerInfo = ({ players, playerId }) => {
