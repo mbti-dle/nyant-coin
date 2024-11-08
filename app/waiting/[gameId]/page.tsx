@@ -73,7 +73,7 @@ const WaitingPage = ({ params }) => {
   }
   return (
     <main className="relative mx-auto min-h-screen w-full bg-ocean-game-mobile bg-sea-spaceship-mobile bg-cover bg-fixed bg-top p-3 pt-[30px] md:bg-sea-spaceship-desktop">
-      <div className="mx-auto mt-20 max-w-[420px] flex-col items-center justify-center gap-4 p-3 pb-44 md:pt-[50px]">
+      <div className="mx-auto mt-5 max-w-[420px] flex-col items-center justify-center gap-4 p-3 pb-44 md:pt-[50px]">
         <PlayerGrid players={players} />
         <div className="mt-5 flex flex-col items-center justify-center gap-4">
           <GameIdCopyButton gameId={gameId} />
