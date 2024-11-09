@@ -24,6 +24,7 @@ const HomePage = () => {
   const [errorMessage, setErrorMessage] = useState('')
 
   const setGameId = useGameStore((state) => state.setGameId)
+  const setIsLeader = useGameStore((state) => state.setIsLeader)
 
   useEffect(() => {
     const handleSocketConnect = () => {
@@ -67,6 +68,7 @@ const HomePage = () => {
     socket.on('is_available_game', ({ isAvailable, message }) => {
       if (isAvailable) {
         setGameId(inputGameId)
+        setIsLeader(false)
         router.push('/setup/user-info')
       } else {
         setErrorMessage(message)
