@@ -43,6 +43,7 @@ const GamePage = ({ params }) => {
   const [transactionResult, setTransactionResult] = useState<TransactionResultModel>({
     playerId: null,
     message: '',
+    timestamp: 0,
   })
   const [playerId, setPlayerId] = useState<string | null>(null)
   const [prevFishPrice, setPrevFishPrice] = useState(gameConfig.INITIAL_FISH_PRICE)

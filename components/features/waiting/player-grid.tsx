@@ -29,6 +29,7 @@ const PlayerGrid = ({ players, transactionResult }: PlayerGridProps) => {
           message={
             player.id === transactionResult?.playerId ? transactionResult.message : undefined
           }
+          timestamp={transactionResult?.timestamp}
         />
       ))}
     </div>
