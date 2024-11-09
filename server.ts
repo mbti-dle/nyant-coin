@@ -413,7 +413,6 @@ app.prepare().then(() => {
       io.to(gameId).emit('trade_message', {
         playerId,
         message,
-        timestamp: Date.now(),
       })
     })
 

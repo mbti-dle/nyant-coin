@@ -8,7 +8,6 @@ export interface AvatarModel {
 export interface TransactionResultModel {
   playerId: string
   message: string
-  timestamp: number
 }
 
 export interface GameStateModel {
