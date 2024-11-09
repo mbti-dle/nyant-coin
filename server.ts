@@ -249,20 +249,7 @@ app.prepare().then(() => {
       } else {
         if (room.state === 'ended') {
           room.state = 'waiting'
-          room.gameResults = []
-          room.players = room.players.map((player) => ({
-            ...player,
-            score: 0,
-          }))
-          room.gameInfo = {
-            currentDay: 1,
-            currentFishPrice: gameConfig.INITIAL_FISH_PRICE,
-            lastRoundHintResult: '',
-            nextRoundHint: room.hints[0]?.hint || '',
-          }
-
-          io.to(gameId).emit('update_players', room.players)
-          io.to(gameId).emit('update_game_info', room.gameInfo)
+          room.readyPlayers.clear()
         }
         gameAvailability.isAvailable = true
       }
@@ -272,26 +259,24 @@ app.prepare().then(() => {
 
     socket.on('create_game', async (totalRounds, joinGame) => {
       const gameId = generateGameId(gameRooms)
-      const hints = await loadGameHints(totalRounds)
 
       const newGame: GameModel & { readyPlayers: Set<string> } = {
         gameId,
         totalRounds,
         state: 'waiting',
-        hints,
+        hints: [],
         players: [],
         gameInfo: {
           currentDay: 1,
           currentFishPrice: gameConfig.INITIAL_FISH_PRICE,
           lastRoundHintResult: '',
-          nextRoundHint: hints[0]?.hint || '',
+          nextRoundHint: '',
         },
         gameResults: [],
         readyPlayers: new Set(),
       }
 
       gameRooms.set(gameId, newGame)
-      io.to(gameId).emit('update_game_info', newGame.gameInfo)
       joinGame(gameId)
     })
 
@@ -352,13 +337,22 @@ app.prepare().then(() => {
       io.to(gameId).emit('new_chat_notice', { notice })
     })
 
-    socket.on('start_game', ({ gameId }) => {
+    socket.on('start_game', async ({ gameId }) => {
       try {
         const room = gameRooms.get(gameId)
 
         if (!room) {
           socket.emit('INITIALIZATION_ERROR', { notice: ERROR_NOTICE.initialization_error })
           return
+        }
+
+        const hints = await loadGameHints(room.totalRounds)
+        room.hints = hints
+        room.gameInfo = {
+          currentDay: 1,
+          currentFishPrice: gameConfig.INITIAL_FISH_PRICE,
+          lastRoundHintResult: '',
+          nextRoundHint: hints[0]?.hint || '',
         }
 
         if (!room.hints || room.hints.length === 0) {
