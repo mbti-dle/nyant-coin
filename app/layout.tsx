@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     url: 'https://nyantcoin.koyeb.app/',
     images: [
       {
-        url: '/images/og.png',
+        url: 'https://nyantcoin.koyeb.app/og.png',
         alt: '냥트코인 로고',
       },
     ],
