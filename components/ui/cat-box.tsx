@@ -9,19 +9,23 @@ interface CatBoxProps extends ComponentProps<'div'> {
   nickName?: string
   isLeader?: boolean
   message?: string
-  timestamp?: number
+  messageKey?: number
 }
 
 const CatBox = memo(
-  ({ imageUrl, nickName, isLeader = false, message, timestamp, className }: CatBoxProps) => {
+  ({ imageUrl, nickName, isLeader = false, message, messageKey, className }: CatBoxProps) => {
     const [showResult, setShowResult] = useState(false)
     const [result, setResult] = useState('')
     const [fadeOut, setFadeOut] = useState(false)
 
     useEffect(() => {
+      setShowResult(false)
+      setFadeOut(false)
+      setResult('')
+
       if (message) {
-        setResult(message)
         setShowResult(true)
+        setResult(message)
         setFadeOut(false)
 
         const fadeOutTimer = setTimeout(() => setFadeOut(true), 2000)
@@ -32,7 +36,7 @@ const CatBox = memo(
           clearTimeout(hideTimer)
         }
       }
-    }, [message, timestamp])
+    }, [message, messageKey])
 
     return (
       <div
