@@ -64,7 +64,7 @@ const HomePage = () => {
       return
     }
 
-    socket.emit('check_game_availability', inputGameId)
+    socket.emit('check_game_availability', { inputGameId })
     socket.on('is_available_game', ({ isAvailable, message }) => {
       if (isAvailable) {
         setGameId(inputGameId)

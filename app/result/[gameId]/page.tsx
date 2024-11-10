@@ -51,6 +51,10 @@ ${results
     showToast('복사 완료! 친구에게 공유해 보세요', 'check')
   }
 
+  const handleLinkButtonClick = () => {
+    socket.emit('back_to_waiting', { gameId })
+  }
+
   if (!results.length) {
     return <LoadingPage />
   }
@@ -74,7 +78,11 @@ ${results
           </li>
         ))}
       </ul>
-      <LinkButton href={`/waiting/${gameId}`} className="flex flex-col items-center">
+      <LinkButton
+        href={`/waiting/${gameId}`}
+        onClick={handleLinkButtonClick}
+        className="flex flex-col items-center"
+      >
         대기실 이동하기
       </LinkButton>
       <button onClick={handleButtonClick} className="mt-4 font-galmuri text-sm text-blue">

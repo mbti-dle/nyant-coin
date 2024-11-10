@@ -38,6 +38,7 @@ const ResultModal = ({
 
   const handleResultButtonClick = () => {
     if (gameResults && gameId) {
+      onGameEnd()
       router.push(`/result/${gameId}`)
     }
   }

@@ -58,7 +58,7 @@ const UserInfoPage = () => {
     }
 
     if (isLeader) {
-      socket.emit('create_game', rounds, joinGame)
+      socket.emit('create_game', { rounds }, joinGame)
     } else {
       joinGame(gameId)
     }

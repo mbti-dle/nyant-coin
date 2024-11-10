@@ -14,7 +14,7 @@ export const gameConfig = {
   INITIAL_COINS: 1000,
   INITIAL_FISH: 0,
   INITIAL_FISH_PRICE: 100,
-  INITIAL_TIMER: 2,
+  INITIAL_TIMER: 20,
 }
 
 export const PRICE_THRESHOLD = {

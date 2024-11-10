@@ -109,7 +109,7 @@ const GamePage = ({ params }) => {
       setGameResults(results)
     }
 
-    socket.emit('request_player_info', gameId)
+    socket.emit('request_player_info', { gameId })
     socket.emit('request_first_round_hint', { gameId })
     socket.emit('player_ready', { gameId })
 
