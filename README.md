@@ -1,9 +1,8 @@
 <div align="center">
-<img src="https://github.com/user-attachments/assets/0a7a5697-2d2c-49a1-a382-5337ca3a2d23" width="150" height="70"/>
 
----
+![readme](https://github.com/user-attachments/assets/5be7ebc0-af38-44a6-ac79-aecb0ae5a2d5)
 
-고양이 주식게임, 냥트코인입니다!<br> 
+### 고양이 주식게임, 냥트코인
 지구에 불시착한 우주고양이 알린과 엘린!<br> 
 생선을 사고팔아 우주선을 수리해 우주 정복의 꿈을 이룰 수 있을까요?
 
