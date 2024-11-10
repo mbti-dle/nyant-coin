@@ -32,7 +32,9 @@ const ChatContainer = ({ gameId, player, setIsPreparingGame }: ChatContainerProp
 
     const handleNewChatNotice = (newChatNotice) => {
       setChats((prevChat) => [...prevChat, { type: 'notice', ...newChatNotice }])
-      setIsPreparingGame(false)
+      if (newChatNotice.notice !== '잠시 후 게임이 시작됩니다') {
+        setIsPreparingGame(false)
+      }
     }
 
     socket.on('new_chat_message', handleNewChatMessage)

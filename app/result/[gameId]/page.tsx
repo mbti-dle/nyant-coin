@@ -6,12 +6,13 @@ import Image from 'next/image'
 
 import LoadingPage from '@/app/loading'
 import LinkButton from '@/components/ui/link-button'
+import { useSocketNavigation } from '@/hooks/use-socket-navigation'
 import ConfettiComponent from '@/lib/confetti'
 import { socket } from '@/lib/socket'
 import coin from '@/public/images/coin.png'
+import useGameStore from '@/store/game'
 import useToastStore from '@/store/toast'
 import { GameResultModel } from '@/types/game'
-import useGameStore from '@/store/game'
 
 const ResultPage = ({ params }) => {
   const { gameId } = params
@@ -20,6 +21,8 @@ const ResultPage = ({ params }) => {
 
   const { playerId: currentPlayerId, results: gameResults } = useGameStore()
   const { showToast } = useToastStore()
+
+  useSocketNavigation(gameId)
 
   useEffect(() => {
     const currentPlayer = gameResults.find((result) => result.id === currentPlayerId) || null

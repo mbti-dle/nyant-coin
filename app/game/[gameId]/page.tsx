@@ -55,6 +55,7 @@ const GamePage = ({ params }) => {
     setPlayerId,
     results: gameResults,
     setResults: setGameResults,
+    resetResults,
   } = useGameStore()
   const { showToast } = useToastStore()
 
@@ -111,7 +112,6 @@ const GamePage = ({ params }) => {
     }
 
     const handleGameEnded = ({ results }: { results: GameResultModel[] }) => {
-      // setGameResults(results)
       setGameResults(results)
     }
 
@@ -137,6 +137,10 @@ const GamePage = ({ params }) => {
       socket.off('game_ended')
     }
   }, [gameId])
+
+  useEffect(() => {
+    resetResults()
+  }, [])
 
   const handleTransaction = (action: TransactionType, amount: number) => {
     setGameState((prevState) => {

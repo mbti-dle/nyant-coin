@@ -63,8 +63,8 @@ const WaitingPage = ({ params }) => {
 
     const handleGameStarted = ({ totalRounds }) => {
       setGameRounds(totalRounds)
-      setIsPreparingGame(false)
       router.push(`/game/${gameId}`)
+      setIsPreparingGame(false)
     }
 
     socket.emit('request_player_info', { gameId })
@@ -87,7 +87,6 @@ const WaitingPage = ({ params }) => {
 
   useEffect(() => {
     const handleNotReturnedCount = ({ count }) => {
-      console.log(count)
       if (count > 0) {
         setNotReturnedPlayersCount(count)
         setIsModalVisible(true)

@@ -12,6 +12,7 @@ interface GameStoreModel {
   setGameRounds: (rounds: number) => void
   setIsLeader: (isLeader: boolean) => void
   setResults: (results: GameResultModel[]) => void
+  resetResults: () => void
 }
 
 const useGameStore = create<GameStoreModel>((set) => ({
@@ -25,6 +26,7 @@ const useGameStore = create<GameStoreModel>((set) => ({
   setGameRounds: (rounds) => set({ rounds }),
   setIsLeader: (isLeader) => set({ isLeader }),
   setResults: (results) => set({ results }),
+  resetResults: () => set({ results: null }),
 }))
 
 export default useGameStore

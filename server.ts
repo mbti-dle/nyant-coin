@@ -293,11 +293,6 @@ app.prepare().then(() => {
         room.players.push(newPlayer)
         room.readyPlayers.add(playerId)
 
-        console.log('게임아이디', gameId)
-        console.log('소켓아이디', socket.id)
-        console.log(playersMap)
-        console.log('유저아이디', playerId)
-
         socket.join(gameId)
         socket.to(gameId).emit('update_players', room.players)
 
@@ -383,8 +378,6 @@ app.prepare().then(() => {
           nextRoundHint: hints[0]?.hint || '',
         }
         room.state = 'in_progress'
-        room.readyPlayers.clear()
-
         io.to(gameId).emit('game_started', { totalRounds: room.totalRounds })
       } catch (error) {
         console.error('Game start error:', error)
@@ -410,6 +403,8 @@ app.prepare().then(() => {
     socket.on('end_game', ({ gameId, result }) => {
       try {
         const room = gameRooms.get(gameId)
+        room.readyPlayers.clear()
+
         if (!room) {
           console.error('게임룸을 찾을 수 없습니다:', gameId)
           return
@@ -470,13 +465,6 @@ app.prepare().then(() => {
         } else if (room.state === 'ended') {
           updateGameResults()
         }
-
-        const playerId = playersMap.get(socket.id)
-        console.log('게임아이디', gameId)
-        console.log('소켓아이디', socket.id)
-        console.log(playersMap)
-        console.log('유저아이디', playerId)
-        room.readyPlayers.clear()
       } catch (error) {
         console.error('게임 결과 제출 중 오류 발생:', error)
         socket.emit('error', { message: '게임 결과 제출 중 오류가 발생했습니다.' })
@@ -501,28 +489,9 @@ app.prepare().then(() => {
       })
     })
 
-    socket.on('request_game_results', ({ gameId }) => {
-      const room = gameRooms.get(gameId)
-      const playerId = playersMap.get(socket.id)
-
-      if (!room || !playerId) {
-        return
-      }
-
-      socket.emit('game_results', {
-        results: room.gameResults,
-        currentPlayerId: playerId,
-      })
-    })
-
     socket.on('back_to_waiting', ({ gameId }) => {
       const room = gameRooms.get(gameId)
       const playerId = playersMap.get(socket.id)
-
-      console.log('게임아이디', gameId)
-      console.log('소켓아이디', socket.id)
-      console.log(playersMap)
-      console.log('유저아이디', playerId)
 
       if (!room || !playerId) {
         return
