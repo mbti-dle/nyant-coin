@@ -26,6 +26,8 @@ import {
 } from '@/types/game'
 
 const GamePage = ({ params }) => {
+  const { gameId } = params
+
   const INITIAL_GAME_STATE: GameStateModel = {
     coins: gameConfig.INITIAL_COINS,
     fish: gameConfig.INITIAL_FISH,
@@ -51,7 +53,6 @@ const GamePage = ({ params }) => {
 
   const { rounds: totalRounds } = useGameStore()
   const { showToast } = useToastStore()
-  const { gameId } = params
 
   useSocketNavigation(gameId)
 

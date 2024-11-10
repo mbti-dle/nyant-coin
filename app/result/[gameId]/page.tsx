@@ -14,18 +14,20 @@ import { GameResultModel } from '@/types/game'
 
 const ResultPage = ({ params }) => {
   const { gameId } = params
-  const { showToast } = useToastStore()
+
   const [results, setResults] = useState<GameResultModel[]>([])
   const [currentUser, setCurrentUser] = useState<GameResultModel | null>(null)
 
-  useEffect(() => {
-    socket.emit('request_game_results', { gameId })
+  const { showToast } = useToastStore()
 
+  useEffect(() => {
     const handleGameResults = ({ results, currentPlayerId }) => {
       setResults(results)
       const currentPlayer = results.find((result) => result.id === currentPlayerId) || null
       setCurrentUser(currentPlayer)
     }
+
+    socket.emit('request_game_results', { gameId })
 
     socket.on('game_results', handleGameResults)
 

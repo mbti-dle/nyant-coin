@@ -17,17 +17,18 @@ import { PlayerModel } from '@/types/game'
 
 const WaitingPage = ({ params }) => {
   const { gameId = 'N09C14' } = params
+
   const router = useRouter()
 
   const [players, setPlayers] = useState<PlayerModel[]>([])
   const [playerInfo, setPlayerInfo] = useState<PlayerModel>()
   const [isLeader, setIsLeader] = useState(false)
-  const [notReturnedCount, setNotReturnedCount] = useState(0)
   const [isModalVisible, setIsModalVisible] = useState(false)
   const [isPreparingGame, setIsPreparingGame] = useState(false)
+  const [notReturnedCount, setNotReturnedCount] = useState(0)
 
-  const setGameRounds = useGameStore((state) => state.setGameRounds)
   const showToast = useToastStore((state) => state.showToast)
+  const setGameRounds = useGameStore((state) => state.setGameRounds)
 
   useSocketNavigation(gameId)
 
@@ -89,10 +90,10 @@ const WaitingPage = ({ params }) => {
       if (count > 0) {
         setNotReturnedCount(count)
         setIsModalVisible(true)
-      } else {
-        if (!isModalVisible) {
-          startGame(false)
-        }
+      }
+
+      if (!isModalVisible) {
+        startGame(false)
       }
     }
 
@@ -102,6 +103,10 @@ const WaitingPage = ({ params }) => {
       socket.off('not_returned_players_count')
     }
   }, [isModalVisible])
+
+  const handleStartClick = () => {
+    socket.emit('check_not_returned_players', { gameId })
+  }
 
   const startGame = (removePlayers: boolean) => {
     setIsPreparingGame(true)
@@ -113,10 +118,6 @@ const WaitingPage = ({ params }) => {
     setTimeout(() => {
       socket.emit('start_game', { gameId, removePlayers })
     }, 2000)
-  }
-
-  const handleStartClick = () => {
-    socket.emit('check_not_returned_players', { gameId })
   }
 
   return (
