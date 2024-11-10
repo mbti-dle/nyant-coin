@@ -232,7 +232,7 @@ app.prepare().then(() => {
   }
 
   io.on('connection', (socket) => {
-    socket.on('check_game_availability', ({ gameId }) => {
+    socket.on('check_game_availability', ({ inputGameId: gameId }) => {
       const room = gameRooms.get(gameId)
 
       const gameAvailability = {
@@ -253,7 +253,7 @@ app.prepare().then(() => {
       socket.emit('is_available_game', gameAvailability)
     })
 
-    socket.on('create_game', async ({ totalRounds }, joinGame) => {
+    socket.on('create_game', async (totalRounds, joinGame) => {
       const gameId = generateGameId(gameRooms)
 
       const newGame: GameModel & { readyPlayers: Set<string> } = {
@@ -339,8 +339,6 @@ app.prepare().then(() => {
       try {
         const room = gameRooms.get(gameId)
 
-        console.log(room.players.length, room.readyPlayers.size)
-
         if (!room) {
           socket.emit('INITIALIZATION_ERROR', { notice: ERROR_NOTICE.initialization_error })
           return
@@ -379,13 +377,8 @@ app.prepare().then(() => {
           lastRoundHintResult: '',
           nextRoundHint: hints[0]?.hint || '',
         }
-        console.log('게임 시작 전 대기실 인원', room.readyPlayers)
-
         room.state = 'in_progress'
         room.readyPlayers.clear()
-
-        console.log('소켓룸 인원', room.players)
-        console.log('게임 시작 후 대기실 인원', room.readyPlayers)
 
         io.to(gameId).emit('game_started', { totalRounds: room.totalRounds })
       } catch (error) {

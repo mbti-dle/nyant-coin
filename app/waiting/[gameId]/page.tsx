@@ -14,6 +14,7 @@ import { socket } from '@/lib/socket'
 import useGameStore from '@/store/game'
 import useToastStore from '@/store/toast'
 import { PlayerModel } from '@/types/game'
+import PlayerReturnStatusModal from '@/components/features/player-return-status-modal'
 
 const WaitingPage = ({ params }) => {
   const { gameId = 'N09C14' } = params
@@ -25,7 +26,7 @@ const WaitingPage = ({ params }) => {
   const [isLeader, setIsLeader] = useState(false)
   const [isModalVisible, setIsModalVisible] = useState(false)
   const [isPreparingGame, setIsPreparingGame] = useState(false)
-  const [notReturnedCount, setNotReturnedCount] = useState(0)
+  const [notReturnedPlayersCount, setNotReturnedPlayersCount] = useState(0)
 
   const showToast = useToastStore((state) => state.showToast)
   const setGameRounds = useGameStore((state) => state.setGameRounds)
@@ -88,12 +89,12 @@ const WaitingPage = ({ params }) => {
   useEffect(() => {
     const handleNotReturnedCount = ({ count }) => {
       if (count > 0) {
-        setNotReturnedCount(count)
+        setNotReturnedPlayersCount(count)
         setIsModalVisible(true)
-      }
-
-      if (!isModalVisible) {
-        startGame(false)
+      } else {
+        if (!isModalVisible) {
+          startGame(false)
+        }
       }
     }
 
@@ -103,6 +104,12 @@ const WaitingPage = ({ params }) => {
       socket.off('not_returned_players_count')
     }
   }, [isModalVisible])
+
+  const handleModalConfirm = () => {
+    setIsModalVisible(false)
+    startGame(true)
+  }
+  const handleModalClose = () => setIsModalVisible(false)
 
   const handleStartClick = () => {
     socket.emit('check_not_returned_players', { gameId })
@@ -136,33 +143,12 @@ const WaitingPage = ({ params }) => {
       <div className="fixed bottom-0 left-0 mx-auto w-full max-w-[420px]">
         <ChatContainer gameId={gameId} player={playerInfo} />
       </div>
-      <Modal
+      <PlayerReturnStatusModal
+        notReturnedPlayerCount={notReturnedPlayersCount}
         isOpen={isModalVisible}
-        title="게임 시작 확인"
-        onModalClose={() => setIsModalVisible(false)}
-      >
-        <div className="flex flex-col items-center gap-4">
-          <p>현재 {notReturnedCount}명이 대기실에 없습니다.</p>
-          <p>그래도 게임을 시작하시겠습니까?</p>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setIsModalVisible(false)}
-              className="rounded bg-gray-200 px-4 py-2"
-            >
-              취소
-            </button>
-            <button
-              onClick={() => {
-                setIsModalVisible(false)
-                startGame(true)
-              }}
-              className="rounded bg-primary px-4 py-2 text-white"
-            >
-              확인
-            </button>
-          </div>
-        </div>
-      </Modal>
+        onModalConfirm={handleModalConfirm}
+        onModalClose={handleModalClose}
+      />
     </main>
   )
 }
