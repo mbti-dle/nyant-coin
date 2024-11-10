@@ -4,17 +4,16 @@ import { useState, useEffect } from 'react'
 
 import { useRouter } from 'next/navigation'
 
+import PlayerReturnStatusModal from '@/components/features/player-return-status-modal'
 import ChatContainer from '@/components/features/waiting/chat-container'
 import GameIdCopyButton from '@/components/features/waiting/game-id-copy-button'
 import PlayerGrid from '@/components/features/waiting/player-grid'
 import Button from '@/components/ui/button'
-import Modal from '@/components/ui/modal'
 import { useSocketNavigation } from '@/hooks/use-socket-navigation'
 import { socket } from '@/lib/socket'
 import useGameStore from '@/store/game'
 import useToastStore from '@/store/toast'
 import { PlayerModel } from '@/types/game'
-import PlayerReturnStatusModal from '@/components/features/player-return-status-modal'
 
 const WaitingPage = ({ params }) => {
   const { gameId = 'N09C14' } = params
@@ -88,6 +87,7 @@ const WaitingPage = ({ params }) => {
 
   useEffect(() => {
     const handleNotReturnedCount = ({ count }) => {
+      console.log(count)
       if (count > 0) {
         setNotReturnedPlayersCount(count)
         setIsModalVisible(true)
@@ -141,7 +141,11 @@ const WaitingPage = ({ params }) => {
         </div>
       </div>
       <div className="fixed bottom-0 left-0 mx-auto w-full max-w-[420px]">
-        <ChatContainer gameId={gameId} player={playerInfo} />
+        <ChatContainer
+          gameId={gameId}
+          player={playerInfo}
+          setIsPreparingGame={setIsPreparingGame}
+        />
       </div>
       <PlayerReturnStatusModal
         notReturnedPlayerCount={notReturnedPlayersCount}

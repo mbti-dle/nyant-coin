@@ -293,6 +293,11 @@ app.prepare().then(() => {
         room.players.push(newPlayer)
         room.readyPlayers.add(playerId)
 
+        console.log('게임아이디', gameId)
+        console.log('소켓아이디', socket.id)
+        console.log(playersMap)
+        console.log('유저아이디', playerId)
+
         socket.join(gameId)
         socket.to(gameId).emit('update_players', room.players)
 
@@ -466,6 +471,11 @@ app.prepare().then(() => {
           updateGameResults()
         }
 
+        const playerId = playersMap.get(socket.id)
+        console.log('게임아이디', gameId)
+        console.log('소켓아이디', socket.id)
+        console.log(playersMap)
+        console.log('유저아이디', playerId)
         room.readyPlayers.clear()
       } catch (error) {
         console.error('게임 결과 제출 중 오류 발생:', error)
@@ -493,8 +503,12 @@ app.prepare().then(() => {
 
     socket.on('request_game_results', ({ gameId }) => {
       const room = gameRooms.get(gameId)
-
       const playerId = playersMap.get(socket.id)
+
+      if (!room || !playerId) {
+        return
+      }
+
       socket.emit('game_results', {
         results: room.gameResults,
         currentPlayerId: playerId,
@@ -502,10 +516,15 @@ app.prepare().then(() => {
     })
 
     socket.on('back_to_waiting', ({ gameId }) => {
-      const playerId = playersMap.get(socket.id)
       const room = gameRooms.get(gameId)
+      const playerId = playersMap.get(socket.id)
 
-      if (!(playerId && room)) {
+      console.log('게임아이디', gameId)
+      console.log('소켓아이디', socket.id)
+      console.log(playersMap)
+      console.log('유저아이디', playerId)
+
+      if (!room || !playerId) {
         return
       }
 

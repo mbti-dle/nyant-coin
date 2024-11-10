@@ -1,6 +1,7 @@
+import React from 'react'
+
 import Button from '@/components/ui/button'
 import Modal from '@/components/ui/modal'
-import React from 'react'
 
 interface PlayerReturnStatusModalProps {
   notReturnedPlayerCount: number

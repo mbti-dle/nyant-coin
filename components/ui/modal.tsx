@@ -3,10 +3,10 @@
 import { ReactNode } from 'react'
 
 import CloseIcon from '@mui/icons-material/CloseSharp'
+import clsx from 'clsx'
 import { createPortal } from 'react-dom'
 
 import IconButton from '@/components/ui/icon-button'
-import clsx from 'clsx'
 
 interface ModalProps {
   title?: string

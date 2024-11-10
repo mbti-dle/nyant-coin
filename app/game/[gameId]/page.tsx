@@ -46,12 +46,16 @@ const GamePage = ({ params }) => {
     playerId: null,
     message: '',
   })
-  const [playerId, setPlayerId] = useState<string | null>(null)
   const [prevFishPrice, setPrevFishPrice] = useState(gameConfig.INITIAL_FISH_PRICE)
   const [lastFishCoin, setLastFishCoin] = useState(0)
-  const [gameResults, setGameResults] = useState<GameResultModel[] | null>(null)
 
-  const { rounds: totalRounds } = useGameStore()
+  const {
+    rounds: totalRounds,
+    playerId,
+    setPlayerId,
+    results: gameResults,
+    setResults: setGameResults,
+  } = useGameStore()
   const { showToast } = useToastStore()
 
   useSocketNavigation(gameId)
@@ -107,6 +111,7 @@ const GamePage = ({ params }) => {
     }
 
     const handleGameEnded = ({ results }: { results: GameResultModel[] }) => {
+      // setGameResults(results)
       setGameResults(results)
     }
 
