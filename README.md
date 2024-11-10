@@ -2,6 +2,7 @@
 <img src="https://github.com/user-attachments/assets/0a7a5697-2d2c-49a1-a382-5337ca3a2d23" width="150" height="70"/>
 
 ---
+
 고양이 주식게임, 냥트코인입니다!<br> 
 지구에 불시착한 우주고양이 알린과 엘린!<br> 
 생선을 사고팔아 우주선을 수리해 우주 정복의 꿈을 이룰 수 있을까요?
@@ -17,6 +18,7 @@
   5. 최종적으로 가장 많은 냥코인을 모은 플레이어가 우승합니다. 최적의 타이밍에 거래해서 우승을 차지하세요!
 <br>
 <br/> 
+
 ## 팀원소개
 
 <div align="center">
@@ -72,3 +74,7 @@ Next.js와 Socket.io의 통합으로 실시간 데이터가 반영되는 서버�
 <img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=PostgreSQL&logoColor=white">
 
 - PostgreSQL을 사용하여 게임 데이터를 안정적으로 저장하고 관리하며, 실시간으로 저장된 데이터에 액세스가 가능하도록 지원
+
+## 프로젝트 회고
+
+![readme](https://github.com/user-attachments/assets/539f27dc-f817-4f1c-b62a-dae9de9265ab)
