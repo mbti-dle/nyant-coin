@@ -31,10 +31,10 @@ const ResultModal = ({
   const router = useRouter()
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !gameResults) {
       onGameEnd()
     }
-  }, [isOpen, onGameEnd])
+  }, [isOpen, onGameEnd, gameResults])
 
   const handleResultButtonClick = () => {
     if (gameResults && gameId) {
