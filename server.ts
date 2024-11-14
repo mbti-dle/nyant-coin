@@ -213,7 +213,7 @@ app.prepare().then(() => {
   const handlePlayerLeave = (socket: Socket, playerId: string, leaveGameId?: string) => {
     if (leaveGameId) {
       const room = gameRooms.get(leaveGameId)
-      if (!room || room.state === 'ended') {
+      if (!room) {
         return
       }
 
@@ -232,7 +232,7 @@ app.prepare().then(() => {
   }
 
   io.on('connection', (socket) => {
-    socket.on('check_game_availability', (gameId) => {
+    socket.on('check_game_availability', ({ inputGameId: gameId }) => {
       const room = gameRooms.get(gameId)
 
       const gameAvailability = {
@@ -242,28 +242,11 @@ app.prepare().then(() => {
 
       if (!room) {
         gameAvailability.message = '존재하지 않는 방 코드입니다.'
-      } else if (room.state === 'in_progress') {
+      } else if (room.state === 'in_progress' || room.state === 'ended') {
         gameAvailability.message = '이미 게임이 진행 중인 방입니다.'
       } else if (room.players.length >= 6) {
         gameAvailability.message = '방이 가득 찼습니다. (최대 6명)'
       } else {
-        if (room.state === 'ended') {
-          room.state = 'waiting'
-          room.gameResults = []
-          room.players = room.players.map((player) => ({
-            ...player,
-            score: 0,
-          }))
-          room.gameInfo = {
-            currentDay: 1,
-            currentFishPrice: gameConfig.INITIAL_FISH_PRICE,
-            lastRoundHintResult: '',
-            nextRoundHint: room.hints[0]?.hint || '',
-          }
-
-          io.to(gameId).emit('update_players', room.players)
-          io.to(gameId).emit('update_game_info', room.gameInfo)
-        }
         gameAvailability.isAvailable = true
       }
 
@@ -272,26 +255,24 @@ app.prepare().then(() => {
 
     socket.on('create_game', async (totalRounds, joinGame) => {
       const gameId = generateGameId(gameRooms)
-      const hints = await loadGameHints(totalRounds)
 
       const newGame: GameModel & { readyPlayers: Set<string> } = {
         gameId,
         totalRounds,
         state: 'waiting',
-        hints,
+        hints: [],
         players: [],
         gameInfo: {
           currentDay: 1,
           currentFishPrice: gameConfig.INITIAL_FISH_PRICE,
           lastRoundHintResult: '',
-          nextRoundHint: hints[0]?.hint || '',
+          nextRoundHint: '',
         },
         gameResults: [],
         readyPlayers: new Set(),
       }
 
       gameRooms.set(gameId, newGame)
-      io.to(gameId).emit('update_game_info', newGame.gameInfo)
       joinGame(gameId)
     })
 
@@ -310,6 +291,8 @@ app.prepare().then(() => {
         }
 
         room.players.push(newPlayer)
+        room.readyPlayers.add(playerId)
+
         socket.join(gameId)
         socket.to(gameId).emit('update_players', room.players)
 
@@ -317,7 +300,7 @@ app.prepare().then(() => {
       }
     })
 
-    socket.on('request_player_info', (gameId) => {
+    socket.on('request_player_info', ({ gameId }) => {
       const room = gameRooms.get(gameId)
       const playerId = playersMap.get(socket.id)
 
@@ -352,7 +335,7 @@ app.prepare().then(() => {
       io.to(gameId).emit('new_chat_notice', { notice })
     })
 
-    socket.on('start_game', ({ gameId }) => {
+    socket.on('start_game', async ({ gameId, removePlayers = false }) => {
       try {
         const room = gameRooms.get(gameId)
 
@@ -361,21 +344,40 @@ app.prepare().then(() => {
           return
         }
 
-        if (!room.hints || room.hints.length === 0) {
-          socket.emit('HINTS_NOT_LOADED', { notice: ERROR_NOTICE.hints_not_loaded })
-          return
+        if (removePlayers) {
+          const inactivePlayers = room.players.filter((player) => !room.readyPlayers.has(player.id))
+
+          inactivePlayers.forEach((player) => {
+            const socketId = Array.from(playersMap.entries()).find(
+              ([_, playerId]) => playerId === player.id
+            )?.[0]
+            if (socketId) {
+              const playerSocket = io.sockets.sockets.get(socketId)
+              if (playerSocket) {
+                handlePlayerLeave(playerSocket, player.id, gameId)
+              }
+            }
+          })
+
+          room.players = room.players.filter((player) => room.readyPlayers.has(player.id))
+          io.to(gameId).emit('update_players', room.players)
         }
 
         const connectedSockets = io.sockets.adapter.rooms.get(gameId)
-
-        if (!connectedSockets || connectedSockets.size !== room.players.length) {
-          io.to(gameId).emit('NETWORK_ERROR', { notice: ERROR_NOTICE.network_error })
+        if (!connectedSockets) {
+          socket.emit('INITIALIZATION_ERROR', { notice: ERROR_NOTICE.initialization_error })
           return
         }
 
+        const hints = await loadGameHints(room.totalRounds)
+        room.hints = hints
+        room.gameInfo = {
+          currentDay: 1,
+          currentFishPrice: gameConfig.INITIAL_FISH_PRICE,
+          lastRoundHintResult: '',
+          nextRoundHint: hints[0]?.hint || '',
+        }
         room.state = 'in_progress'
-        room.readyPlayers.clear()
-
         io.to(gameId).emit('game_started', { totalRounds: room.totalRounds })
       } catch (error) {
         console.error('Game start error:', error)
@@ -398,43 +400,17 @@ app.prepare().then(() => {
       }
     })
 
-    socket.on('request_first_round_hint', ({ gameId }) => {
-      const room = gameRooms.get(gameId)
-
-      if (room) {
-        socket.emit('first_round_hint', room.gameInfo)
-      }
-    })
-
-    socket.on('trade_fishes', ({ gameId, action, amount }) => {
-      const playerId = playersMap.get(socket.id)
-      const message = `${amount}마리 ${action === 'buy' ? '사요!' : '팔아요!'}`
-
-      io.to(gameId).emit('trade_message', {
-        playerId,
-        message,
-      })
-    })
-
-    socket.on('request_game_results', ({ gameId }) => {
-      const room = gameRooms.get(gameId)
-
-      const playerId = playersMap.get(socket.id)
-      socket.emit('game_results', {
-        results: room.gameResults,
-        currentPlayerId: playerId,
-      })
-    })
-
     socket.on('end_game', ({ gameId, result }) => {
       try {
         const room = gameRooms.get(gameId)
+        room.readyPlayers.clear()
+
         if (!room) {
           console.error('게임룸을 찾을 수 없습니다:', gameId)
           return
         }
 
-        const playerIndex = room.players.findIndex((p) => p.id === result.playerId)
+        const playerIndex = room.players.findIndex((player) => player.id === result.playerId)
         if (playerIndex !== -1) {
           room.players[playerIndex].score = result.totalCoin
         }
@@ -495,10 +471,52 @@ app.prepare().then(() => {
       }
     })
 
+    socket.on('request_first_round_hint', ({ gameId }) => {
+      const room = gameRooms.get(gameId)
+
+      if (room) {
+        socket.emit('first_round_hint', room.gameInfo)
+      }
+    })
+
+    socket.on('trade_fishes', ({ gameId, action, amount }) => {
+      const playerId = playersMap.get(socket.id)
+      const message = `${amount}마리 ${action === 'buy' ? '사요!' : '팔아요!'}`
+
+      io.to(gameId).emit('trade_message', {
+        playerId,
+        message,
+      })
+    })
+
+    socket.on('back_to_waiting', ({ gameId }) => {
+      const room = gameRooms.get(gameId)
+      const playerId = playersMap.get(socket.id)
+
+      if (!room || !playerId) {
+        return
+      }
+
+      room.state = 'waiting'
+      room.readyPlayers.add(playerId)
+    })
+
+    socket.on('check_not_returned_players', ({ gameId }) => {
+      const room = gameRooms.get(gameId)
+      if (room) {
+        const notReturnedCount = room.players.length - room.readyPlayers.size
+        socket.emit('not_returned_players_count', { count: notReturnedCount })
+      }
+    })
+
     socket.on('leave_game', ({ gameId }) => {
       const playerId = playersMap.get(socket.id)
       if (!playerId) return
 
+      const room = gameRooms.get(gameId)
+      if (!room) return
+
+      room.readyPlayers.delete(playerId)
       handlePlayerLeave(socket, playerId, gameId)
     })
 

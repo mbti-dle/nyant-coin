@@ -16,9 +16,10 @@ import { PlayerModel } from '@/types/game'
 interface ChatContainerProps {
   gameId: string
   player: PlayerModel
+  setIsPreparingGame: (isPreparingGame: boolean) => void
 }
 
-const ChatContainer = ({ gameId, player }: ChatContainerProps) => {
+const ChatContainer = ({ gameId, player, setIsPreparingGame }: ChatContainerProps) => {
   const [isChatExpanded, setIsChatExpanded] = useState(true)
   const [chats, setChats] = useState<ChatType[]>([])
 
@@ -31,6 +32,9 @@ const ChatContainer = ({ gameId, player }: ChatContainerProps) => {
 
     const handleNewChatNotice = (newChatNotice) => {
       setChats((prevChat) => [...prevChat, { type: 'notice', ...newChatNotice }])
+      if (newChatNotice.notice !== '잠시 후 게임이 시작됩니다') {
+        setIsPreparingGame(false)
+      }
     }
 
     socket.on('new_chat_message', handleNewChatMessage)

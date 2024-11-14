@@ -3,6 +3,7 @@
 import { ReactNode } from 'react'
 
 import CloseIcon from '@mui/icons-material/CloseSharp'
+import clsx from 'clsx'
 import { createPortal } from 'react-dom'
 
 import IconButton from '@/components/ui/icon-button'
@@ -40,7 +41,13 @@ const Modal = ({
       <div className="pointer-events-none fixed inset-0 z-30 flex items-center justify-center">
         <div className="pointer-events-auto w-[300px] overflow-hidden rounded-lg bg-white shadow-md">
           <div className="flex h-[60px] w-full items-center bg-primary">
-            <div className="ml-10 flex-grow text-center text-xl text-white">{title}</div>
+            <div
+              className={clsx('flex-grow text-center text-xl text-white', {
+                'ml-10': isShowCloseButton,
+              })}
+            >
+              {title}
+            </div>
             {isShowCloseButton && (
               <IconButton
                 Icon={CloseIcon}

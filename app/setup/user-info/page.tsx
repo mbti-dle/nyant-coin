@@ -16,12 +16,14 @@ import useGameStore from '@/store/game'
 
 const UserInfoPage = () => {
   const AVATAR_COUNT = 6
+
   const router = useRouter()
-  const countInputRef = useRef(null)
 
   const [currentAvatarIndex, setCurrentAvatarIndex] = useState(1)
   const [nickname, setNickname] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
+
+  const countInputRef = useRef(null)
 
   const gameId = useGameStore((state) => state.gameId)
   const isLeader = useGameStore((state) => state.isLeader)

@@ -26,6 +26,8 @@ import {
 } from '@/types/game'
 
 const GamePage = ({ params }) => {
+  const { gameId } = params
+
   const INITIAL_GAME_STATE: GameStateModel = {
     coins: gameConfig.INITIAL_COINS,
     fish: gameConfig.INITIAL_FISH,
@@ -44,14 +46,18 @@ const GamePage = ({ params }) => {
     playerId: null,
     message: '',
   })
-  const [playerId, setPlayerId] = useState<string | null>(null)
   const [prevFishPrice, setPrevFishPrice] = useState(gameConfig.INITIAL_FISH_PRICE)
   const [lastFishCoin, setLastFishCoin] = useState(0)
-  const [gameResults, setGameResults] = useState<GameResultModel[] | null>(null)
 
-  const { rounds: totalRounds } = useGameStore()
+  const {
+    rounds: totalRounds,
+    playerId,
+    setPlayerId,
+    results: gameResults,
+    setResults: setGameResults,
+    resetResults,
+  } = useGameStore()
   const { showToast } = useToastStore()
-  const { gameId } = params
 
   useSocketNavigation(gameId)
 
@@ -109,7 +115,7 @@ const GamePage = ({ params }) => {
       setGameResults(results)
     }
 
-    socket.emit('request_player_info', gameId)
+    socket.emit('request_player_info', { gameId })
     socket.emit('request_first_round_hint', { gameId })
     socket.emit('player_ready', { gameId })
 
@@ -131,6 +137,10 @@ const GamePage = ({ params }) => {
       socket.off('game_ended')
     }
   }, [gameId])
+
+  useEffect(() => {
+    resetResults()
+  }, [])
 
   const handleTransaction = (action: TransactionType, amount: number) => {
     setGameState((prevState) => {
