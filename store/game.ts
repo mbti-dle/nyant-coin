@@ -1,5 +1,6 @@
-import { GameResultModel } from '@/types/game'
 import { create } from 'zustand'
+
+import { GameResultModel } from '@/types/game'
 
 interface GameStoreModel {
   gameId: string | null
