@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 
 import ReactDOM from 'react-dom'
 
+import ChatContainer from '@/components/features/chat/chat-container'
 import FishCoinsAssets from '@/components/features/game/fish-coins-assets'
 import GameFooter from '@/components/features/game/game-footer'
 import Hints from '@/components/features/game/hints'
@@ -201,6 +202,14 @@ const GamePage = ({ params }) => {
 
         <PlayerGrid players={players} transactionResult={transactionResult} />
 
+        <div className="hidden md:block">
+          <ChatContainer
+            gameId={gameId}
+            player={players.find((player) => player.id === playerId)}
+            setIsPreparingGame={() => {}}
+            className="md:bottom-20"
+          />
+        </div>
         <Toast />
         <ResultModal
           isOpen={gameState.isModalOpen}

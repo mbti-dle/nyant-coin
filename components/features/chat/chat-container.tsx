@@ -5,10 +5,11 @@ import { useState, useRef, useEffect } from 'react'
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import clsx from 'clsx'
+import { twMerge } from 'tailwind-merge'
 
-import ChatInput from '@/components/features/waiting/chat-input'
-import ChatMessage from '@/components/features/waiting/chat-message'
-import ChatNotice from '@/components/features/waiting/chat-notice'
+import ChatInput from '@/components/features/chat/chat-input'
+import ChatMessage from '@/components/features/chat/chat-message'
+import ChatNotice from '@/components/features/chat/chat-notice'
 import { socket } from '@/lib/socket'
 import { ChatType } from '@/types/chat'
 import { PlayerModel } from '@/types/game'
@@ -17,9 +18,10 @@ interface ChatContainerProps {
   gameId: string
   player: PlayerModel
   setIsPreparingGame: (isPreparingGame: boolean) => void
+  className?: string
 }
 
-const ChatContainer = ({ gameId, player, setIsPreparingGame }: ChatContainerProps) => {
+const ChatContainer = ({ gameId, player, setIsPreparingGame, className }: ChatContainerProps) => {
   const [isChatExpanded, setIsChatExpanded] = useState(true)
   const [chats, setChats] = useState<ChatType[]>([])
 
@@ -65,7 +67,7 @@ const ChatContainer = ({ gameId, player, setIsPreparingGame }: ChatContainerProp
   }
 
   return (
-    <div className="fixed bottom-1 w-full p-3 md:bottom-11 md:left-8 md:max-w-[358px]">
+    <div className={twMerge('fixed bottom-1 w-full p-3 md:left-8 md:max-w-[358px]', className)}>
       <div
         className={clsx(
           'relative overflow-hidden rounded-[15px] bg-white bg-opacity-15 pr-3 transition-all duration-300 ease-in-out hover:bg-opacity-30',

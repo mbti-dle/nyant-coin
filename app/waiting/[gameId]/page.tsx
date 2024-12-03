@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react'
 
 import { useRouter } from 'next/navigation'
 
+import ChatContainer from '@/components/features/chat/chat-container'
 import PlayerReturnStatusModal from '@/components/features/player-return-status-modal'
-import ChatContainer from '@/components/features/waiting/chat-container'
 import GameIdCopyButton from '@/components/features/waiting/game-id-copy-button'
 import PlayerGrid from '@/components/features/waiting/player-grid'
 import Button from '@/components/ui/button'
@@ -144,6 +144,7 @@ const WaitingPage = ({ params }) => {
           gameId={gameId}
           player={playerInfo}
           setIsPreparingGame={setIsPreparingGame}
+          className="md:bottom-8"
         />
       </div>
       <PlayerReturnStatusModal
