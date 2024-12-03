@@ -281,12 +281,11 @@ app.prepare().then(() => {
     socket.on('join_game', ({ gameId, nickname, character }) => {
       const room = gameRooms.get(gameId)
 
-      if (room.state === 'in_progress') {
-        socket.emit('join_failure')
-        return
-      }
-
       if (room) {
+        if (room.state === 'in_progress') {
+          socket.emit('join_failure')
+          return
+        }
         const playerId = uuid()
         playersMap.set(socket.id, playerId)
 

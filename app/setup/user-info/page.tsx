@@ -47,7 +47,7 @@ const UserInfoPage = () => {
 
     return () => {
       socket.off('join_success', handleJoinSuccess)
-      socket.on('join_failure', handleJoinFailure)
+      socket.off('join_failure', handleJoinFailure)
     }
   }, [router, showToast])
 
