@@ -67,6 +67,8 @@ app.prepare().then(() => {
       io.to(gameId).emit('timer_update', timer)
 
       if (timer === 0) {
+        timer = gameConfig.INITIAL_TIMER
+        io.to(gameId).emit('timer_update', timer)
         clearInterval(intervalId)
         roundTimers.delete(gameId)
 

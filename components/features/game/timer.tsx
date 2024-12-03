@@ -3,7 +3,7 @@ import { useState, useEffect, memo } from 'react'
 import { socket } from '@/lib/socket'
 
 const Timer = memo(() => {
-  const [timer, setTimer] = useState(0)
+  const [timer, setTimer] = useState(20)
 
   useEffect(() => {
     const handleTimerUpdate = (newTime: number) => {
