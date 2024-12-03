@@ -13,6 +13,7 @@ import CountInput from '@/components/ui/count-input'
 import { socket } from '@/lib/socket'
 import { validateNickname } from '@/lib/utils/nickname-validation'
 import useGameStore from '@/store/game'
+import useToastStore from '@/store/toast'
 
 const UserInfoPage = () => {
   const AVATAR_COUNT = 6
@@ -22,6 +23,8 @@ const UserInfoPage = () => {
   const [currentAvatarIndex, setCurrentAvatarIndex] = useState(1)
   const [nickname, setNickname] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
+
+  const showToast = useToastStore((state) => state.showToast)
 
   const countInputRef = useRef(null)
 
@@ -34,12 +37,19 @@ const UserInfoPage = () => {
       router.push(`/waiting/${gameId}`)
     }
 
+    const handleJoinFailure = () => {
+      router.replace('/')
+      showToast('이미 게임이 시작되었습니다')
+    }
+
     socket.on('join_success', handleJoinSuccess)
+    socket.on('join_failure', handleJoinFailure)
 
     return () => {
       socket.off('join_success', handleJoinSuccess)
+      socket.off('join_failure', handleJoinFailure)
     }
-  }, [router])
+  }, [router, showToast])
 
   const handlePrevClick = () => {
     setCurrentAvatarIndex((prevIndex) => (prevIndex === 1 ? AVATAR_COUNT : prevIndex - 1))
