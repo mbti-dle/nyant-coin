@@ -33,7 +33,13 @@ const PlayerGrid = ({ players, transactionResult }: PlayerGridProps) => {
   const playerSlots = Array(MAX_PLAYERS)
     .fill(null)
     .map((_, index) => {
-      const player = players[index] || { id: '', nickname: '', character: '', score: 0 }
+      const player = players[index] || {
+        id: '',
+        nickname: '',
+        character: '',
+        score: 0,
+        isInWaitingRoom: false,
+      }
       return {
         ...player,
       }
@@ -52,6 +58,7 @@ const PlayerGrid = ({ players, transactionResult }: PlayerGridProps) => {
             isLeader={index === 0}
             message={message?.content}
             messageKey={message?.timestamp}
+            className={!player.isInWaitingRoom ? 'opacity-40' : ''}
           />
         )
       })}

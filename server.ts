@@ -67,6 +67,8 @@ app.prepare().then(() => {
       io.to(gameId).emit('timer_update', timer)
 
       if (timer === 0) {
+        timer = gameConfig.INITIAL_TIMER
+        io.to(gameId).emit('timer_update', timer)
         clearInterval(intervalId)
         roundTimers.delete(gameId)
 
@@ -280,6 +282,10 @@ app.prepare().then(() => {
       const room = gameRooms.get(gameId)
 
       if (room) {
+        if (room.state === 'in_progress') {
+          socket.emit('join_failure')
+          return
+        }
         const playerId = uuid()
         playersMap.set(socket.id, playerId)
 
@@ -288,8 +294,8 @@ app.prepare().then(() => {
           nickname,
           character,
           score: 0,
+          isInWaitingRoom: true,
         }
-
         room.players.push(newPlayer)
         room.readyPlayers.add(playerId)
 
@@ -377,6 +383,7 @@ app.prepare().then(() => {
           lastRoundHintResult: '',
           nextRoundHint: hints[0]?.hint || '',
         }
+
         room.state = 'in_progress'
         io.to(gameId).emit('game_started', { totalRounds: room.totalRounds })
       } catch (error) {
@@ -409,6 +416,8 @@ app.prepare().then(() => {
           console.error('게임룸을 찾을 수 없습니다:', gameId)
           return
         }
+
+        room.players.forEach((player) => (player.isInWaitingRoom = false))
 
         const playerIndex = room.players.findIndex((player) => player.id === result.playerId)
         if (playerIndex !== -1) {
@@ -499,6 +508,16 @@ app.prepare().then(() => {
 
       room.state = 'waiting'
       room.readyPlayers.add(playerId)
+
+      const playerIndex = room.players.findIndex((player) => player.id === playerId)
+      if (playerIndex !== -1) {
+        room.players[playerIndex] = {
+          ...room.players[playerIndex],
+          isInWaitingRoom: true,
+        }
+      }
+
+      io.to(gameId).emit('update_players', room.players)
     })
 
     socket.on('check_not_returned_players', ({ gameId }) => {
