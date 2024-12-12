@@ -39,6 +39,7 @@ export interface PlayerModel {
   nickname: string
   character: string
   score?: number
+  isInWaitingRoom: boolean
 }
 
 export interface HintContentModel {
