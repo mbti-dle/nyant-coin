@@ -67,6 +67,8 @@ app.prepare().then(() => {
       io.to(gameId).emit('timer_update', timer)
 
       if (timer === 0) {
+        timer = gameConfig.INITIAL_TIMER
+        io.to(gameId).emit('timer_update', timer)
         clearInterval(intervalId)
         roundTimers.delete(gameId)
 
@@ -280,6 +282,10 @@ app.prepare().then(() => {
       const room = gameRooms.get(gameId)
 
       if (room) {
+        if (room.state === 'in_progress') {
+          socket.emit('join_failure')
+          return
+        }
         const playerId = uuid()
         playersMap.set(socket.id, playerId)
 
@@ -289,7 +295,6 @@ app.prepare().then(() => {
           character,
           score: 0,
         }
-
         room.players.push(newPlayer)
         room.readyPlayers.add(playerId)
 
