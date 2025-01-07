@@ -1,7 +1,6 @@
 import { createServer } from 'node:http'
 
 import next from 'next'
-import { Socket } from 'socket.io'
 import { v4 as uuid } from 'uuid'
 
 import { ERROR_NOTICE } from '../constants/chat.js'
@@ -10,18 +9,17 @@ import { loadGameHints } from '../lib/api/hints.js'
 import { generateGameId } from '../lib/utils/generate-game-id.js'
 import { GameModel, PlayerModel } from '../types/game.js'
 
+import { handlePlayerLeave } from './game/player.js'
 import {
   gameRooms,
   playersMap,
   gameTimers,
   getRoom,
   addRoom,
-  removeRoom,
   addPlayer,
-  removePlayer,
   getPlayerId,
 } from './game/store.js'
-import { clearGameTimers, startGameTimer } from './game/timer.js'
+import { startGameTimer } from './game/timer.js'
 import { createSocketServer } from './socket/config.js'
 
 const dev = process.env.NODE_ENV !== 'production'
@@ -34,50 +32,6 @@ const handler = app.getRequestHandler()
 app.prepare().then(() => {
   const httpServer = createServer(handler)
   const io = createSocketServer(httpServer)
-
-  const removePlayerFromRoom = (
-    socket: Socket,
-    playerId: string,
-    room: GameModel & { readyPlayers: Set<string> },
-    gameId: string
-  ) => {
-    const playerIndex = room.players.findIndex((player) => player.id === playerId)
-    if (playerIndex === -1) {
-      return false
-    }
-
-    room.players.splice(playerIndex, 1)
-    room.readyPlayers.delete(playerId)
-    socket.to(gameId).emit('update_players', room.players)
-
-    if (room.players.length === 0) {
-      clearGameTimers(gameId)
-      removeRoom(gameId)
-    }
-
-    return true
-  }
-
-  const handlePlayerLeave = (socket: Socket, playerId: string, leaveGameId?: string) => {
-    if (leaveGameId) {
-      const room = gameRooms.get(leaveGameId)
-      if (!room) {
-        return
-      }
-
-      if (removePlayerFromRoom(socket, playerId, room, leaveGameId)) {
-        removePlayer(socket.id)
-      }
-      return
-    }
-
-    gameRooms.forEach((room, gameId) => {
-      if (room.state !== 'ended') {
-        removePlayerFromRoom(socket, playerId, room, gameId)
-      }
-    })
-    removePlayer(socket.id)
-  }
 
   io.on('connection', (socket) => {
     socket.on('check_game_availability', ({ inputGameId: gameId }) => {
@@ -378,10 +332,6 @@ app.prepare().then(() => {
       const playerId = getPlayerId(socket.id)
       if (!playerId) return
 
-      const room = getRoom(gameId)
-      if (!room) return
-
-      room.readyPlayers.delete(playerId)
       handlePlayerLeave(socket, playerId, gameId)
     })
 
