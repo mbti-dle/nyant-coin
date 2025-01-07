@@ -1,8 +1,7 @@
 import { createServer } from 'node:http'
 
-import { instrument } from '@socket.io/admin-ui'
 import next from 'next'
-import { Server as SocketIOServer, Socket } from 'socket.io'
+import { Socket } from 'socket.io'
 import { v4 as uuid } from 'uuid'
 
 import { ERROR_NOTICE } from '../constants/chat.js'
@@ -11,6 +10,8 @@ import { loadGameHints } from '../lib/api/hints.js'
 import { generateNewFishPrice, isPriceChangeHigh, shouldHintMatch } from '../lib/utils/game.js'
 import { generateGameId } from '../lib/utils/generate-game-id.js'
 import { GameModel, PlayerIdType, PlayerModel, SocketIdType } from '../types/game.js'
+
+import { createSocketServer } from './socket/config.js'
 
 const dev = process.env.NODE_ENV !== 'production'
 const hostname = 'localhost'
@@ -21,16 +22,7 @@ const handler = app.getRequestHandler()
 
 app.prepare().then(() => {
   const httpServer = createServer(handler)
-
-  const io = new SocketIOServer(httpServer, {
-    cors: {
-      origin: ['https://admin.socket.io'],
-      credentials: true,
-    },
-  })
-  instrument(io, {
-    auth: false,
-  })
+  const io = createSocketServer(httpServer)
 
   const gameRooms = new Map<string, GameModel & { readyPlayers: Set<string> }>()
   const playersMap = new Map<SocketIdType, PlayerIdType>()
