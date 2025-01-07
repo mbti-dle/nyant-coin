@@ -1,13 +1,13 @@
 import { Server as SocketIOServer, Socket } from 'socket.io'
 import { v4 as uuid } from 'uuid'
 
-import { ERROR_NOTICE } from '../../constants/chat'
-import { gameConfig } from '../../constants/game'
-import { loadGameHints } from '../../lib/api/hints'
-import { generateGameId } from '../../lib/utils/generate-game-id'
-import { GameModel, PlayerModel } from '../../types/game'
+import { ERROR_NOTICE } from '../../constants/chat.js'
+import { gameConfig } from '../../constants/game.js'
+import { loadGameHints } from '../../lib/api/hints.js'
+import { generateGameId } from '../../lib/utils/generate-game-id.js'
+import { GameModel, PlayerModel } from '../../types/game.js'
 
-import { handlePlayerLeave } from './player'
+import { handlePlayerLeave } from './player.js'
 import {
   addPlayer,
   addRoom,
@@ -16,8 +16,8 @@ import {
   getPlayerId,
   getRoom,
   playersMap,
-} from './store'
-import { startGameTimer } from './timer'
+} from './store.js'
+import { startGameTimer } from './timer.js'
 
 export const handleCheckGameAvailability = (
   socket: Socket,

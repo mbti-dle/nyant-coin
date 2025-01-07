@@ -1,4 +1,4 @@
-import { GameModel, PlayerIdType, SocketIdType } from '@/types/game'
+import { GameModel, PlayerIdType, SocketIdType } from '@/types/game.js'
 
 export const gameRooms = new Map<string, GameModel & { readyPlayers: Set<string> }>()
 export const playersMap = new Map<SocketIdType, PlayerIdType>()

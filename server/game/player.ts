@@ -1,7 +1,7 @@
 import { Socket } from 'socket.io'
 
-import { gameRooms, getRoom, removePlayer, removeRoom } from './store'
-import { clearGameTimers } from './timer'
+import { gameRooms, getRoom, removePlayer, removeRoom } from './store.js'
+import { clearGameTimers } from './timer.js'
 
 export const removePlayerFromRoom = (socket: Socket, playerId: string, gameId: string) => {
   const room = getRoom(gameId)

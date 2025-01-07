@@ -1,10 +1,10 @@
 import { Server as SocketIOServer } from 'socket.io'
 
-import { gameConfig, PRICE_THRESHOLD } from '../../constants/game'
-import { generateNewFishPrice, isPriceChangeHigh, shouldHintMatch } from '../../lib/utils/game'
-import { GameModel } from '../../types/game'
+import { gameConfig, PRICE_THRESHOLD } from '../../constants/game.js'
+import { generateNewFishPrice, isPriceChangeHigh, shouldHintMatch } from '../../lib/utils/game.js'
+import { GameModel } from '../../types/game.js'
 
-import { gameTimers, getRoom, roundTimers } from './store'
+import { gameTimers, getRoom, roundTimers } from './store.js'
 
 export const startGameTimer = (
   io: SocketIOServer,
