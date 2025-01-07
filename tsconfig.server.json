@@ -3,6 +3,7 @@
   "compilerOptions": {
     "module": "ESNext",
     "moduleResolution": "node",
+    "rootDir": ".",
     "outDir": "dist",
     "noEmit": false,
     "jsx": "react"
