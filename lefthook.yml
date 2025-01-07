@@ -1,0 +1,12 @@
+pre-commit:
+  parallel: true
+  commands:
+    lint-staged:
+      run: npx lint-staged
+    type-check:
+      run: npm run type-check
+
+pre-push:
+  commands:
+    audit-check:
+      run: npm audit
