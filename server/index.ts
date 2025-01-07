@@ -9,8 +9,20 @@ import { gameConfig, PRICE_THRESHOLD } from '../constants/game.js'
 import { loadGameHints } from '../lib/api/hints.js'
 import { generateNewFishPrice, isPriceChangeHigh, shouldHintMatch } from '../lib/utils/game.js'
 import { generateGameId } from '../lib/utils/generate-game-id.js'
-import { GameModel, PlayerIdType, PlayerModel, SocketIdType } from '../types/game.js'
+import { GameModel, PlayerModel } from '../types/game.js'
 
+import {
+  gameRooms,
+  playersMap,
+  gameTimers,
+  roundTimers,
+  getRoom,
+  addRoom,
+  removeRoom,
+  addPlayer,
+  removePlayer,
+  getPlayerId,
+} from './game/store.js'
 import { createSocketServer } from './socket/config.js'
 
 const dev = process.env.NODE_ENV !== 'production'
@@ -23,11 +35,6 @@ const handler = app.getRequestHandler()
 app.prepare().then(() => {
   const httpServer = createServer(handler)
   const io = createSocketServer(httpServer)
-
-  const gameRooms = new Map<string, GameModel & { readyPlayers: Set<string> }>()
-  const playersMap = new Map<SocketIdType, PlayerIdType>()
-  const gameTimers = new Map<string, NodeJS.Timeout>()
-  const roundTimers = new Map<string, NodeJS.Timeout>()
 
   const startGameTimer = (gameId: string, room: GameModel & { readyPlayers: Set<string> }) => {
     if (!room || room.state !== 'in_progress') {
@@ -48,7 +55,7 @@ app.prepare().then(() => {
 
     let timer = gameConfig.INITIAL_TIMER
     const intervalId = setInterval(() => {
-      const currentRoom = gameRooms.get(gameId)
+      const currentRoom = getRoom(gameId)
       if (!currentRoom || currentRoom.state !== 'in_progress') {
         clearInterval(intervalId)
         roundTimers.delete(gameId)
@@ -198,7 +205,7 @@ app.prepare().then(() => {
 
     if (room.players.length === 0) {
       clearGameTimers(gameId)
-      gameRooms.delete(gameId)
+      removeRoom(gameId)
     }
 
     return true
@@ -212,7 +219,7 @@ app.prepare().then(() => {
       }
 
       if (removePlayerFromRoom(socket, playerId, room, leaveGameId)) {
-        playersMap.delete(socket.id)
+        removePlayer(socket.id)
       }
       return
     }
@@ -222,12 +229,12 @@ app.prepare().then(() => {
         removePlayerFromRoom(socket, playerId, room, gameId)
       }
     })
-    playersMap.delete(socket.id)
+    removePlayer(socket.id)
   }
 
   io.on('connection', (socket) => {
     socket.on('check_game_availability', ({ inputGameId: gameId }) => {
-      const room = gameRooms.get(gameId)
+      const room = getRoom(gameId)
 
       const gameAvailability = {
         isAvailable: false,
@@ -266,12 +273,12 @@ app.prepare().then(() => {
         readyPlayers: new Set(),
       }
 
-      gameRooms.set(gameId, newGame)
+      addRoom(gameId, newGame)
       joinGame(gameId)
     })
 
     socket.on('join_game', ({ gameId, nickname, character }) => {
-      const room = gameRooms.get(gameId)
+      const room = getRoom(gameId)
 
       if (room) {
         if (room.state === 'in_progress') {
@@ -279,7 +286,7 @@ app.prepare().then(() => {
           return
         }
         const playerId = uuid()
-        playersMap.set(socket.id, playerId)
+        addPlayer(socket.id, playerId)
 
         const newPlayer: PlayerModel = {
           id: playerId,
@@ -299,8 +306,8 @@ app.prepare().then(() => {
     })
 
     socket.on('request_player_info', ({ gameId }) => {
-      const room = gameRooms.get(gameId)
-      const playerId = playersMap.get(socket.id)
+      const room = getRoom(gameId)
+      const playerId = getPlayerId(socket.id)
 
       if (room) {
         socket.emit('player_info', { players: room.players, playerId })
@@ -308,8 +315,8 @@ app.prepare().then(() => {
     })
 
     socket.on('send_message', ({ gameId, playerId, nickname, character, message }) => {
-      const senderId = playersMap.get(socket.id)
-      const room = gameRooms.get(gameId)
+      const senderId = getPlayerId(socket.id)
+      const room = getRoom(gameId)
 
       if (!senderId || !room) return
 
@@ -327,7 +334,7 @@ app.prepare().then(() => {
     })
 
     socket.on('send_notice', ({ gameId, notice }) => {
-      const room = gameRooms.get(gameId)
+      const room = getRoom(gameId)
       if (!room) return
 
       io.to(gameId).emit('new_chat_notice', { notice })
@@ -335,7 +342,7 @@ app.prepare().then(() => {
 
     socket.on('start_game', async ({ gameId, removePlayers = false }) => {
       try {
-        const room = gameRooms.get(gameId)
+        const room = getRoom(gameId)
 
         if (!room) {
           socket.emit('INITIALIZATION_ERROR', { notice: ERROR_NOTICE.initialization_error })
@@ -385,10 +392,10 @@ app.prepare().then(() => {
     })
 
     socket.on('player_ready', ({ gameId }) => {
-      const room = gameRooms.get(gameId)
+      const room = getRoom(gameId)
       if (!room || room.state !== 'in_progress') return
 
-      const playerId = playersMap.get(socket.id)
+      const playerId = getPlayerId(socket.id)
       if (!playerId) return
 
       room.readyPlayers.add(playerId)
@@ -401,7 +408,7 @@ app.prepare().then(() => {
 
     socket.on('end_game', ({ gameId, result }) => {
       try {
-        const room = gameRooms.get(gameId)
+        const room = getRoom(gameId)
         room.readyPlayers.clear()
 
         if (!room) {
@@ -441,7 +448,7 @@ app.prepare().then(() => {
 
         if (!gameTimers.has(gameId)) {
           const timer = setTimeout(() => {
-            const currentRoom = gameRooms.get(gameId)
+            const currentRoom = getRoom(gameId)
             if (currentRoom && currentRoom.state !== 'ended') {
               updateGameResults()
             }
@@ -473,7 +480,7 @@ app.prepare().then(() => {
     })
 
     socket.on('request_first_round_hint', ({ gameId }) => {
-      const room = gameRooms.get(gameId)
+      const room = getRoom(gameId)
 
       if (room) {
         socket.emit('first_round_hint', room.gameInfo)
@@ -481,7 +488,7 @@ app.prepare().then(() => {
     })
 
     socket.on('trade_fishes', ({ gameId, action, amount }) => {
-      const playerId = playersMap.get(socket.id)
+      const playerId = getPlayerId(socket.id)
       const message = `${amount}마리 ${action === 'buy' ? '사요!' : '팔아요!'}`
 
       io.to(gameId).emit('trade_message', {
@@ -491,8 +498,8 @@ app.prepare().then(() => {
     })
 
     socket.on('back_to_waiting', ({ gameId }) => {
-      const room = gameRooms.get(gameId)
-      const playerId = playersMap.get(socket.id)
+      const room = getRoom(gameId)
+      const playerId = getPlayerId(socket.id)
 
       if (!room || !playerId) {
         return
@@ -513,7 +520,7 @@ app.prepare().then(() => {
     })
 
     socket.on('check_not_returned_players', ({ gameId }) => {
-      const room = gameRooms.get(gameId)
+      const room = getRoom(gameId)
       if (room) {
         const notReturnedCount = room.players.length - room.readyPlayers.size
         socket.emit('not_returned_players_count', { count: notReturnedCount })
@@ -521,10 +528,10 @@ app.prepare().then(() => {
     })
 
     socket.on('leave_game', ({ gameId }) => {
-      const playerId = playersMap.get(socket.id)
+      const playerId = getPlayerId(socket.id)
       if (!playerId) return
 
-      const room = gameRooms.get(gameId)
+      const room = getRoom(gameId)
       if (!room) return
 
       room.readyPlayers.delete(playerId)
@@ -532,7 +539,7 @@ app.prepare().then(() => {
     })
 
     socket.on('disconnect', () => {
-      const playerId = playersMap.get(socket.id)
+      const playerId = getPlayerId(socket.id)
       if (!playerId) return
 
       handlePlayerLeave(socket, playerId)
