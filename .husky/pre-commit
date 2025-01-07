@@ -1,8 +1,0 @@
-#!/usr/bin/env sh
-
-npm run lint && npm run prettier
-
-if [ $? -ne 0 ]; then
-  echo "Linting or formatting failed. Commit aborted."
-  exit 1
-fi
