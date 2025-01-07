@@ -7,5 +7,5 @@
     "noEmit": false,
     "jsx": "react"
   },
-  "include": ["server.ts", "lib/**/*", "constants/**/*", "types/**/*"]
+  "include": ["server/**/*", "lib/**/*", "constants/**/*", "types/**/*"]
 }

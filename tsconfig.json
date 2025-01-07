@@ -38,7 +38,7 @@
     "lib/api/.gitkeep",
     "app/**/*.ts",
     "app/**/*.tsx",
-    "server.ts"
+    "server/**/*.ts"
   ],
   "exclude": ["node_modules"]
 }

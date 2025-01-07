@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "nodemon --exec node --loader ts-node/esm server.ts",
+    "dev": "nodemon --exec node --loader ts-node/esm server/index.ts",
     "build": "next build && tsc -p tsconfig.server.json",
-    "start": "NODE_ENV=production node dist/server.js",
+    "start": "NODE_ENV=production node dist/server/index.js",
     "lint": "next lint --fix",
     "prettier": "prettier --write .",
     "type-check": "tsc --noEmit -p ./tsconfig.json",
