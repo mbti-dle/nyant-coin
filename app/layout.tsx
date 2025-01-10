@@ -15,19 +15,28 @@ const galmuri = localFont({
 })
 
 export const metadata: Metadata = {
-  title: '냥트코인',
+  title: '냥트코인 - 생선 트레이딩 게임',
   description: '최고의 생선 트레이더는 누구? 생선을 사고팔아 냥코인을 모아보세요!',
-  keywords: ['냥트코인', '게임', '생선 트레이드'],
+  keywords: ['냥트코인', '게임', '생선 트레이드', '트레이딩 게임', '멀티플레이어 게임'],
   openGraph: {
-    title: '냥트코인',
+    title: '냥트코인 - 생선 트레이딩 게임',
     description: '최고의 생선 트레이더는 누구? 생선을 사고팔아 냥코인을 모아보세요!',
     url: 'https://nyantcoin.koyeb.app/',
+    siteName: '냥트코인',
     images: [
       {
         url: 'https://nyantcoin.koyeb.app/og.png',
         alt: '냥트코인 로고',
+        width: 1200,
+        height: 630,
       },
     ],
+    locale: 'ko_KR',
+    type: 'website',
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
 }
 
