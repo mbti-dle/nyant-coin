@@ -18,7 +18,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       url: 'https://nyantcoin.koyeb.app/setup/user-info',
       lastModified: new Date(),
       changeFrequency: 'daily',
-      priority: 0.8,
+      priority: 0.9,
     },
   ]
 }
