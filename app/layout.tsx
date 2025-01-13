@@ -49,6 +49,9 @@ export const viewport: Viewport = {
 
 const RootLayout = ({ children }: { children: React.ReactNode }) => (
   <html lang="ko">
+    <head>
+      <meta name="google-site-verification" content="1P5OKF9u2FsfsVBFZ47I_BZxoXdaTJX4w_0-TDWxbBw" />
+    </head>
     <body className={`${neodgm.variable} ${galmuri.variable}`}>
       {children}
       <Toast />
