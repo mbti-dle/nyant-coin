@@ -65,7 +65,7 @@
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
-      "next lint --fix",
+      "npx next lint --fix --dir .",
       "prettier --write"
     ],
     "*.{css,md,json}": [
