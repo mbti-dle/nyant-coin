@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 
 import { socket } from '@/lib/socket'
+import { isMobile } from '@/lib/utils/device'
 
 export const useSocketNavigation = (gameId) => {
   const timeoutId = useRef(null)
@@ -64,12 +65,15 @@ export const useSocketNavigation = (gameId) => {
 
     window.addEventListener('popstate', handlePopState)
     window.addEventListener('beforeunload', handleBeforeUnload)
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-
+    if (isMobile()) {
+      document.addEventListener('visibilitychange', handleVisibilityChange)
+    }
     return () => {
       window.removeEventListener('popstate', handlePopState)
       window.removeEventListener('beforeunload', handleBeforeUnload)
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      if (isMobile()) {
+        document.removeEventListener('visibilitychange', handleVisibilityChange)
+      }
     }
   }, [gameId])
 }
