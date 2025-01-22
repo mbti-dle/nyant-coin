@@ -16,10 +16,16 @@ const useToastStore = create<ToastStoreModel>((set) => ({
   isVisible: false,
   message: '',
   icon: null,
-  showToast: (message, icon) => {
-    set({ isVisible: true, message, icon })
+  showToast: (message, icon, duration = TOAST_DISPLAY_DURATION) => {
+    requestAnimationFrame(() => {
+      set({ isVisible: true, message, icon })
 
-    setTimeout(() => set({ isVisible: false, icon: null }), TOAST_DISPLAY_DURATION)
+      setTimeout(() => {
+        requestAnimationFrame(() => {
+          set({ isVisible: false, icon: null })
+        })
+      }, duration)
+    })
   },
   hideToast: () => set({ isVisible: false, icon: null }),
 }))
