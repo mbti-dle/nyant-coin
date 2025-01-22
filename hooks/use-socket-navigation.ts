@@ -1,13 +1,15 @@
-import { useCallback, useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 
 import { useRouter } from 'next/navigation'
 
 import { socket } from '@/lib/socket'
+import { isMobile } from '@/lib/utils/device'
 
 export const useSocketNavigation = (gameId) => {
+  const timeoutId = useRef(null)
   const router = useRouter()
 
-  const cleanupAndRedirect = useCallback(() => {
+  const cleanupAndRedirect = () => {
     if (gameId) {
       socket.emit('leave_game', { gameId })
     }
@@ -15,7 +17,17 @@ export const useSocketNavigation = (gameId) => {
     socket.removeAllListeners()
     socket.disconnect()
     router.push('/')
-  }, [gameId, router])
+  }
+
+  const startExitTimer = () => {
+    timeoutId.current = setTimeout(() => {
+      cleanupAndRedirect()
+    }, 5000)
+  }
+
+  const stopExitTimer = () => {
+    clearTimeout(timeoutId.current)
+  }
 
   useEffect(() => {
     if (!gameId) {
@@ -39,12 +51,29 @@ export const useSocketNavigation = (gameId) => {
       return ''
     }
 
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        if (!socket.connected) {
+          cleanupAndRedirect()
+        } else {
+          startExitTimer()
+        }
+      } else if (document.visibilityState === 'visible') {
+        stopExitTimer()
+      }
+    }
+
     window.addEventListener('popstate', handlePopState)
     window.addEventListener('beforeunload', handleBeforeUnload)
-
+    if (isMobile()) {
+      document.addEventListener('visibilitychange', handleVisibilityChange)
+    }
     return () => {
       window.removeEventListener('popstate', handlePopState)
       window.removeEventListener('beforeunload', handleBeforeUnload)
+      if (isMobile()) {
+        document.removeEventListener('visibilitychange', handleVisibilityChange)
+      }
     }
-  }, [gameId, cleanupAndRedirect])
+  }, [gameId])
 }
