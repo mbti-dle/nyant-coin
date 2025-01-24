@@ -9,8 +9,8 @@ import PlayerReturnStatusModal from '@/components/features/player-return-status-
 import GameIdCopyButton from '@/components/features/waiting/game-id-copy-button'
 import PlayerGrid from '@/components/features/waiting/player-grid'
 import Button from '@/components/ui/button'
+import { useSocket } from '@/hooks/use-socket'
 import { useSocketNavigation } from '@/hooks/use-socket-navigation'
-import { socket } from '@/lib/socket'
 import useGameStore from '@/store/game'
 import useToastStore from '@/store/toast'
 import { PlayerModel } from '@/types/game'
@@ -26,6 +26,8 @@ const WaitingPage = ({ params }) => {
   const [isModalVisible, setIsModalVisible] = useState(false)
   const [isPreparingGame, setIsPreparingGame] = useState(false)
   const [notReturnedPlayersCount, setNotReturnedPlayersCount] = useState(0)
+
+  const { socket } = useSocket()
 
   const showToast = useToastStore((state) => state.showToast)
   const setGameRounds = useGameStore((state) => state.setGameRounds)

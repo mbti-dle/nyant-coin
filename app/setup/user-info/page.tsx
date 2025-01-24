@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation'
 import AvatarSelector from '@/components/ui/avatar-selector'
 import Button from '@/components/ui/button'
 import CountInput from '@/components/ui/count-input'
-import { socket } from '@/lib/socket'
+import { useSocket } from '@/hooks/use-socket'
 import { validateNickname } from '@/lib/utils/nickname-validation'
 import useGameStore from '@/store/game'
 import useToastStore from '@/store/toast'
@@ -23,6 +23,8 @@ const UserInfoPage = () => {
   const [currentAvatarIndex, setCurrentAvatarIndex] = useState(1)
   const [nickname, setNickname] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
+
+  const { socket } = useSocket()
 
   const showToast = useToastStore((state) => state.showToast)
 

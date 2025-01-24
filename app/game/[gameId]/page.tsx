@@ -13,8 +13,8 @@ import ResultModal from '@/components/features/result-modal'
 import PlayerGrid from '@/components/features/waiting/player-grid'
 import Toast from '@/components/ui/toast'
 import { gameConfig } from '@/constants/game'
+import { useSocket } from '@/hooks/use-socket'
 import { useSocketNavigation } from '@/hooks/use-socket-navigation'
-import { socket } from '@/lib/socket'
 import useGameStore from '@/store/game'
 import useToastStore from '@/store/toast'
 import {
@@ -61,6 +61,7 @@ const GamePage = ({ params }) => {
   const { showToast } = useToastStore()
 
   useSocketNavigation(gameId)
+  const { socket } = useSocket()
 
   useEffect(() => {
     ReactDOM.preload('/images/background-mobile-3.png', { as: 'image' })

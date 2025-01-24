@@ -1,9 +1,11 @@
 import { useState, useEffect, memo } from 'react'
 
-import { socket } from '@/lib/socket'
+import { useSocket } from '@/hooks/use-socket'
 
 const Timer = memo(() => {
   const [timer, setTimer] = useState(20)
+
+  const { socket } = useSocket()
 
   useEffect(() => {
     const handleTimerUpdate = (newTime: number) => {

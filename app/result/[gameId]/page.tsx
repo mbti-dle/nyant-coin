@@ -6,9 +6,9 @@ import Image from 'next/image'
 
 import LoadingPage from '@/app/loading'
 import LinkButton from '@/components/ui/link-button'
+import { useSocket } from '@/hooks/use-socket'
 import { useSocketNavigation } from '@/hooks/use-socket-navigation'
 import ConfettiComponent from '@/lib/confetti'
-import { socket } from '@/lib/socket'
 import coin from '@/public/images/coin.png'
 import useGameStore from '@/store/game'
 import useToastStore from '@/store/toast'
@@ -21,6 +21,7 @@ const ResultPage = ({ params }) => {
 
   const { playerId: currentPlayerId, results: gameResults } = useGameStore()
   const { showToast } = useToastStore()
+  const { socket } = useSocket()
 
   useSocketNavigation(gameId)
 
