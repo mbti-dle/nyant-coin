@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useState, useRef } from 'react'
 
 import TrendingFlatIcon from '@mui/icons-material/TrendingFlat'
 import clsx from 'clsx'
@@ -10,45 +10,21 @@ import { useRouter } from 'next/navigation'
 import GuideButton from '@/components/features/guide-button'
 import Input from '@/components/ui/input'
 import LinkButton from '@/components/ui/link-button'
-import { socket } from '@/lib/socket'
+import { useSocket } from '@/hooks/use-socket'
 import { isValidId } from '@/lib/utils/generate-game-id'
 import logo from '@/public/images/logo.png'
 import useGameStore from '@/store/game'
 
 const HomePage = () => {
   const router = useRouter()
-  const gameIdInputRef = useRef(null)
-
   const [inputGameId, setInputGameId] = useState('')
-  const [isConnected, setIsConnected] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
 
+  const gameIdInputRef = useRef(null)
+
+  const { socket } = useSocket()
   const setGameId = useGameStore((state) => state.setGameId)
   const setIsLeader = useGameStore((state) => state.setIsLeader)
-
-  useEffect(() => {
-    const handleSocketConnect = () => {
-      setIsConnected(true)
-    }
-
-    const handleSocketDisconnect = () => {
-      setIsConnected(false)
-    }
-
-    socket.on('connect', handleSocketConnect)
-    socket.on('disconnect', handleSocketDisconnect)
-
-    setIsConnected(socket.connected)
-
-    if (!socket.connected) {
-      socket.connect()
-    }
-
-    return () => {
-      socket.off('connect', handleSocketConnect)
-      socket.off('disconnect', handleSocketDisconnect)
-    }
-  }, [])
 
   const handleGameIdChange = (event) => {
     setInputGameId(event.target.value)

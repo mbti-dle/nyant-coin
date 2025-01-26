@@ -10,7 +10,7 @@ import { twMerge } from 'tailwind-merge'
 import ChatInput from '@/components/features/chat/chat-input'
 import ChatMessage from '@/components/features/chat/chat-message'
 import ChatNotice from '@/components/features/chat/chat-notice'
-import { socket } from '@/lib/socket'
+import { useSocket } from '@/hooks/use-socket'
 import { ChatType } from '@/types/chat'
 import { PlayerModel } from '@/types/game'
 
@@ -25,6 +25,7 @@ const ChatContainer = ({ gameId, player, setIsPreparingGame, className }: ChatCo
   const [isChatExpanded, setIsChatExpanded] = useState(true)
   const [chats, setChats] = useState<ChatType[]>([])
 
+  const { socket } = useSocket()
   const chatContainerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {

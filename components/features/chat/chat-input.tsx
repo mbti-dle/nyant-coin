@@ -5,10 +5,12 @@ import { useState } from 'react'
 import SendIcon from '@mui/icons-material/Send'
 
 import IconButton from '@/components/ui/icon-button'
-import { socket } from '@/lib/socket'
+import { useSocket } from '@/hooks/use-socket'
 
 const ChatInput = ({ gameId, player }) => {
   const [message, setMessage] = useState('')
+
+  const { socket } = useSocket()
 
   const handleInputChange = (event) => {
     const input = event.target.value

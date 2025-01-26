@@ -1,6 +1,7 @@
 import { Metadata, Viewport } from 'next'
 import localFont from 'next/font/local'
 
+import SocketProvider from '@/components/provider/socket-provider'
 import Toast from '@/components/ui/toast'
 import './global.css'
 
@@ -53,7 +54,7 @@ export const viewport: Viewport = {
 const RootLayout = ({ children }: { children: React.ReactNode }) => (
   <html lang="ko">
     <body className={`${neodgm.variable} ${galmuri.variable}`}>
-      {children}
+      <SocketProvider>{children}</SocketProvider>
       <Toast />
       <div id="modal-root"></div>
     </body>

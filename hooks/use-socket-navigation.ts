@@ -2,12 +2,15 @@ import { useEffect, useRef } from 'react'
 
 import { useRouter } from 'next/navigation'
 
-import { socket } from '@/lib/socket'
 import { isMobile } from '@/lib/utils/device'
+
+import { useSocket } from './use-socket'
 
 export const useSocketNavigation = (gameId) => {
   const timeoutId = useRef(null)
   const router = useRouter()
+
+  const { socket } = useSocket()
 
   const cleanupAndRedirect = () => {
     if (gameId) {
