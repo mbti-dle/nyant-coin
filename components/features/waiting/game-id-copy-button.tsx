@@ -1,6 +1,6 @@
 'use client'
 
-import CopyIcon from '@mui/icons-material/ContentCopySharp'
+import { MdContentCopy } from 'react-icons/md'
 
 import Button from '@/components/ui/button'
 import useToastStore from '@/store/toast'
@@ -28,7 +28,7 @@ const GameIdCopyButton = ({ gameId }: GameIdCopyButtonProps) => {
       onClick={handleGameIdCopyClick}
     >
       <span className="font-galmuri tracking-widest">{gameId}</span>
-      <CopyIcon />
+      <MdContentCopy size={24} />
     </Button>
   )
 }
