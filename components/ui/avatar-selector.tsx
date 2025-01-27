@@ -1,13 +1,13 @@
 import Image from 'next/image'
-import { MdArrowLeft, MdArrowRight } from 'react-icons/md'
 
+import { ArrowLeftIcon, ArrowRightIcon } from '@/components/icons'
 import IconButton from '@/components/ui/icon-button'
 
 const AvatarSelector = ({ currentAvatarIndex, onPrevClick, onNextClick }) => {
   return (
     <div className="mb-10 flex items-center justify-center">
       <IconButton
-        Icon={MdArrowLeft}
+        Icon={ArrowLeftIcon}
         label="왼쪽"
         className="text-gray-300 hover:text-gray-500"
         onClick={onPrevClick}
@@ -17,7 +17,7 @@ const AvatarSelector = ({ currentAvatarIndex, onPrevClick, onNextClick }) => {
         <Image fill src={`/images/cat-${currentAvatarIndex}.png`} alt="고양이" />
       </div>
       <IconButton
-        Icon={MdArrowRight}
+        Icon={ArrowRightIcon}
         label="오른쪽"
         className="text-gray-300 hover:text-gray-500"
         onClick={onNextClick}

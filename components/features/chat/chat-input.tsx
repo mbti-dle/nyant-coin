@@ -2,8 +2,7 @@
 
 import { useState } from 'react'
 
-import { MdSend } from 'react-icons/md'
-
+import { SendIcon } from '@/components/icons'
 import IconButton from '@/components/ui/icon-button'
 import { useSocket } from '@/hooks/use-socket'
 
@@ -51,7 +50,7 @@ const ChatInput = ({ gameId, player }) => {
         maxLength={100}
       />
       <IconButton
-        Icon={MdSend}
+        Icon={SendIcon}
         label="전송"
         className="bg-blue-500 bg-white px-4 py-3 text-blue"
         onClick={handleMessageSubmit}

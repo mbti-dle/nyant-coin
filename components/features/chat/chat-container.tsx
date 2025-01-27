@@ -3,12 +3,12 @@
 import { useState, useRef, useEffect } from 'react'
 
 import clsx from 'clsx'
-import { MdExpandLess, MdExpandMore } from 'react-icons/md'
 import { twMerge } from 'tailwind-merge'
 
 import ChatInput from '@/components/features/chat/chat-input'
 import ChatMessage from '@/components/features/chat/chat-message'
 import ChatNotice from '@/components/features/chat/chat-notice'
+import { ExpandLessIcon, ExpandMoreIcon } from '@/components/icons'
 import { useSocket } from '@/hooks/use-socket'
 import { ChatType } from '@/types/chat'
 import { PlayerModel } from '@/types/game'
@@ -82,9 +82,9 @@ const ChatContainer = ({ gameId, player, setIsPreparingGame, className }: ChatCo
           onClick={toggleChatExpansion}
         >
           {isChatExpanded ? (
-            <MdExpandMore className="text-[#626262]" size={24} />
+            <ExpandMoreIcon className="text-[#626262]" size={24} />
           ) : (
-            <MdExpandLess className="text-[#626262]" size={24} />
+            <ExpandLessIcon className="text-[#626262]" size={24} />
           )}
         </button>
         <div

@@ -5,9 +5,9 @@ import { useState, useRef } from 'react'
 import clsx from 'clsx'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { MdOutlineTrendingFlat } from 'react-icons/md'
 
 import GuideButton from '@/components/features/guide-button'
+import { TrendingFlatIcon } from '@/components/icons'
 import Input from '@/components/ui/input'
 import LinkButton from '@/components/ui/link-button'
 import { useSocket } from '@/hooks/use-socket'
@@ -76,7 +76,7 @@ const HomePage = () => {
             className="absolute right-3 top-[14px] cursor-pointer"
             onClick={handleGameIdSubmit}
           >
-            <MdOutlineTrendingFlat className="text-gray-300 hover:text-gray-500" size={24} />
+            <TrendingFlatIcon className="text-gray-300 hover:text-gray-500" size={24} />
           </button>
 
           {errorMessage && (

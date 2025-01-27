@@ -4,8 +4,8 @@ import { ReactNode } from 'react'
 
 import clsx from 'clsx'
 import { createPortal } from 'react-dom'
-import { MdClose } from 'react-icons/md'
 
+import { CloseIcon } from '@/components/icons'
 import IconButton from '@/components/ui/icon-button'
 
 interface ModalProps {
@@ -50,7 +50,7 @@ const Modal = ({
             </div>
             {isShowCloseButton && (
               <IconButton
-                Icon={MdClose}
+                Icon={CloseIcon}
                 onClick={onModalClose}
                 className="mr-2 h-[40px] w-[40px] text-white"
                 label="닫기"

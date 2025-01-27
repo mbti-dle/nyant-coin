@@ -1,9 +1,9 @@
 'use client'
 
 import Image from 'next/image'
-import { MdCheckCircle } from 'react-icons/md'
 import { twMerge } from 'tailwind-merge'
 
+import { CheckCircleIcon } from '@/components/icons'
 import useToastStore from '@/store/toast'
 import { ToastIconType } from '@/types/ui-types'
 
@@ -23,7 +23,7 @@ interface IconConfigModel {
 // coin: 코인 아이콘 이미지 경로 | check: 체크 아이콘 컴포넌트
 const iconConfig: IconConfigModel = {
   coin: '/images/coin.png',
-  check: <MdCheckCircle className="text-white" size={24} />,
+  check: <CheckCircleIcon className="text-white" size={24} />,
 }
 
 // 토스트 아이콘 컴포넌트
