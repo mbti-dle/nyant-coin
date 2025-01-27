@@ -1,24 +1,24 @@
 import { ComponentProps } from 'react'
 
-import { SvgIconComponent } from '@mui/icons-material'
+import { IconType } from 'react-icons'
 import { twMerge } from 'tailwind-merge'
 
 interface IconButtonProps extends ComponentProps<'button'> {
-  Icon: SvgIconComponent
+  Icon: IconType
   label: string
   iconClassName?: string
-  sx?: { fontSize: number }
+  size?: number
 }
 
-const IconButton = ({ Icon, label, iconClassName, className, sx, ...props }: IconButtonProps) => {
+const IconButton = ({ Icon, label, iconClassName, className, size, ...props }: IconButtonProps) => {
   return (
     <button
-      className={twMerge('inline-flex items-center justify-center p-2 text-gray-400', className)}
+      className={twMerge('inline-flex items-center justify-center text-gray-400', className)}
       type="button"
       {...props}
       aria-label={label}
     >
-      <Icon className={iconClassName} sx={sx} />
+      <Icon className={iconClassName} size={size} />
     </button>
   )
 }

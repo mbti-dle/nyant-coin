@@ -2,12 +2,12 @@
 
 import { useState, useRef } from 'react'
 
-import TrendingFlatIcon from '@mui/icons-material/TrendingFlat'
 import clsx from 'clsx'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 
 import GuideButton from '@/components/features/guide-button'
+import { TrendingFlatIcon } from '@/components/icons'
 import Input from '@/components/ui/input'
 import LinkButton from '@/components/ui/link-button'
 import { useSocket } from '@/hooks/use-socket'
@@ -76,7 +76,7 @@ const HomePage = () => {
             className="absolute right-3 top-[14px] cursor-pointer"
             onClick={handleGameIdSubmit}
           >
-            <TrendingFlatIcon className="text-gray-300 hover:text-gray-500" />
+            <TrendingFlatIcon className="text-gray-300 hover:text-gray-500" size={24} />
           </button>
 
           {errorMessage && (

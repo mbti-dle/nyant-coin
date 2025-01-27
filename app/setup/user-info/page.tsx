@@ -2,11 +2,11 @@
 
 import { useState, useEffect, useRef } from 'react'
 
-import { ArrowBackIosNew } from '@mui/icons-material'
 import clsx from 'clsx'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
+import { ArrowBackIcon } from '@/components/icons'
 import AvatarSelector from '@/components/ui/avatar-selector'
 import Button from '@/components/ui/button'
 import CountInput from '@/components/ui/count-input'
@@ -98,7 +98,7 @@ const UserInfoPage = () => {
         href={isLeader ? '/setup/select-rounds' : '/'}
         className="absolute left-0 top-0 mx-4 mt-6"
       >
-        <ArrowBackIosNew className="text-gray-300 hover:text-gray-500" />
+        <ArrowBackIcon className="text-gray-300 hover:text-gray-500" size={24} />
       </Link>
       <AvatarSelector
         currentAvatarIndex={currentAvatarIndex}
