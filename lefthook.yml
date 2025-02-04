@@ -3,10 +3,11 @@ pre-commit:
   commands:
     lint-staged:
       run: npx lint-staged
-    type-check:
-      run: npm run type-check
 
 pre-push:
+  parallel: true
   commands:
+    type-check:
+      run: npm run type-check
     audit-check:
       run: npm audit
