@@ -7,6 +7,8 @@ import { useRouter } from 'next/navigation'
 
 import Button from '@/components/ui/button'
 import Modal from '@/components/ui/modal'
+import coinImage from '@/public/images/coin.png'
+import fishImage from '@/public/images/fish.png'
 import { GameResultModel } from '@/types/game'
 
 interface ResultModalProps {
@@ -46,7 +48,7 @@ const ResultModal = ({
     <Modal isOpen={isOpen} onModalClose={onModalClose}>
       <div className="mt-8 text-center">
         <div className="mb-3 flex justify-center">
-          <Image src="/images/fish.png" alt="생선" width={36} height={36} />
+          <Image src={fishImage} alt="생선" width={36} height={36} />
         </div>
         <p className="mb-3 font-galmuri">최종 생선 판매 가격</p>
         <p className="mb-5 text-2xl">{coin} 냥코인</p>
@@ -56,7 +58,7 @@ const ResultModal = ({
         </p>
         <p className="mb-8 flex items-center justify-center font-galmuri">
           최종 냥코인
-          <Image src="/images/coin.png" alt="코인" width={24} height={24} className="ml-2 mr-2" />
+          <Image src={coinImage} alt="코인" width={24} height={24} className="ml-2 mr-2" />
           {totalCoin}
         </p>
         <div className="mt-4 flex justify-center text-xl">

@@ -4,6 +4,8 @@ import clsx from 'clsx'
 import Image from 'next/image'
 import { twMerge } from 'tailwind-merge'
 
+import crownImage from '@/public/images/crown.png'
+
 interface CatBoxProps extends ComponentProps<'div'> {
   imageUrl?: string
   nickName?: string
@@ -47,7 +49,7 @@ const CatBox = memo(
       >
         {isLeader && (
           <Image
-            src="/images/crown.png"
+            src={crownImage}
             alt="리더 왕관"
             width={20}
             height={20}
