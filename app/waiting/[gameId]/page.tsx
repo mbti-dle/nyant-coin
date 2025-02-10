@@ -8,9 +8,12 @@ import ChatContainer from '@/components/features/chat/chat-container'
 import PlayerReturnStatusModal from '@/components/features/player-return-status-modal'
 import GameIdCopyButton from '@/components/features/waiting/game-id-copy-button'
 import PlayerGrid from '@/components/features/waiting/player-grid'
+import Background from '@/components/ui/background'
 import Button from '@/components/ui/button'
 import { useSocket } from '@/hooks/use-socket'
 import { useSocketNavigation } from '@/hooks/use-socket-navigation'
+import backgroundDesktopImage from '@/public/images/background-desktop-2.png'
+import backgroundMobileImage from '@/public/images/background-mobile-2.png'
 import useGameStore from '@/store/game'
 import useToastStore from '@/store/toast'
 import { PlayerModel } from '@/types/game'
@@ -129,7 +132,9 @@ const WaitingPage = ({ params }) => {
   }
 
   return (
-    <main className="relative mx-auto min-h-screen w-full bg-sea-spaceship-mobile bg-cover bg-fixed bg-top p-3 pt-[10px] md:bg-sea-spaceship-desktop">
+    <main className="relative mx-auto min-h-screen w-full p-3 pt-[10px]">
+      <Background desktopImage={backgroundDesktopImage} mobileImage={backgroundMobileImage} />
+
       <div className="mx-auto mt-3 max-w-[420px] flex-col items-center justify-center gap-4 p-3 pb-44 md:pt-[50px]">
         <PlayerGrid players={players} />
         <div className="mt-3 flex flex-col items-center justify-center gap-3">

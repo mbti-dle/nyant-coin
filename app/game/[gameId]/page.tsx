@@ -2,8 +2,6 @@
 
 import { useState, useEffect } from 'react'
 
-import ReactDOM from 'react-dom'
-
 import ChatContainer from '@/components/features/chat/chat-container'
 import FishCoinsAssets from '@/components/features/game/fish-coins-assets'
 import GameFooter from '@/components/features/game/game-footer'
@@ -11,10 +9,13 @@ import Hints from '@/components/features/game/hints'
 import Timer from '@/components/features/game/timer'
 import ResultModal from '@/components/features/result-modal'
 import PlayerGrid from '@/components/features/waiting/player-grid'
+import Background from '@/components/ui/background'
 import Toast from '@/components/ui/toast'
 import { gameConfig } from '@/constants/game'
 import { useSocket } from '@/hooks/use-socket'
 import { useSocketNavigation } from '@/hooks/use-socket-navigation'
+import backgroundDesktopImage from '@/public/images/background-desktop-3.png'
+import backgroundMobileImage from '@/public/images/background-mobile-3.png'
 import useGameStore from '@/store/game'
 import useToastStore from '@/store/toast'
 import {
@@ -64,9 +65,6 @@ const GamePage = ({ params }) => {
   const { socket } = useSocket()
 
   useEffect(() => {
-    ReactDOM.preload('/images/background-mobile-3.png', { as: 'image' })
-    ReactDOM.preload('/images/background-desktop-3.png', { as: 'image' })
-
     const handlePlayerInitialize = ({
       players,
       playerId,
@@ -182,7 +180,8 @@ const GamePage = ({ params }) => {
   const totalCoin = gameState.fish * lastFishCoin + gameState.coins
 
   return (
-    <main className="relative h-screen min-h-screen w-full flex-col bg-ocean-game-mobile bg-cover bg-fixed p-3 pt-[0px] md:bg-ocean-game-desktop">
+    <main className="relative h-screen min-h-screen w-full flex-col p-3 pt-[0px]">
+      <Background desktopImage={backgroundDesktopImage} mobileImage={backgroundMobileImage} />
       <div className="mx-auto max-w-[420px] flex-col items-center justify-center p-3 md:pt-[50px]">
         <div className="my-4 flex justify-between">
           <div className="flex justify-start">

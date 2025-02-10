@@ -8,10 +8,13 @@ import { useRouter } from 'next/navigation'
 
 import GuideButton from '@/components/features/guide-button'
 import { TrendingFlatIcon } from '@/components/icons'
+import Background from '@/components/ui/background'
 import Input from '@/components/ui/input'
 import LinkButton from '@/components/ui/link-button'
 import { useSocket } from '@/hooks/use-socket'
 import { isValidId } from '@/lib/utils/generate-game-id'
+import backgroundDesktopImage from '@/public/images/background-desktop-1.png'
+import backgroundMobileImage from '@/public/images/background-mobile-1.png'
 import logo from '@/public/images/logo.png'
 import useGameStore from '@/store/game'
 
@@ -56,9 +59,11 @@ const HomePage = () => {
   }
 
   return (
-    <main className="flex min-h-dvh flex-col justify-center bg-sky-mobile bg-cover bg-fixed bg-center md:bg-sky-desktop">
+    <main className="flex min-h-dvh flex-col justify-center">
+      <Background desktopImage={backgroundDesktopImage} mobileImage={backgroundMobileImage} />
+
       <h1 className="mb-20 flex justify-center">
-        <Image src={logo} alt="냥트코인" width={280} height={140} />
+        <Image src={logo} alt="냥트코인" width={280} height={140} priority />
       </h1>
 
       <div className="flex flex-col items-center gap-4">
