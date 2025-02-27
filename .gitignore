@@ -38,3 +38,7 @@ _logs/
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# hints
+/constants/hintsData.ts
+/scripts/init-db.ts
