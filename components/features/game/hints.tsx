@@ -2,6 +2,9 @@ import { memo } from 'react'
 
 import Image from 'next/image'
 
+import fishImage from '@/public/images/fish.png'
+import paperImage from '@/public/images/paper.png'
+
 interface HintsProps {
   fishPrice: number
   prevFishPrice: number
@@ -15,7 +18,7 @@ const Hints = memo(
   ({ fishPrice, prevFishPrice, currentRound, totalRounds, hint, hintResult }: HintsProps) => {
     return (
       <div className="relative mb-10 max-h-[156px] min-h-[120px] w-full min-[360px]:h-[156px]">
-        <Image src="/images/paper.png" alt="냥트코인 힌트" fill style={{ position: 'absolute' }} />
+        <Image src={paperImage} alt="냥트코인 힌트" fill className="absolute" />
 
         <div className="absolute right-1/2 top-1/2 w-full -translate-y-1/2 translate-x-1/2">
           <div className="flex flex-col justify-between min-[375px]:gap-1">
@@ -23,7 +26,7 @@ const Hints = memo(
               {hint || '내일 가격 힌트를 기다리는 중입니다...'}
             </p>
             <p className="mb-1 flex items-center justify-center">
-              <Image src="/images/fish.png" alt="물고기" width={32} height={32} className="mr-1" />
+              <Image src={fishImage} alt="물고기" width={32} height={32} className="mr-1" />
               <span className="text-xl font-light">
                 {fishPrice} 냥코인{' '}
                 {currentRound === 1 ? '' : fishPrice > prevFishPrice ? '📈' : '📉'}
