@@ -34,28 +34,8 @@ const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       setErrorType('DISCONNECT')
     }
 
-    const handleReconnectFailed = () => {
-      setErrorType('RECONNECT_FAILED')
-    }
-
-    const handleConnectTimeout = () => {
-      setErrorType('CONNECT_TIMEOUT')
-    }
-
-    const handleServerUnreachable = () => {
-      setErrorType('SERVER_UNREACHABLE')
-    }
-
-    const handleBadRequest = () => {
-      setErrorType('BAD_REQUEST')
-    }
-
     socketInstance.on('connect', handleSocketConnect)
     socketInstance.on('disconnect', handleSocketDisconnect)
-    socketInstance.on('reconnect_failed', handleReconnectFailed)
-    socketInstance.on('connect_timeout', handleConnectTimeout)
-    socketInstance.on('server_unreachable', handleServerUnreachable)
-    socketInstance.on('bad_request', handleBadRequest)
 
     setSocket(socketInstance)
     setIsConnected(socketInstance.connected)
@@ -67,10 +47,6 @@ const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     return () => {
       socketInstance.off('connect', handleSocketConnect)
       socketInstance.off('disconnect', handleSocketDisconnect)
-      socketInstance.off('reconnect_failed', handleReconnectFailed)
-      socketInstance.off('connect_timeout', handleConnectTimeout)
-      socketInstance.off('server_unreachable', handleServerUnreachable)
-      socketInstance.off('bad_request', handleBadRequest)
       socketInstance.disconnect()
     }
   }, [])
