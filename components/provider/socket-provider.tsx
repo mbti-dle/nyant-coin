@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Socket, io } from 'socket.io-client'
 
 import ErrorModal from '@/components/ui/error-modal'
-import { SOCKET_ERROR_MESSAGES, SocketErrorType } from '@/constants/socket'
+import { SOCKET_ERROR_MESSAGES, SOCKET_ERROR_TYPES, SocketErrorType } from '@/constants/socket'
 
 interface SocketContextModel {
   socket: Socket | null
@@ -31,7 +31,7 @@ const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
     const handleSocketDisconnect = () => {
       setIsConnected(false)
-      setErrorType('DISCONNECT')
+      setErrorType(SOCKET_ERROR_TYPES.DISCONNECT)
     }
 
     socketInstance.on('connect', handleSocketConnect)
