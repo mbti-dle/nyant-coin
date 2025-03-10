@@ -11,7 +11,9 @@
     "prettier": "prettier --write .",
     "type-check": "tsc --noEmit -p ./tsconfig.json",
     "init-db": "node --loader ts-node/esm scripts/init-db.ts",
-    "test": "jest"
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:watchAll": "jest --watchAll"
   },
   "dependencies": {
     "@socket.io/admin-ui": "^0.5.1",
