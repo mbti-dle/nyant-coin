@@ -33,15 +33,20 @@ const Modal = ({
   return createPortal(
     <>
       <div
-        role="presentation"
+        aria-hidden="true"
         className="pointer-events-auto fixed inset-0 z-20 flex items-center justify-center bg-black/20"
         onClick={shouldCloseOnBackgroundClick ? onModalClose : undefined}
       />
-
       <div className="pointer-events-none fixed inset-0 z-30 flex items-center justify-center">
-        <div className="pointer-events-auto w-[300px] overflow-hidden rounded-lg bg-white shadow-md">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-title"
+          className="pointer-events-auto w-[300px] overflow-hidden rounded-lg bg-white shadow-md"
+        >
           <div className="flex h-[60px] w-full items-center bg-primary">
             <div
+              id="modal-title"
               className={clsx('flex-grow text-center text-xl text-white', {
                 'ml-10': isShowCloseButton,
               })}
@@ -58,7 +63,6 @@ const Modal = ({
               />
             )}
           </div>
-
           <div className="p-4 text-black">{children}</div>
         </div>
       </div>

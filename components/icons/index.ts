@@ -5,6 +5,7 @@ import {
   MdExpandLess,
   MdSend,
   MdError,
+  MdErrorOutline,
   MdContentCopy,
   MdArrowLeft,
   MdArrowRight,
@@ -18,6 +19,7 @@ export const ExpandMoreIcon = MdExpandMore
 export const ExpandLessIcon = MdExpandLess
 export const SendIcon = MdSend
 export const ErrorIcon = MdError
+export const ErrorOutlineIcon = MdErrorOutline
 export const ContentCopyIcon = MdContentCopy
 export const ArrowLeftIcon = MdArrowLeft
 export const ArrowRightIcon = MdArrowRight
