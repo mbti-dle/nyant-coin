@@ -69,7 +69,7 @@ const CatBox = memo(
         )}
 
         {nickName && (
-          <p className="mx-3 flex h-8 items-center justify-center text-center font-galmuri text-xs leading-tight min-[375px]:text-sm min-[410px]:mx-5 md:mx-6">
+          <p className="mx-3 flex h-8 items-center justify-center text-center font-galmuri text-xs leading-tight min-[375px]:text-sm min-[410px]:mx-2">
             {nickName}
           </p>
         )}
