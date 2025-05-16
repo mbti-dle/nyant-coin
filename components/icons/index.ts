@@ -11,6 +11,8 @@ import {
   MdArrowRight,
   MdClose,
   MdCheckCircle,
+  MdOutlineWifi,
+  MdOutlineWifiOff,
 } from 'react-icons/md'
 
 export const TrendingFlatIcon = MdOutlineTrendingFlat
@@ -25,3 +27,5 @@ export const ArrowLeftIcon = MdArrowLeft
 export const ArrowRightIcon = MdArrowRight
 export const CloseIcon = MdClose
 export const CheckCircleIcon = MdCheckCircle
+export const WifiIcon = MdOutlineWifi
+export const WifiOffIcon = MdOutlineWifiOff
