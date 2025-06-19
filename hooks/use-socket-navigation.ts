@@ -17,8 +17,6 @@ export const useSocketNavigation = (gameId) => {
       socket.emit('leave_game', { gameId })
     }
 
-    socket.removeAllListeners()
-    socket.disconnect()
     router.push('/')
   }
 
