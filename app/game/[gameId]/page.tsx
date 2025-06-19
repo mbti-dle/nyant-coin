@@ -25,6 +25,7 @@ import {
   TransactionType,
   HintContentModel,
   GameResultModel,
+  GameInfoModel,
 } from '@/types/game'
 
 const GamePage = ({ params }) => {
@@ -65,60 +66,6 @@ const GamePage = ({ params }) => {
   const { socket } = useSocket()
 
   useEffect(() => {
-    const handlePlayerInitialize = ({
-      players,
-      playerId,
-    }: {
-      players: PlayerModel[]
-      playerId: string
-    }) => {
-      setPlayers(players)
-      setPlayerId(playerId)
-    }
-
-    const handlePlayersUpdate = (updatedPlayers: PlayerModel[]) => {
-      setPlayers(updatedPlayers)
-    }
-
-    const handleFirstRoundHint = (gameInfo) => {
-      if (gameInfo.currentDay === 1) {
-        setHints({
-          nextRoundHint: gameInfo.nextRoundHint,
-          lastRoundHintResult: '',
-        })
-      }
-    }
-
-    const handleLastFishPrice = (newPrice) => {
-      setLastFishCoin(newPrice)
-      setGameState((prev) => ({ ...prev, isModalOpen: true }))
-    }
-
-    const handleTradeMessage = (result: TransactionResultModel) => {
-      setTransactionResult(result)
-    }
-
-    const handleGameInfoUpdate = (gameInfo) => {
-      setPrevFishPrice(gameState.fishPrice)
-      setGameState((prev) => ({
-        ...prev,
-        fishPrice: gameInfo.currentFishPrice,
-        currentRound: gameInfo.currentDay,
-      }))
-      setHints({
-        nextRoundHint: gameInfo.nextRoundHint || '',
-        lastRoundHintResult: gameInfo.lastRoundHintResult || '',
-      })
-    }
-
-    const handleGameEnded = ({ results }: { results: GameResultModel[] }) => {
-      setGameResults(results)
-    }
-
-    socket.emit('request_player_info', { gameId })
-    socket.emit('request_first_round_hint', { gameId })
-    socket.emit('player_ready', { gameId })
-
     socket.on('player_info', handlePlayerInitialize)
     socket.on('update_players', handlePlayersUpdate)
     socket.on('first_round_hint', handleFirstRoundHint)
@@ -126,6 +73,17 @@ const GamePage = ({ params }) => {
     socket.on('trade_message', handleTradeMessage)
     socket.on('update_game_info', handleGameInfoUpdate)
     socket.on('game_ended', handleGameEnded)
+    socket.on('round_sync', handleRoundSync)
+    socket.on('reconnect', handleReconnect)
+    socket.on('disconnect', handleDisconnect)
+    socket.on('sync_complete', handleGameSync)
+    socket.on('complete_round_sync', handleGameSync)
+
+    // 초기 요청
+    console.log('🚀 초기 게임 정보 요청:', { gameId })
+    socket.emit('request_player_info', { gameId })
+    socket.emit('request_first_round_hint', { gameId })
+    socket.emit('player_ready', { gameId })
 
     return () => {
       socket.off('player_info')
@@ -135,12 +93,43 @@ const GamePage = ({ params }) => {
       socket.off('trade_message')
       socket.off('update_game_info')
       socket.off('game_ended')
+      socket.off('round_sync')
+      socket.off('reconnect')
+      socket.off('disconnect')
+      socket.off('sync_complete')
+      socket.off('complete_round_sync')
     }
   }, [gameId])
 
   useEffect(() => {
     resetResults()
   }, [])
+
+  const updateHintsAndGameState = (gameInfo: GameInfoModel, source: string) => {
+    console.log(`🎯 힌트 및 게임 상태 업데이트 (${source}):`, gameInfo)
+    if (gameInfo.currentFishPrice && gameInfo.currentFishPrice !== gameState.fishPrice) {
+      setPrevFishPrice(gameState.fishPrice)
+    }
+
+    if (gameInfo.nextRoundHint !== undefined || gameInfo.lastRoundHintResult !== undefined) {
+      setHints((prev) => ({
+        nextRoundHint:
+          gameInfo.nextRoundHint !== undefined ? gameInfo.nextRoundHint : prev.nextRoundHint,
+        lastRoundHintResult:
+          gameInfo.lastRoundHintResult !== undefined
+            ? gameInfo.lastRoundHintResult
+            : prev.lastRoundHintResult,
+      }))
+    }
+
+    if (gameInfo.currentFishPrice !== undefined || gameInfo.currentDay !== undefined) {
+      setGameState((prev) => ({
+        ...prev,
+        ...(gameInfo.currentFishPrice !== undefined && { fishPrice: gameInfo.currentFishPrice }),
+        ...(gameInfo.currentDay !== undefined && { currentRound: gameInfo.currentDay }),
+      }))
+    }
+  }
 
   const handleTransaction = (action: TransactionType, amount: number) => {
     setGameState((prevState) => {
@@ -175,6 +164,142 @@ const GamePage = ({ params }) => {
     }
 
     socket.emit('end_game', { gameId, result: finalScore })
+  }
+
+  const handlePlayerInitialize = ({
+    players,
+    playerId,
+  }: {
+    players: PlayerModel[]
+    playerId: string
+  }) => {
+    console.log('🎮 플레이어 초기화:', { players, playerId })
+    setPlayers(players)
+    setPlayerId(playerId)
+
+    if (gameId && playerId) {
+      console.log('🔄 동기화 요청 (playerId 설정 후):', { gameId, playerId })
+      socket.emit('request_sync', {
+        gameId,
+        playerId,
+      })
+    }
+  }
+
+  const handlePlayersUpdate = (updatedPlayers: PlayerModel[]) => {
+    setPlayers(updatedPlayers)
+  }
+
+  const handleFirstRoundHint = (gameInfo) => {
+    console.log('🎯 첫 라운드 힌트 수신:', gameInfo)
+    updateHintsAndGameState(gameInfo, 'firstRoundHint')
+
+    if (gameInfo.currentDay === 1) {
+      setHints({
+        nextRoundHint: gameInfo.nextRoundHint,
+        lastRoundHintResult: '',
+      })
+    }
+  }
+
+  const handleLastFishPrice = (newPrice) => {
+    setLastFishCoin(newPrice)
+    setGameState((prev) => ({ ...prev, isModalOpen: true }))
+  }
+
+  const handleTradeMessage = (result: TransactionResultModel) => {
+    setTransactionResult(result)
+  }
+
+  const handleGameInfoUpdate = (gameInfo) => {
+    console.log('🔄 게임 정보 업데이트:', gameInfo)
+    updateHintsAndGameState(gameInfo, 'updateGameInfo')
+  }
+
+  const handleGameEnded = ({ results }: { results: GameResultModel[] }) => {
+    setGameResults(results)
+  }
+
+  const handleRoundSync = (roundData) => {
+    console.log('🔄 라운드 동기화:', roundData)
+    updateHintsAndGameState(
+      {
+        currentDay: roundData.currentRound,
+        currentFishPrice: roundData.fishPrice,
+        nextRoundHint: roundData.hint,
+        lastRoundHintResult: roundData.lastRoundResult,
+      },
+      'roundSync'
+    )
+  }
+
+  const handleGameSync = (syncData) => {
+    console.log('🔄 게임 상태 동기화 수신:', syncData)
+
+    if (syncData.gameInfo) {
+      const { currentDay, currentFishPrice, nextRoundHint, lastRoundHintResult } = syncData.gameInfo
+
+      console.log('📊 동기화 데이터 적용:', {
+        currentRound: currentDay,
+        fishPrice: currentFishPrice,
+        hint: nextRoundHint,
+        hintResult: lastRoundHintResult,
+      })
+
+      if (currentFishPrice !== undefined && currentFishPrice !== gameState.fishPrice) {
+        setPrevFishPrice(gameState.fishPrice)
+      }
+
+      setGameState((prev) => ({
+        ...prev,
+        currentRound: currentDay || prev.currentRound,
+        fishPrice: currentFishPrice !== undefined ? currentFishPrice : prev.fishPrice,
+      }))
+
+      setHints({
+        nextRoundHint: nextRoundHint || '',
+        lastRoundHintResult: lastRoundHintResult || '',
+      })
+    }
+
+    if (syncData.currentRound !== undefined) {
+      console.log('📊 라운드 동기화:', {
+        currentRound: syncData.currentRound,
+        fishPrice: syncData.fishPrice,
+        hint: syncData.hint,
+        hintResult: syncData.lastRoundResult,
+      })
+
+      if (syncData.fishPrice !== undefined && syncData.fishPrice !== gameState.fishPrice) {
+        setPrevFishPrice(gameState.fishPrice)
+      }
+
+      setGameState((prev) => ({
+        ...prev,
+        currentRound: syncData.currentRound,
+        fishPrice: syncData.fishPrice !== undefined ? syncData.fishPrice : prev.fishPrice,
+      }))
+
+      setHints({
+        nextRoundHint: syncData.hint || '',
+        lastRoundHintResult: syncData.lastRoundResult || '',
+      })
+    }
+
+    if (syncData.players) {
+      setPlayers(syncData.players)
+    }
+  }
+
+  const handleReconnect = () => {
+    console.log('🔄 소켓 재연결됨')
+    socket.emit('request_player_info', { gameId })
+    socket.emit('request_first_round_hint', { gameId })
+    socket.emit('player_ready', { gameId })
+  }
+
+  const handleDisconnect = (reason) => {
+    console.log('🔴 소켓 연결 끊김:', reason)
   }
 
   const totalCoin = gameState.fish * lastFishCoin + gameState.coins
