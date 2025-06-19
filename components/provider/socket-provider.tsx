@@ -29,13 +29,71 @@ const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const [errorType, setErrorType] = useState<SocketErrorType | null>(null)
 
   const wasEverConnected = useRef(false)
-  const disconnectedAtRef = useRef<number | null>(null)
   const errorModalTimerRef = useRef<NodeJS.Timeout | null>(null)
   const reconnectIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const shouldShowErrorModal = useRef(false)
 
-  const handleSocketConnect = () => {
-    disconnectedAtRef.current = null
+  const reconnectionInProgress = useRef(false)
+  const lastSyncRequestTime = useRef(0)
+  const gameRestoreToastShown = useRef(false)
+
+  const gameDataRef = useRef<{
+    gameId: string | null
+    playerId: string | null
+  }>({
+    gameId: null,
+    playerId: null,
+  })
+
+  const saveGameData = (gameId: string, playerId: string) => {
+    gameDataRef.current = {
+      gameId,
+      playerId,
+    }
+    console.log('💾 게임 데이터 저장됨:', { gameId, playerId })
+  }
+
+  const getGameData = () => {
+    return {
+      gameId: gameDataRef.current.gameId,
+      playerId: gameDataRef.current.playerId,
+    }
+  }
+
+  const handleGameStateSync = (socketInstance: Socket) => {
+    const { gameId, playerId } = getGameData()
+
+    if (reconnectionInProgress.current) {
+      return
+    }
+
+    const now = Date.now()
+    if (now - lastSyncRequestTime.current < 3000) {
+      return
+    }
+
+    if (gameId && playerId && socketInstance.connected) {
+      console.log('📡 게임 상태 동기화 요청 전송됨')
+
+      reconnectionInProgress.current = true
+      lastSyncRequestTime.current = now
+
+      socketInstance.emit('request_sync', {
+        gameId,
+        playerId,
+        timestamp: now,
+      })
+
+      setTimeout(() => {
+        if (reconnectionInProgress.current) {
+          console.log('⏰ 동기화 타임아웃')
+          reconnectionInProgress.current = false
+        }
+      }, 10000)
+    }
+  }
+
+  const handleSocketConnect = (socketInstance: Socket) => {
     setIsNetworkOffline(false)
     shouldShowErrorModal.current = false
 
@@ -44,6 +102,13 @@ const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
     if (wasEverConnected.current && !isSocketConnected) {
       showToast('서버에 다시 연결되었습니다', 'connection')
+
+      const { gameId, playerId } = getGameData()
+      if (gameId && playerId) {
+        setTimeout(() => {
+          handleGameStateSync(socketInstance)
+        }, 1000)
+      }
     }
 
     setIsSocketConnected(true)
@@ -52,10 +117,8 @@ const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
   const handleSocketDisconnect = () => {
     setIsSocketConnected(false)
-
-    if (disconnectedAtRef.current === null) {
-      disconnectedAtRef.current = Date.now()
-    }
+    reconnectionInProgress.current = false
+    gameRestoreToastShown.current = false
 
     if (wasEverConnected.current) {
       showToast('연결이 불안정합니다. 다시 연결 중...', 'warning')
@@ -80,6 +143,8 @@ const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   }
 
   const handleConnectionError = () => {
+    reconnectionInProgress.current = false
+
     if (wasEverConnected.current) {
       setIsNetworkOffline(true)
       shouldShowErrorModal.current = true
@@ -114,11 +179,139 @@ const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }
 
-  // 네트워크 상태 관리
+  const handleSocketReconnectAttempt = () => {
+    reconnectionInProgress.current = false
+  }
+
+  const handleSocketReconnectSuccess = () => {
+    reconnectionInProgress.current = false
+  }
+
+  const handleSocketReconnectFailed = () => {
+    console.log('❌ 재연결 실패')
+    reconnectionInProgress.current = false
+    if (confirm('재연결에 실패했습니다. 페이지를 새로고침하시겠습니까?')) {
+      window.location.reload()
+    }
+  }
+
+  const handleSyncComplete = (gameSnapshot: any) => {
+    console.log('✅ 게임 상태 동기화 완료')
+
+    reconnectionInProgress.current = false
+    setIsNetworkOffline(false)
+
+    if (!gameRestoreToastShown.current) {
+      showToast('게임 상태가 복원되었습니다', 'connection')
+      gameRestoreToastShown.current = true
+    }
+
+    const { gameId, playerId } = getGameData()
+    if (gameSnapshot.gameId && gameId !== gameSnapshot.gameId) {
+      saveGameData(gameSnapshot.gameId, playerId || '')
+    }
+
+    window.dispatchEvent(
+      new CustomEvent('gameStateRestored', {
+        detail: gameSnapshot,
+      })
+    )
+  }
+
+  const handleSyncFailed = ({ error }: { error: string }, socketInstance: Socket) => {
+    console.log('❌ 동기화 실패:', error)
+    reconnectionInProgress.current = false
+    showToast('게임 상태 복원에 실패했습니다', 'warning')
+
+    const { gameId, playerId } = getGameData()
+    if (gameId && playerId && socketInstance.connected) {
+      setTimeout(() => {
+        if (!reconnectionInProgress.current && socketInstance.connected) {
+          handleGameStateSync(socketInstance)
+        }
+      }, 3000)
+    }
+  }
+
+  const handleJoinSuccess = ({ gameId, playerId }: { gameId: string; playerId: string }) => {
+    saveGameData(gameId, playerId)
+  }
+
+  const handlePlayerNotFound = ({ message }: { message: string }) => {
+    console.log('❌ 플레이어를 찾을 수 없음:', message)
+
+    reconnectionInProgress.current = false
+
+    setTimeout(() => {
+      if (!reconnectionInProgress.current) {
+        gameDataRef.current = {
+          gameId: null,
+          playerId: null,
+        }
+
+        showToast(message, 'warning')
+
+        if (
+          window.location.pathname.includes('/game/') ||
+          window.location.pathname.includes('/waiting/')
+        ) {
+          router.push('/')
+        }
+      }
+    }, 1000)
+  }
+
+  const handleGameStateRestored = (gameState: any) => {
+    reconnectionInProgress.current = false
+    setIsNetworkOffline(false)
+
+    window.dispatchEvent(
+      new CustomEvent('gameStateRestored', {
+        detail: gameState,
+      })
+    )
+  }
+
+  const handlePlayerReconnected = ({ nickname }: { nickname: string }) => {
+    showToast(`${nickname}님이 재연결되었습니다`, 'connection')
+  }
+
+  const setupDebugFunctions = (socketInstance: Socket) => {
+    if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+      window.debugSocket = {
+        status: () => {
+          const { gameId, playerId } = getGameData()
+          console.log('🔍 소켓 상태:', {
+            connected: socketInstance.connected,
+            gameId: gameId ? `${gameId.slice(0, 4)}***` : null,
+            playerId: playerId ? `${playerId.slice(0, 8)}***` : null,
+            reconnecting: reconnectionInProgress.current,
+          })
+        },
+        reconnect: () => {
+          console.log('🔧 수동 게임 상태 동기화 시도')
+          if (socketInstance.connected) {
+            reconnectionInProgress.current = false
+            handleGameStateSync(socketInstance)
+          } else {
+            console.log('❌ 소켓이 연결되지 않음')
+          }
+        },
+      }
+    }
+  }
+
+  const cleanupDebugFunctions = () => {
+    if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+      delete window.debugSocket
+    }
+  }
+
   useEffect(() => {
     const handleOnline = () => {
       setIsNetworkOffline(false)
       shouldShowErrorModal.current = false
+      reconnectionInProgress.current = false
 
       if (errorModalTimerRef.current) {
         clearTimeout(errorModalTimerRef.current)
@@ -127,12 +320,22 @@ const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (socket && !socket.connected && wasEverConnected.current) {
         socket.connect()
+
+        const { gameId, playerId } = getGameData()
+        if (gameId && playerId) {
+          setTimeout(() => {
+            if (socket.connected) {
+              handleGameStateSync(socket)
+            }
+          }, 1500)
+        }
       }
     }
 
     const handleOffline = () => {
       setIsNetworkOffline(true)
       shouldShowErrorModal.current = true
+      reconnectionInProgress.current = false
 
       if (wasEverConnected.current) {
         showToast('연결이 불안정합니다. 다시 연결 중...', 'warning')
@@ -163,7 +366,6 @@ const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [socket, showToast])
 
-  // 재연결 알람 관리
   useEffect(() => {
     if (isNetworkOffline && wasEverConnected.current && !errorType) {
       if (reconnectIntervalRef.current) {
@@ -187,17 +389,36 @@ const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [isNetworkOffline, showToast, errorType])
 
-  // Socket 초기화
   useEffect(() => {
     const socketInstance = io({
-      reconnectionAttempts: Infinity,
+      reconnection: true,
+      reconnectionAttempts: 10,
       reconnectionDelay: 1000,
-      timeout: 5000,
+      reconnectionDelayMax: 5000,
+      timeout: 15000,
+      forceNew: false,
     })
 
-    socketInstance.on('connect', handleSocketConnect)
-    socketInstance.on('disconnect', handleSocketDisconnect)
-    socketInstance.on('connect_error', handleConnectionError)
+    socketInstance.on('connect', () => {
+      handleSocketConnect(socketInstance)
+    })
+    socketInstance.on('disconnect', (reason) => {
+      console.log('💔 소켓 연결 끊김:', reason)
+      handleSocketDisconnect()
+    })
+    socketInstance.on('connect_error', (error) => {
+      console.log('❌ 연결 에러:', error)
+      handleConnectionError()
+    })
+    socketInstance.on('reconnect_attempt', handleSocketReconnectAttempt)
+    socketInstance.on('reconnect', handleSocketReconnectSuccess)
+    socketInstance.on('reconnect_failed', handleSocketReconnectFailed)
+    socketInstance.on('sync_complete', handleSyncComplete)
+    socketInstance.on('sync_failed', (data) => handleSyncFailed(data, socketInstance))
+    socketInstance.on('join_success', handleJoinSuccess)
+    socketInstance.on('player_not_found', handlePlayerNotFound)
+    socketInstance.on('game_state_restored', handleGameStateRestored)
+    socketInstance.on('player_reconnected', handlePlayerReconnected)
 
     setSocket(socketInstance)
     setIsSocketConnected(socketInstance.connected)
@@ -206,15 +427,28 @@ const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       socketInstance.connect()
     }
 
+    setupDebugFunctions(socketInstance)
+
     return () => {
       clearTimers()
 
-      socketInstance.off('connect', handleSocketConnect)
-      socketInstance.off('disconnect', handleSocketDisconnect)
+      socketInstance.off('connect')
+      socketInstance.off('disconnect')
       socketInstance.off('connect_error')
+      socketInstance.off('reconnect_attempt')
+      socketInstance.off('reconnect')
+      socketInstance.off('reconnect_failed')
+      socketInstance.off('sync_complete')
+      socketInstance.off('sync_failed')
+      socketInstance.off('game_state_restored')
+      socketInstance.off('player_reconnected')
+      socketInstance.off('player_not_found')
+      socketInstance.off('join_success')
       socketInstance.disconnect()
+
+      cleanupDebugFunctions()
     }
-  }, [showToast])
+  }, [showToast, router])
 
   const handleErrorModalClose = () => {
     setErrorType(null)
