@@ -1,16 +1,40 @@
-import { GameModel, PlayerIdType, SocketIdType } from '@/types/game.js'
+import { GameHistoryModel, GameModel, PlayerIdType, SocketIdType } from '../../types/game.js'
 
 export const gameRooms = new Map<string, GameModel & { readyPlayers: Set<string> }>()
+export const gameHistory = new Map<string, GameHistoryModel>()
+
 export const playersMap = new Map<SocketIdType, PlayerIdType>()
+export const playersStatus = new Map<
+  PlayerIdType,
+  {
+    isOnline: boolean
+    lastSeen: number
+    socketId?: SocketIdType
+  }
+>()
+
+export const playersReconnecting = new Map<PlayerIdType, number>()
+export const playersDisconnected = new Map<PlayerIdType, NodeJS.Timeout>()
+export const playersReconnectingSet = new Set<string>()
+
 export const gameTimers = new Map<string, NodeJS.Timeout>()
 export const roundTimers = new Map<string, NodeJS.Timeout>()
+export const gameTimersState = new Map<
+  string,
+  {
+    startTime: number
+    duration: number
+    isRunning: boolean
+  }
+>()
 
-export const getRoom = (gameId: string) => gameRooms.get(gameId)
-export const addRoom = (gameId: string, game: GameModel & { readyPlayers: Set<string> }) =>
-  gameRooms.set(gameId, game)
-export const removeRoom = (gameId: string) => gameRooms.delete(gameId)
-
-export const addPlayer = (socketId: SocketIdType, playerId: PlayerIdType) =>
-  playersMap.set(socketId, playerId)
-export const removePlayer = (socketId: SocketIdType) => playersMap.delete(socketId)
-export const getPlayerId = (socketId: SocketIdType) => playersMap.get(socketId)
+export const roundProgress = new Map<
+  string,
+  {
+    gameId: string
+    currentRound: number
+    isTransitioning: boolean
+    lastUpdateTime: number
+    lastValidatedRound: number
+  }
+>()

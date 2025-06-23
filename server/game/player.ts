@@ -1,9 +1,19 @@
 import { Socket } from 'socket.io'
 
-import { gameRooms, getRoom, removePlayer, removeRoom } from './store.js'
-import { clearGameTimers } from './timer.js'
+import { PlayerIdType, SocketIdType } from '../../types/game'
 
-export const removePlayerFromRoom = (socket: Socket, playerId: string, gameId: string) => {
+import { getRoom, removeRoom } from './room.js'
+import { gameRooms, playersStatus, playersMap } from './store.js'
+import { clearAllGameTimers } from './timer.js'
+
+export const addPlayer = (socketId: SocketIdType, playerId: PlayerIdType) =>
+  playersMap.set(socketId, playerId)
+
+export const removePlayer = (socketId: SocketIdType) => playersMap.delete(socketId)
+
+export const getPlayer = (socketId: SocketIdType) => playersMap.get(socketId)
+
+const removePlayerFromRoom = (socket: Socket, playerId: string, gameId: string) => {
   const room = getRoom(gameId)
   if (!room) {
     return false
@@ -19,7 +29,7 @@ export const removePlayerFromRoom = (socket: Socket, playerId: string, gameId: s
   socket.to(gameId).emit('update_players', room.players)
 
   if (room.players.length === 0) {
-    clearGameTimers(gameId)
+    clearAllGameTimers(gameId)
     removeRoom(gameId)
   }
 
@@ -41,4 +51,31 @@ export const handlePlayerLeave = (socket: Socket, playerId: string, leaveGameId?
     }
   })
   removePlayer(socket.id)
+}
+
+export const updatePlayerStatus = (
+  playerId: PlayerIdType,
+  isOnline: boolean,
+  socketId?: SocketIdType
+) => {
+  playersStatus.set(playerId, {
+    isOnline,
+    lastSeen: Date.now(),
+    socketId: isOnline ? socketId : undefined,
+  })
+}
+
+export const getPlayerStatus = (playerId: PlayerIdType): boolean => {
+  return playersStatus.get(playerId)?.isOnline ?? false
+}
+
+export const clearPlayerStatus = (playerId: PlayerIdType) => {
+  playersStatus.delete(playerId)
+}
+
+export const getOnlinePlayers = (gameId: string): PlayerIdType[] => {
+  const room = gameRooms.get(gameId)
+  if (!room) return []
+
+  return room.players.filter((player) => getPlayerStatus(player.id)).map((player) => player.id)
 }

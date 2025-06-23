@@ -35,8 +35,8 @@ const UserInfoPage = () => {
   const rounds = useGameStore((state) => state.rounds)
 
   useEffect(() => {
-    const handleJoinSuccess = (gameId: string) => {
-      router.push(`/waiting/${gameId}`)
+    const handleJoinSuccess = (data) => {
+      router.push(`/waiting/${data.gameId}`)
     }
 
     const handleJoinFailure = () => {

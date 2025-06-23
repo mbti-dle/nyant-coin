@@ -14,6 +14,7 @@ import {
   handlePlayerReady,
   handleRequestFirstRoundHint,
   handleRequestPlayerInfo,
+  handleRequestSync,
   handleSendMessage,
   handleSendNotice,
   handleStartGame,
@@ -52,6 +53,8 @@ app.prepare().then(() => {
 
     socket.on('leave_game', (data) => handleLeaveGame(socket, data))
     socket.on('disconnect', () => handleDisconnect(socket))
+
+    socket.on('request_sync', (data) => handleRequestSync(io, socket, data))
   })
 
   httpServer

@@ -1,13 +1,18 @@
-export interface AvatarModel {
-  imageUrl: string
-  nickName: string
-  isLeader?: boolean
+export interface PlayerModel {
   id: string
+  nickname: string
+  character: string
+  score?: number
+  isInWaitingRoom: boolean
 }
 
-export interface TransactionResultModel {
-  playerId: string
-  message: string
+export interface AvatarModel extends Pick<PlayerModel, 'id' | 'nickname'> {
+  imageUrl: string
+  isLeader?: boolean
+}
+
+export interface GameResultModel extends Pick<PlayerModel, 'id' | 'nickname' | 'character'> {
+  score: number
 }
 
 export interface GameStateModel {
@@ -19,32 +24,9 @@ export interface GameStateModel {
   isModalOpen: boolean
 }
 
-export interface GameModel {
-  gameId: string
-  totalRounds: number
-  state: 'waiting' | 'in_progress' | 'ended'
-  hints: HintModel[]
-  gameInfo: {
-    currentDay: number
-    currentFishPrice: number
-    lastRoundHintResult: string
-    nextRoundHint: string
-  }
-  players: PlayerModel[]
-  gameResults: GameResultModel[]
-}
-
-export interface PlayerModel {
-  id: string
-  nickname: string
-  character: string
-  score?: number
-  isInWaitingRoom: boolean
-}
-
-export interface HintContentModel {
-  nextRoundHint: string
-  lastRoundHintResult: string
+export interface TransactionResultModel {
+  playerId: string
+  message: string
 }
 
 export interface HintModel {
@@ -57,11 +39,50 @@ export interface HintModel {
   mismatchOutcomeLow: string
 }
 
-export interface GameResultModel {
-  id: string
-  nickname: string
-  score: number
-  character: string
+export interface HintContentModel {
+  nextRoundHint: string
+  lastRoundHintResult: string
+}
+
+export interface RoundRecordModel {
+  roundNumber: number
+  fishPrice: number
+  hint: string
+  hintResult: string
+  timestamp: number
+}
+
+export interface GameHistoryModel {
+  rounds: RoundRecordModel[]
+  currentRound: number
+}
+
+export interface GameInfoModel {
+  currentDay: number
+  currentFishPrice: number
+  lastRoundHintResult: string
+  nextRoundHint: string
+}
+
+export interface GameModel {
+  gameId: string
+  totalRounds: number
+  state: 'waiting' | 'in_progress' | 'ended'
+  hints: HintModel[]
+  gameInfo: GameInfoModel
+  players: PlayerModel[]
+  gameResults: GameResultModel[]
+  gameStartTime?: number
+}
+
+export interface GameSnapshotModel {
+  gameId: string
+  players: PlayerModel[]
+  gameInfo: GameInfoModel
+  gameState: GameStateModel
+  gameHistory: GameHistoryModel
+  gameResults: GameResultModel[]
+  currentPlayerId: string
 }
 
 export type SocketIdType = string
