@@ -419,6 +419,17 @@ const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     socketInstance.on('player_not_found', handlePlayerNotFound)
     socketInstance.on('game_state_restored', handleGameStateRestored)
     socketInstance.on('player_reconnected', handlePlayerReconnected)
+    socketInstance.on('player_disconnected', ({ message }) => {
+      showToast(message, 'warning')
+    })
+
+    socketInstance.on('player_removed', ({ message }) => {
+      showToast(message, 'warning')
+    })
+
+    socketInstance.on('player_left', ({ message }) => {
+      showToast(message, 'warning')
+    })
 
     setSocket(socketInstance)
     setIsSocketConnected(socketInstance.connected)
@@ -444,6 +455,10 @@ const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       socketInstance.off('player_reconnected')
       socketInstance.off('player_not_found')
       socketInstance.off('join_success')
+      socketInstance.off('player_disconnected')
+      socketInstance.off('player_removed')
+      socketInstance.off('player_left')
+
       socketInstance.disconnect()
 
       cleanupDebugFunctions()
