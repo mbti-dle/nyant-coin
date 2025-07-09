@@ -417,9 +417,21 @@ export const handleRoundValidationRequest = (
   }
 }
 
-export const handleDisconnect = (socket: Socket) => {
+export const handleDisconnect = (io: SocketIOServer, socket: Socket, reason: string) => {
+  console.log(`🔌 플레이어 연결 끊김: ${socket.id}, 이유: ${reason}`)
+
   const playerId = getPlayer(socket.id)
   if (!playerId) return
+
+  const gameId = Array.from(socket.rooms).find((room) => {
+    if (room === socket.id) return false
+
+    return getRoom(room) !== undefined
+  })
+
+  if (!gameId) return
+
+  console.log(`📤 플레이어 ${playerId}가 게임 ${gameId}에서 연결 끊김 (60초 재연결 대기)`)
 
   if (playersDisconnected.has(playerId)) {
     const existingTimeout = playersDisconnected.get(playerId)
@@ -428,12 +440,42 @@ export const handleDisconnect = (socket: Socket) => {
     }
   }
 
+  updatePlayerStatus(playerId, false, '')
+
+  socket.to(gameId).emit('player_disconnected', {
+    playerId,
+    message: '플레이어가 연결이 끊어졌습니다. 60초 후 자동으로 제거됩니다.',
+  })
+
   const timeoutId = setTimeout(() => {
-    handlePlayerLeave(socket, playerId)
+    console.log(`⏰ 플레이어 ${playerId} 60초 타임아웃으로 게임에서 제거`)
+
+    const currentStatus = getPlayerStatus(playerId)
+    if (!currentStatus) {
+      handlePlayerLeave(socket, playerId, gameId)
+
+      io.to(gameId).emit('player_removed', {
+        playerId,
+        message: '플레이어가 게임에서 나갔습니다.',
+      })
+    }
+
     playersDisconnected.delete(playerId)
   }, 60000)
 
   playersDisconnected.set(playerId, timeoutId)
+}
+
+export const handleUserDisconnect = (io, socket, { gameId }) => {
+  const playerId = getPlayer(socket.id)
+  if (!playerId) return
+
+  handlePlayerLeave(socket, playerId, gameId)
+
+  socket.to(gameId).emit('player_left', {
+    playerId,
+    message: '플레이어가 게임에서 나갔습니다.',
+  })
 }
 
 export const handleTradeFishes = (
