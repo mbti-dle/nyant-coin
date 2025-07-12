@@ -78,6 +78,10 @@ const GamePage = ({ params }) => {
     socket.on('disconnect', handleDisconnect)
     socket.on('sync_complete', handleGameSync)
     socket.on('complete_round_sync', handleGameSync)
+    socket.on('player_disconnected', handlePlayerDisconnected)
+    socket.on('player_removed', handlePlayerRemoved)
+    socket.on('player_left', handlePlayerLeft)
+    socket.on('player_reconnected', handlePlayerReconnected)
 
     // 초기 요청
     console.log('🚀 초기 게임 정보 요청:', { gameId })
@@ -98,6 +102,10 @@ const GamePage = ({ params }) => {
       socket.off('disconnect')
       socket.off('sync_complete')
       socket.off('complete_round_sync')
+      socket.off('player_disconnected')
+      socket.off('player_removed')
+      socket.off('player_left')
+      socket.off('player_reconnected')
     }
   }, [gameId])
 
@@ -105,21 +113,54 @@ const GamePage = ({ params }) => {
     resetResults()
   }, [])
 
+  const handlePlayerDisconnected = ({ playerId, message }) => {
+    showToast(message, 'warning')
+
+    setPlayers((prev) =>
+      prev.map((player) => (player.id === playerId ? { ...player, isOnline: false } : player))
+    )
+  }
+
+  const handlePlayerRemoved = ({ message }) => {
+    showToast(message, 'warning')
+  }
+
+  const handlePlayerLeft = ({ message }) => {
+    showToast(message, 'warning')
+  }
+
+  const handlePlayerReconnected = ({ playerId, nickname }) => {
+    showToast(`${nickname}님이 재연결되었습니다`, 'connection')
+
+    setPlayers((prev) =>
+      prev.map((player) => (player.id === playerId ? { ...player, isOnline: true } : player))
+    )
+  }
+
   const updateHintsAndGameState = (gameInfo: GameInfoModel, source: string) => {
-    console.log(`🎯 힌트 및 게임 상태 업데이트 (${source}):`, gameInfo)
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`🎯 힌트 및 게임 상태 업데이트 (${source}):`, gameInfo)
+    }
+
     if (gameInfo.currentFishPrice && gameInfo.currentFishPrice !== gameState.fishPrice) {
       setPrevFishPrice(gameState.fishPrice)
     }
 
     if (gameInfo.nextRoundHint !== undefined || gameInfo.lastRoundHintResult !== undefined) {
-      setHints((prev) => ({
-        nextRoundHint:
-          gameInfo.nextRoundHint !== undefined ? gameInfo.nextRoundHint : prev.nextRoundHint,
-        lastRoundHintResult:
-          gameInfo.lastRoundHintResult !== undefined
-            ? gameInfo.lastRoundHintResult
-            : prev.lastRoundHintResult,
-      }))
+      console.log('🔄 힌트 상태 업데이트 전:', hints)
+
+      setHints((prev) => {
+        const newHints = {
+          nextRoundHint:
+            gameInfo.nextRoundHint !== undefined ? gameInfo.nextRoundHint : prev.nextRoundHint,
+          lastRoundHintResult:
+            gameInfo.lastRoundHintResult !== undefined
+              ? gameInfo.lastRoundHintResult
+              : prev.lastRoundHintResult,
+        }
+        console.log('🔄 힌트 상태 업데이트 후:', newHints)
+        return newHints
+      })
     }
 
     if (gameInfo.currentFishPrice !== undefined || gameInfo.currentDay !== undefined) {
@@ -173,7 +214,9 @@ const GamePage = ({ params }) => {
     players: PlayerModel[]
     playerId: string
   }) => {
-    console.log('🎮 플레이어 초기화:', { players, playerId })
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🎮 플레이어 초기화:', { players, playerId })
+    }
     setPlayers(players)
     setPlayerId(playerId)
 
@@ -234,8 +277,9 @@ const GamePage = ({ params }) => {
   }
 
   const handleGameSync = (syncData) => {
-    console.log('🔄 게임 상태 동기화 수신:', syncData)
-
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔄 게임 상태 동기화 수신:', syncData)
+    }
     if (syncData.gameInfo) {
       const { currentDay, currentFishPrice, nextRoundHint, lastRoundHintResult } = syncData.gameInfo
 
@@ -280,10 +324,14 @@ const GamePage = ({ params }) => {
         fishPrice: syncData.fishPrice !== undefined ? syncData.fishPrice : prev.fishPrice,
       }))
 
-      setHints({
-        nextRoundHint: syncData.hint || '',
-        lastRoundHintResult: syncData.lastRoundResult || '',
-      })
+      setHints((prev) => ({
+        nextRoundHint:
+          syncData.hint !== undefined && syncData.hint !== '' ? syncData.hint : prev.nextRoundHint, // 기존 값 유지
+        lastRoundHintResult:
+          syncData.lastRoundResult !== undefined && syncData.lastRoundResult !== ''
+            ? syncData.lastRoundResult
+            : prev.lastRoundHintResult,
+      }))
     }
 
     if (syncData.players) {
@@ -299,7 +347,9 @@ const GamePage = ({ params }) => {
   }
 
   const handleDisconnect = (reason) => {
-    console.log('🔴 소켓 연결 끊김:', reason)
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔴 소켓 연결 끊김:', reason)
+    }
   }
 
   const totalCoin = gameState.fish * lastFishCoin + gameState.coins

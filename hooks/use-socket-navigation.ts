@@ -13,25 +13,33 @@ export const useSocketNavigation = (gameId) => {
   const { socket } = useSocket()
 
   const cleanupAndRedirect = () => {
-    if (gameId) {
+    if (gameId && socket) {
       socket.emit('leave_game', { gameId })
+      socket.emit('user_disconnect', { gameId })
     }
 
     router.push('/')
   }
 
   const startExitTimer = () => {
+    if (timeoutId.current) {
+      clearTimeout(timeoutId.current)
+    }
+
     timeoutId.current = setTimeout(() => {
       cleanupAndRedirect()
     }, 5000)
   }
 
   const stopExitTimer = () => {
-    clearTimeout(timeoutId.current)
+    if (timeoutId.current) {
+      clearTimeout(timeoutId.current)
+      timeoutId.current = null
+    }
   }
 
   useEffect(() => {
-    if (!gameId) {
+    if (!gameId || !socket) {
       return
     }
 
@@ -47,6 +55,10 @@ export const useSocketNavigation = (gameId) => {
     }
 
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (gameId && socket && socket.connected) {
+        socket.emit('user_disconnect', { gameId })
+      }
+
       event.preventDefault()
       event.returnValue = ''
       return ''
@@ -54,7 +66,7 @@ export const useSocketNavigation = (gameId) => {
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden') {
-        if (!socket.connected) {
+        if (!socket?.connected) {
           cleanupAndRedirect()
         } else {
           startExitTimer()
@@ -69,12 +81,21 @@ export const useSocketNavigation = (gameId) => {
     if (isMobile()) {
       document.addEventListener('visibilitychange', handleVisibilityChange)
     }
+
     return () => {
+      stopExitTimer()
+
       window.removeEventListener('popstate', handlePopState)
       window.removeEventListener('beforeunload', handleBeforeUnload)
       if (isMobile()) {
         document.removeEventListener('visibilitychange', handleVisibilityChange)
       }
     }
-  }, [gameId])
+  }, [gameId, socket])
+
+  useEffect(() => {
+    return () => {
+      stopExitTimer()
+    }
+  }, [])
 }
