@@ -1,7 +1,8 @@
 import { useRef } from 'react'
+
 import { Socket } from 'socket.io-client'
 
-export const useSocketReconnection = () => {
+export const useSocketReconnection = <T>() => {
   const reconnectionInProgress = useRef(false)
   const lastSyncRequestTime = useRef(0)
   const gameRestoreToastShown = useRef(false)
@@ -34,10 +35,7 @@ export const useSocketReconnection = () => {
     }
   }
 
-  const handleSyncComplete = (
-    gameSnapshot: any,
-    showToast: (msg: string, type: string) => void
-  ) => {
+  const handleSyncComplete = (gameSnapshot: T, showToast: (msg: string, type: string) => void) => {
     console.log('✅ 게임 상태 동기화 완료')
 
     reconnectionInProgress.current = false
@@ -94,5 +92,3 @@ export const useSocketReconnection = () => {
     clearReconnectionState,
   }
 }
-
-

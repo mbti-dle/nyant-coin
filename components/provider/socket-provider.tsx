@@ -13,6 +13,7 @@ import { useSocketConnection } from '@/hooks/socket/use-socket-connection'
 import { useSocketReconnection } from '@/hooks/socket/use-socket-reconnection'
 import { useTabVisibility } from '@/hooks/socket/use-tab-visibility'
 import useToastStore from '@/store/toast'
+import { GameSnapshotModel } from '@/types/game'
 
 interface SocketContextModel {
   socket: Socket | null
@@ -199,7 +200,7 @@ const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     forceExitGame(message || '플레이어를 찾을 수 없습니다.')
   }
 
-  const handleSyncCompleteWrapper = (gameSnapshot: any) => {
+  const handleSyncCompleteWrapper = (gameSnapshot: GameSnapshotModel) => {
     handleSyncComplete(gameSnapshot, showToast)
 
     if (!gameRestoreToastShown.current) {
