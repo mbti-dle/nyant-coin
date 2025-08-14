@@ -1,17 +1,18 @@
 'use client'
 
 import { createContext, useEffect, useRef, useState } from 'react'
+
 import { useRouter } from 'next/navigation'
 import { Socket } from 'socket.io-client'
 
 import ErrorModal from '@/components/ui/error-modal'
 import { SOCKET_ERROR_TYPES, SocketErrorType } from '@/constants/socket'
-import useToastStore from '@/store/toast'
-import { useSocketConnection } from '@/hooks/socket/use-socket-connection'
 import { useGameState } from '@/hooks/game/use-game-state'
 import { useNetworkStatus } from '@/hooks/socket/use-network-status'
+import { useSocketConnection } from '@/hooks/socket/use-socket-connection'
 import { useSocketReconnection } from '@/hooks/socket/use-socket-reconnection'
 import { useTabVisibility } from '@/hooks/socket/use-tab-visibility'
+import useToastStore from '@/store/toast'
 
 interface SocketContextModel {
   socket: Socket | null

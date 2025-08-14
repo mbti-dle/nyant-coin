@@ -10,11 +10,11 @@ import { ArrowBackIcon } from '@/components/icons'
 import AvatarSelector from '@/components/ui/avatar-selector'
 import Button from '@/components/ui/button'
 import CountInput from '@/components/ui/count-input'
+import { useNetworkStatus } from '@/hooks/socket/use-network-status'
 import { useSocket } from '@/hooks/use-socket'
 import { validateNickname } from '@/lib/utils/nickname-validation'
 import useGameStore from '@/store/game'
 import useToastStore from '@/store/toast'
-import { useNetworkStatus } from '@/hooks/socket/use-network-status'
 
 const UserInfoPage = () => {
   const AVATAR_COUNT = 6

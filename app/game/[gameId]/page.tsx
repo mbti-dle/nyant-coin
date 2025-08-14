@@ -12,6 +12,9 @@ import PlayerGrid from '@/components/features/waiting/player-grid'
 import Background from '@/components/ui/background'
 import Toast from '@/components/ui/toast'
 import { gameConfig } from '@/constants/game'
+import { useGameState } from '@/hooks/game/use-game-state'
+import { useHeartbeat } from '@/hooks/game/use-heartbeat'
+import { useNetworkStatus } from '@/hooks/socket/use-network-status'
 import { useSocket } from '@/hooks/use-socket'
 import { useSocketNavigation } from '@/hooks/use-socket-navigation'
 import backgroundDesktopImage from '@/public/images/background-desktop-3.png'
@@ -27,9 +30,6 @@ import {
   GameResultModel,
   GameInfoModel,
 } from '@/types/game'
-import { useNetworkStatus } from '@/hooks/socket/use-network-status'
-import { useGameState } from '@/hooks/game/use-game-state'
-import { useHeartbeat } from '@/hooks/game/use-heartbeat'
 
 const GamePage = ({ params }) => {
   const { gameId } = params

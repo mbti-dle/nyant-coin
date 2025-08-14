@@ -6,6 +6,7 @@ import Image from 'next/image'
 
 import LoadingPage from '@/app/loading'
 import LinkButton from '@/components/ui/link-button'
+import { useNetworkStatus } from '@/hooks/socket/use-network-status'
 import { useSocket } from '@/hooks/use-socket'
 import { useSocketNavigation } from '@/hooks/use-socket-navigation'
 import ConfettiComponent from '@/lib/confetti'
@@ -13,7 +14,6 @@ import coin from '@/public/images/coin.png'
 import useGameStore from '@/store/game'
 import useToastStore from '@/store/toast'
 import { GameResultModel } from '@/types/game'
-import { useNetworkStatus } from '@/hooks/socket/use-network-status'
 
 const ResultPage = ({ params }) => {
   const { gameId } = params

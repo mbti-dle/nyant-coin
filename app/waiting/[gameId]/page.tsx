@@ -10,6 +10,8 @@ import GameIdCopyButton from '@/components/features/waiting/game-id-copy-button'
 import PlayerGrid from '@/components/features/waiting/player-grid'
 import Background from '@/components/ui/background'
 import Button from '@/components/ui/button'
+import { useGameState } from '@/hooks/game/use-game-state'
+import { useNetworkStatus } from '@/hooks/socket/use-network-status'
 import { useSocket } from '@/hooks/use-socket'
 import { useSocketNavigation } from '@/hooks/use-socket-navigation'
 import backgroundDesktopImage from '@/public/images/background-desktop-2.png'
@@ -17,8 +19,6 @@ import backgroundMobileImage from '@/public/images/background-mobile-2.png'
 import useGameStore from '@/store/game'
 import useToastStore from '@/store/toast'
 import { PlayerModel } from '@/types/game'
-import { useNetworkStatus } from '@/hooks/socket/use-network-status'
-import { useGameState } from '@/hooks/game/use-game-state'
 
 const WaitingPage = ({ params }) => {
   const { gameId = 'N09C14' } = params
