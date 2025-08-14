@@ -1,23 +1,24 @@
 import { useEffect, useRef } from 'react'
-
 import { useRouter } from 'next/navigation'
-
-import { isMobile } from '@/lib/utils/device'
-
 import { useSocket } from './use-socket'
 
-export const useSocketNavigation = (gameId) => {
-  const timeoutId = useRef(null)
-  const router = useRouter()
+const AUTO_EXIT_TIMEOUT = 5000
 
+interface UseSocketNavigationReturn {
+  startExitTimer: () => void
+  stopExitTimer: () => void
+}
+
+export const useSocketNavigation = (gameId: string | null): UseSocketNavigationReturn => {
+  const router = useRouter()
   const { socket } = useSocket()
+  const timeoutId = useRef<NodeJS.Timeout | null>(null)
 
   const cleanupAndRedirect = () => {
     if (gameId && socket) {
       socket.emit('leave_game', { gameId })
       socket.emit('user_disconnect', { gameId })
     }
-
     router.push('/')
   }
 
@@ -28,7 +29,7 @@ export const useSocketNavigation = (gameId) => {
 
     timeoutId.current = setTimeout(() => {
       cleanupAndRedirect()
-    }, 5000)
+    }, AUTO_EXIT_TIMEOUT)
   }
 
   const stopExitTimer = () => {
@@ -43,13 +44,18 @@ export const useSocketNavigation = (gameId) => {
       return
     }
 
-    window.history.pushState(null, '', window.location.pathname)
+    if (typeof window !== 'undefined') {
+      window.history.pushState(null, '', window.location.pathname)
+    }
 
     const handlePopState = (event: PopStateEvent) => {
       event.preventDefault()
-      if (window.confirm('뒤로가기 시, 게임에 다시 입장할 수 없습니다.')) {
+      if (
+        typeof window !== 'undefined' &&
+        window.confirm('뒤로가기 시, 게임에 다시 입장할 수 없습니다.')
+      ) {
         cleanupAndRedirect()
-      } else {
+      } else if (typeof window !== 'undefined') {
         window.history.pushState(null, '', window.location.pathname)
       }
     }
@@ -64,38 +70,29 @@ export const useSocketNavigation = (gameId) => {
       return ''
     }
 
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden') {
-        if (!socket?.connected) {
-          cleanupAndRedirect()
-        } else {
-          startExitTimer()
-        }
-      } else if (document.visibilityState === 'visible') {
-        stopExitTimer()
-      }
-    }
-
-    window.addEventListener('popstate', handlePopState)
-    window.addEventListener('beforeunload', handleBeforeUnload)
-    if (isMobile()) {
-      document.addEventListener('visibilitychange', handleVisibilityChange)
+    if (typeof window !== 'undefined') {
+      window.addEventListener('popstate', handlePopState)
+      window.addEventListener('beforeunload', handleBeforeUnload)
     }
 
     return () => {
       stopExitTimer()
 
-      window.removeEventListener('popstate', handlePopState)
-      window.removeEventListener('beforeunload', handleBeforeUnload)
-      if (isMobile()) {
-        document.removeEventListener('visibilitychange', handleVisibilityChange)
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('popstate', handlePopState)
+        window.removeEventListener('beforeunload', handleBeforeUnload)
       }
     }
-  }, [gameId, socket])
+  }, [gameId, socket, cleanupAndRedirect, stopExitTimer])
 
   useEffect(() => {
     return () => {
       stopExitTimer()
     }
-  }, [])
+  }, [stopExitTimer])
+
+  return {
+    startExitTimer,
+    stopExitTimer,
+  }
 }
