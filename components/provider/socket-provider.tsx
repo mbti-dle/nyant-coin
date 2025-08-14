@@ -208,7 +208,11 @@ const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   }
 
   const handleSyncFailedWrapper = (data: { error: string }) => {
-    handleSyncFailed(data, socket!, getGameData, showToast, forceExitGame)
+    if (socket) {
+      handleSyncFailed(data, socket, getGameData, showToast, forceExitGame)
+    } else {
+      console.error('Socket is not available to handle sync failure.')
+    }
   }
 
   const handlePlayerReconnected = ({ nickname }: { nickname: string }) => {
