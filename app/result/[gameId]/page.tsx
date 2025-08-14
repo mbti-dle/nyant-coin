@@ -13,16 +13,15 @@ import coin from '@/public/images/coin.png'
 import useGameStore from '@/store/game'
 import useToastStore from '@/store/toast'
 import { GameResultModel } from '@/types/game'
+import { useNetworkStatus } from '@/hooks/socket/use-network-status'
 
 const ResultPage = ({ params }) => {
   const { gameId } = params
-
   const [currentUser, setCurrentUser] = useState<GameResultModel | null>(null)
-
+  const { socket } = useSocket()
+  const { isOnline } = useNetworkStatus()
   const { playerId: currentPlayerId, results: gameResults } = useGameStore()
   const { showToast } = useToastStore()
-  const { socket } = useSocket()
-
   useSocketNavigation(gameId)
 
   useEffect(() => {
@@ -57,6 +56,11 @@ ${gameResults
 
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center">
+      {!isOnline && (
+        <div className="bg-red-500 fixed left-4 top-4 z-50 rounded px-3 py-1 text-sm text-white">
+          오프라인 - 공유 기능 제한됨
+        </div>
+      )}
       <div className="relative ml-1 flex h-[100px] w-[100px] items-center justify-center md:h-[150px] md:w-[150px]">
         <Image src={`/images/cat-${gameResults[0].character}.png`} alt="고양이" fill />
       </div>

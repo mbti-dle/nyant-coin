@@ -27,6 +27,9 @@ import {
   GameResultModel,
   GameInfoModel,
 } from '@/types/game'
+import { useNetworkStatus } from '@/hooks/socket/use-network-status'
+import { useGameState } from '@/hooks/game/use-game-state'
+import { useHeartbeat } from '@/hooks/game/use-heartbeat'
 
 const GamePage = ({ params }) => {
   const { gameId } = params
@@ -61,9 +64,40 @@ const GamePage = ({ params }) => {
     resetResults,
   } = useGameStore()
   const { showToast } = useToastStore()
+  const { socket } = useSocket()
+  const { isOnline, isNetworkOffline } = useNetworkStatus()
+  const { gameData, saveGameData, getGameData } = useGameState()
+  const { startHeartbeat, stopHeartbeat, isHeartbeatActive, getLastHeartbeatTime } = useHeartbeat()
 
   useSocketNavigation(gameId)
-  const { socket } = useSocket()
+
+  useEffect(() => {
+    if (gameData.gameId && gameData.playerId && socket?.connected) {
+      console.log('💓 게임 하트비트 시작:', {
+        gameId: gameData.gameId,
+        playerId: gameData.playerId,
+      })
+      startHeartbeat(socket, getGameData, () => {
+        console.log('💔 하트비트 실패 - 동기화 요청')
+        socket.emit('request_sync', {
+          gameId: gameData.gameId,
+          playerId: gameData.playerId,
+        })
+      })
+    }
+
+    return () => {
+      console.log('💓 게임 하트비트 정지')
+      stopHeartbeat()
+    }
+  }, [
+    gameData.gameId,
+    gameData.playerId,
+    socket?.connected,
+    startHeartbeat,
+    stopHeartbeat,
+    getGameData,
+  ])
 
   useEffect(() => {
     socket.on('player_info', handlePlayerInitialize)
@@ -83,7 +117,6 @@ const GamePage = ({ params }) => {
     socket.on('player_left', handlePlayerLeft)
     socket.on('player_reconnected', handlePlayerReconnected)
 
-    // 초기 요청
     console.log('🚀 초기 게임 정보 요청:', { gameId })
     socket.emit('request_player_info', { gameId })
     socket.emit('request_first_round_hint', { gameId })
@@ -357,6 +390,20 @@ const GamePage = ({ params }) => {
   return (
     <main className="relative h-screen min-h-screen w-full flex-col p-3 pt-[0px]">
       <Background desktopImage={backgroundDesktopImage} mobileImage={backgroundMobileImage} />
+      {/* 🌐 연결 상태 표시 */}
+      <div className="fixed right-4 top-4 z-50 flex gap-2">
+        {!isOnline && (
+          <div className="bg-red-500 rounded px-2 py-1 text-xs text-white">오프라인</div>
+        )}
+        {isNetworkOffline && (
+          <div className="rounded bg-yellow-500 px-2 py-1 text-xs text-white">재연결 중...</div>
+        )}
+        {isHeartbeatActive && getLastHeartbeatTime() > 0 && (
+          <div className="rounded bg-green-500 px-2 py-1 text-xs text-white">
+            💓 {Math.floor((Date.now() - getLastHeartbeatTime()) / 1000)}s
+          </div>
+        )}
+      </div>
       <div className="mx-auto max-w-[420px] flex-col items-center justify-center p-3 md:pt-[50px]">
         <div className="my-4 flex justify-between">
           <div className="flex justify-start">
