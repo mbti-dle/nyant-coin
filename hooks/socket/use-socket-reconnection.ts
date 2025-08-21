@@ -18,7 +18,11 @@ export const useSocketReconnection = <T>() => {
     const now = Date.now()
     if (now - lastSyncRequestTime.current < 3000) return
 
-    if (gameId && playerId && socket.connected) {
+    const hasValidGameData = gameId && playerId
+    const isSocketConnected = socket.connected
+    const canRequestSync = hasValidGameData && isSocketConnected
+
+    if (canRequestSync) {
       console.log('📡 게임 상태 동기화 요청 전송됨')
 
       reconnectionInProgress.current = true
@@ -70,7 +74,11 @@ export const useSocketReconnection = <T>() => {
     showToast('게임 상태 복원에 실패했습니다', 'warning')
 
     const { gameId, playerId } = getGameData()
-    if (gameId && playerId && socket.connected) {
+    const hasValidGameData = gameId && playerId
+    const isSocketConnected = socket.connected
+    const canRetrySync = hasValidGameData && isSocketConnected
+
+    if (canRetrySync) {
       setTimeout(() => {
         if (!reconnectionInProgress.current && socket.connected) {
           handleGameStateSync(socket, getGameData)

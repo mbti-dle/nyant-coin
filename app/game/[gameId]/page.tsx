@@ -72,16 +72,24 @@ const GamePage = ({ params }) => {
   useSocketNavigation(gameId)
 
   useEffect(() => {
-    if (gameData.gameId && gameData.playerId && socket?.connected) {
+    const gameId = gameData.gameId
+    const playerId = gameData.playerId
+    const isSocketConnected = socket && socket.connected
+
+    const hasValidGameData = gameId && playerId
+    const canStartHeartbeat = hasValidGameData && isSocketConnected
+
+    if (canStartHeartbeat) {
       console.log('💓 게임 하트비트 시작:', {
-        gameId: gameData.gameId,
-        playerId: gameData.playerId,
+        gameId,
+        playerId,
       })
+
       startHeartbeat(socket, getGameData, () => {
         console.log('💔 하트비트 실패 - 동기화 요청')
         socket.emit('request_sync', {
-          gameId: gameData.gameId,
-          playerId: gameData.playerId,
+          gameId,
+          playerId,
         })
       })
     }
@@ -90,14 +98,7 @@ const GamePage = ({ params }) => {
       console.log('💓 게임 하트비트 정지')
       stopHeartbeat()
     }
-  }, [
-    gameData.gameId,
-    gameData.playerId,
-    socket?.connected,
-    startHeartbeat,
-    stopHeartbeat,
-    getGameData,
-  ])
+  }, [gameData.gameId, gameData.playerId, socket, startHeartbeat, stopHeartbeat, getGameData])
 
   useEffect(() => {
     socket.on('player_info', handlePlayerInitialize)
@@ -386,6 +387,8 @@ const GamePage = ({ params }) => {
   }
 
   const totalCoin = gameState.fish * lastFishCoin + gameState.coins
+  const lastHeartbeatTime = getLastHeartbeatTime()
+  const shouldShowHeartbeat = isHeartbeatActive && lastHeartbeatTime > 0
 
   return (
     <main className="relative h-screen min-h-screen w-full flex-col p-3 pt-[0px]">
@@ -398,9 +401,9 @@ const GamePage = ({ params }) => {
         {isNetworkOffline && (
           <div className="rounded bg-yellow-500 px-2 py-1 text-xs text-white">재연결 중...</div>
         )}
-        {isHeartbeatActive && getLastHeartbeatTime() > 0 && (
+        {shouldShowHeartbeat && (
           <div className="rounded bg-green-500 px-2 py-1 text-xs text-white">
-            💓 {Math.floor((Date.now() - getLastHeartbeatTime()) / 1000)}s
+            💓 {Math.floor((Date.now() - lastHeartbeatTime) / 1000)}s
           </div>
         )}
       </div>

@@ -58,11 +58,12 @@ export const useTabVisibility = (): UseTabVisibilityReturn => {
     console.log('모바일: 60초 후 최종 자동 퇴장됩니다')
 
     tabSwitchFinalTimerRef.current = setTimeout(() => {
-      if (
-        isTabSwitchModalShown.current &&
-        typeof document !== 'undefined' &&
-        document.visibilityState === 'hidden'
-      ) {
+      const isModalShown = isTabSwitchModalShown.current
+      const isDocumentAvailable = typeof document !== 'undefined'
+      const isTabHidden = isDocumentAvailable && document.visibilityState === 'hidden'
+      const shouldFinalExit = isModalShown && isTabHidden
+
+      if (shouldFinalExit) {
         console.log('모바일: 최종 시간 초과 - 강제 퇴장')
         onFinalExit()
       }

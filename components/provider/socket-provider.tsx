@@ -138,9 +138,15 @@ const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
   const handleTabSwitchExit = () => {
     const { gameId, playerId } = getGameData()
-    if (gameId && playerId && socket) {
+
+    const hasValidGameData = gameId && playerId
+    const hasSocket = socket
+    const canLeaveGame = hasValidGameData && hasSocket
+
+    if (canLeaveGame) {
       socket.emit('leave_game', { gameId, playerId, reason: 'tab_switch' })
     }
+
     forceExitGame('탭 전환으로 인해 게임에서 퇴장되었습니다.')
   }
 

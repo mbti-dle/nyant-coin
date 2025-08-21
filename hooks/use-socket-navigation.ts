@@ -61,7 +61,10 @@ export const useSocketNavigation = (gameId: string | null): UseSocketNavigationR
     }
 
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      if (gameId && socket && socket.connected) {
+      const hasGameId = gameId
+      const isSocketConnected = socket && socket.connected
+
+      if (hasGameId && isSocketConnected) {
         socket.emit('user_disconnect', { gameId })
       }
 

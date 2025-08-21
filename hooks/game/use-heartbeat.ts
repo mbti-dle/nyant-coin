@@ -41,7 +41,12 @@ export const useHeartbeat = (): UseHeartbeatReturn => {
     heartbeatIntervalRef.current = setInterval(() => {
       const { gameId, playerId } = getGameData()
 
-      if (gameId && playerId && socket.connected) {
+      // 조건을 명확하게 분리
+      const hasValidGameData = gameId && playerId
+      const isSocketConnected = socket.connected
+      const canSendHeartbeat = hasValidGameData && isSocketConnected
+
+      if (canSendHeartbeat) {
         const now = Date.now()
         lastHeartbeatTime.current = now
 
@@ -60,7 +65,8 @@ export const useHeartbeat = (): UseHeartbeatReturn => {
 
         heartbeatTimeoutRef.current = setTimeout(() => {
           console.log('💔 Heartbeat 응답 없음 - 연결 상태 확인 필요')
-          if (socket.connected && onSyncRequired) {
+          const isStillConnected = socket.connected
+          if (isStillConnected && onSyncRequired) {
             onSyncRequired()
           }
         }, HEARTBEAT_TIMEOUT)
