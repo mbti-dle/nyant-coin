@@ -66,14 +66,13 @@ const GamePage = ({ params }) => {
   const { showToast } = useToastStore()
   const { socket } = useSocket()
   const { isOnline, isNetworkOffline } = useNetworkStatus()
-  const { gameData, saveGameData, getGameData } = useGameState()
+  const { gameData, getGameData } = useGameState()
   const { startHeartbeat, stopHeartbeat, isHeartbeatActive, getLastHeartbeatTime } = useHeartbeat()
 
   useSocketNavigation(gameId)
 
   useEffect(() => {
-    const gameId = gameData.gameId
-    const playerId = gameData.playerId
+    const { gameId, playerId } = gameData
     const isSocketConnected = socket && socket.connected
 
     const hasValidGameData = gameId && playerId

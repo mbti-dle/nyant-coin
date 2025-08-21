@@ -54,7 +54,6 @@ const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const {
     isTabVisible,
     tabSwitchTimeLeft,
-    isTabSwitchModalShown,
     startTabSwitchWarning,
     stopTabSwitchTimers,
     handleTabReturn,
