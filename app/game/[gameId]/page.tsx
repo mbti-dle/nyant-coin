@@ -80,11 +80,6 @@ const GamePage = ({ params }) => {
     const canStartHeartbeat = hasValidGameData && isSocketConnected
 
     if (canStartHeartbeat) {
-      console.log('💓 게임 하트비트 시작:', {
-        gameId,
-        playerId,
-      })
-
       startHeartbeat(socket, getGameData, () => {
         console.log('💔 하트비트 실패 - 동기화 요청')
         socket.emit('request_sync', {
@@ -95,7 +90,6 @@ const GamePage = ({ params }) => {
     }
 
     return () => {
-      console.log('💓 게임 하트비트 정지')
       stopHeartbeat()
     }
   }, [gameData.gameId, gameData.playerId, socket, startHeartbeat, stopHeartbeat, getGameData])
@@ -181,8 +175,6 @@ const GamePage = ({ params }) => {
     }
 
     if (gameInfo.nextRoundHint !== undefined || gameInfo.lastRoundHintResult !== undefined) {
-      console.log('🔄 힌트 상태 업데이트 전:', hints)
-
       setHints((prev) => {
         const newHints = {
           nextRoundHint:
@@ -192,7 +184,6 @@ const GamePage = ({ params }) => {
               ? gameInfo.lastRoundHintResult
               : prev.lastRoundHintResult,
         }
-        console.log('🔄 힌트 상태 업데이트 후:', newHints)
         return newHints
       })
     }
@@ -289,7 +280,6 @@ const GamePage = ({ params }) => {
   }
 
   const handleGameInfoUpdate = (gameInfo) => {
-    console.log('🔄 게임 정보 업데이트:', gameInfo)
     updateHintsAndGameState(gameInfo, 'updateGameInfo')
   }
 
@@ -298,7 +288,6 @@ const GamePage = ({ params }) => {
   }
 
   const handleRoundSync = (roundData) => {
-    console.log('🔄 라운드 동기화:', roundData)
     updateHintsAndGameState(
       {
         currentDay: roundData.currentRound,
@@ -317,13 +306,6 @@ const GamePage = ({ params }) => {
     if (syncData.gameInfo) {
       const { currentDay, currentFishPrice, nextRoundHint, lastRoundHintResult } = syncData.gameInfo
 
-      console.log('📊 동기화 데이터 적용:', {
-        currentRound: currentDay,
-        fishPrice: currentFishPrice,
-        hint: nextRoundHint,
-        hintResult: lastRoundHintResult,
-      })
-
       if (currentFishPrice !== undefined && currentFishPrice !== gameState.fishPrice) {
         setPrevFishPrice(gameState.fishPrice)
       }
@@ -341,13 +323,6 @@ const GamePage = ({ params }) => {
     }
 
     if (syncData.currentRound !== undefined) {
-      console.log('📊 라운드 동기화:', {
-        currentRound: syncData.currentRound,
-        fishPrice: syncData.fishPrice,
-        hint: syncData.hint,
-        hintResult: syncData.lastRoundResult,
-      })
-
       if (syncData.fishPrice !== undefined && syncData.fishPrice !== gameState.fishPrice) {
         setPrevFishPrice(gameState.fishPrice)
       }
