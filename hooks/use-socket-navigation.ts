@@ -44,18 +44,13 @@ export const useSocketNavigation = (gameId: string | null): UseSocketNavigationR
       return
     }
 
-    if (typeof window !== 'undefined') {
-      window.history.pushState(null, '', window.location.pathname)
-    }
+    window.history.pushState(null, '', window.location.pathname)
 
     const handlePopState = (event: PopStateEvent) => {
       event.preventDefault()
-      if (
-        typeof window !== 'undefined' &&
-        window.confirm('뒤로가기 시, 게임에 다시 입장할 수 없습니다.')
-      ) {
+      if (window.confirm('뒤로가기 시, 게임에 다시 입장할 수 없습니다.')) {
         cleanupAndRedirect()
-      } else if (typeof window !== 'undefined') {
+      } else {
         window.history.pushState(null, '', window.location.pathname)
       }
     }
@@ -73,25 +68,18 @@ export const useSocketNavigation = (gameId: string | null): UseSocketNavigationR
       return ''
     }
 
-    if (typeof window !== 'undefined') {
-      window.addEventListener('popstate', handlePopState)
-      window.addEventListener('beforeunload', handleBeforeUnload)
-    }
+    window.addEventListener('popstate', handlePopState)
+    window.addEventListener('beforeunload', handleBeforeUnload)
 
     return () => {
       stopExitTimer()
-
-      if (typeof window !== 'undefined') {
-        window.removeEventListener('popstate', handlePopState)
-        window.removeEventListener('beforeunload', handleBeforeUnload)
-      }
+      window.removeEventListener('popstate', handlePopState)
+      window.removeEventListener('beforeunload', handleBeforeUnload)
     }
-  }, [gameId, socket, cleanupAndRedirect, stopExitTimer])
+  }, [gameId, socket])
 
   useEffect(() => {
-    return () => {
-      stopExitTimer()
-    }
+    return stopExitTimer
   }, [stopExitTimer])
 
   return {
