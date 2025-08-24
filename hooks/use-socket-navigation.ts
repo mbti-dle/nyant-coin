@@ -1,23 +1,24 @@
 import { useEffect, useRef } from 'react'
-
 import { useRouter } from 'next/navigation'
-
-import { isMobile } from '@/lib/utils/device'
-
 import { useSocket } from './use-socket'
 
-export const useSocketNavigation = (gameId) => {
-  const timeoutId = useRef(null)
-  const router = useRouter()
+const AUTO_EXIT_TIMEOUT = 5000
 
+interface UseSocketNavigationReturn {
+  startExitTimer: () => void
+  stopExitTimer: () => void
+}
+
+export const useSocketNavigation = (gameId: string | null): UseSocketNavigationReturn => {
+  const router = useRouter()
   const { socket } = useSocket()
+  const timeoutId = useRef<NodeJS.Timeout | null>(null)
 
   const cleanupAndRedirect = () => {
     if (gameId && socket) {
       socket.emit('leave_game', { gameId })
       socket.emit('user_disconnect', { gameId })
     }
-
     router.push('/')
   }
 
@@ -28,7 +29,7 @@ export const useSocketNavigation = (gameId) => {
 
     timeoutId.current = setTimeout(() => {
       cleanupAndRedirect()
-    }, 5000)
+    }, AUTO_EXIT_TIMEOUT)
   }
 
   const stopExitTimer = () => {
@@ -55,7 +56,10 @@ export const useSocketNavigation = (gameId) => {
     }
 
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      if (gameId && socket && socket.connected) {
+      const hasGameId = gameId
+      const isSocketConnected = socket && socket.connected
+
+      if (hasGameId && isSocketConnected) {
         socket.emit('user_disconnect', { gameId })
       }
 
@@ -64,38 +68,22 @@ export const useSocketNavigation = (gameId) => {
       return ''
     }
 
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden') {
-        if (!socket?.connected) {
-          cleanupAndRedirect()
-        } else {
-          startExitTimer()
-        }
-      } else if (document.visibilityState === 'visible') {
-        stopExitTimer()
-      }
-    }
-
     window.addEventListener('popstate', handlePopState)
     window.addEventListener('beforeunload', handleBeforeUnload)
-    if (isMobile()) {
-      document.addEventListener('visibilitychange', handleVisibilityChange)
-    }
 
     return () => {
       stopExitTimer()
-
       window.removeEventListener('popstate', handlePopState)
       window.removeEventListener('beforeunload', handleBeforeUnload)
-      if (isMobile()) {
-        document.removeEventListener('visibilitychange', handleVisibilityChange)
-      }
     }
   }, [gameId, socket])
 
   useEffect(() => {
-    return () => {
-      stopExitTimer()
-    }
-  }, [])
+    return stopExitTimer
+  }, [stopExitTimer])
+
+  return {
+    startExitTimer,
+    stopExitTimer,
+  }
 }

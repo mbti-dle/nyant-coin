@@ -12,6 +12,9 @@ import PlayerGrid from '@/components/features/waiting/player-grid'
 import Background from '@/components/ui/background'
 import Toast from '@/components/ui/toast'
 import { gameConfig } from '@/constants/game'
+import { useGameState } from '@/hooks/game/use-game-state'
+import { useHeartbeat } from '@/hooks/game/use-heartbeat'
+import { useNetworkStatus } from '@/hooks/socket/use-network-status'
 import { useSocket } from '@/hooks/use-socket'
 import { useSocketNavigation } from '@/hooks/use-socket-navigation'
 import backgroundDesktopImage from '@/public/images/background-desktop-3.png'
@@ -61,9 +64,34 @@ const GamePage = ({ params }) => {
     resetResults,
   } = useGameStore()
   const { showToast } = useToastStore()
+  const { socket } = useSocket()
+  const { isOnline, isNetworkOffline } = useNetworkStatus()
+  const { gameData, getGameData } = useGameState()
+  const { startHeartbeat, stopHeartbeat, isHeartbeatActive, getLastHeartbeatTime } = useHeartbeat()
 
   useSocketNavigation(gameId)
-  const { socket } = useSocket()
+
+  useEffect(() => {
+    const { gameId, playerId } = gameData
+    const isSocketConnected = socket && socket.connected
+
+    const hasValidGameData = gameId && playerId
+    const canStartHeartbeat = hasValidGameData && isSocketConnected
+
+    if (canStartHeartbeat) {
+      startHeartbeat(socket, getGameData, () => {
+        console.log('💔 하트비트 실패 - 동기화 요청')
+        socket.emit('request_sync', {
+          gameId,
+          playerId,
+        })
+      })
+    }
+
+    return () => {
+      stopHeartbeat()
+    }
+  }, [gameData.gameId, gameData.playerId, socket, startHeartbeat, stopHeartbeat, getGameData])
 
   useEffect(() => {
     socket.on('player_info', handlePlayerInitialize)
@@ -83,7 +111,6 @@ const GamePage = ({ params }) => {
     socket.on('player_left', handlePlayerLeft)
     socket.on('player_reconnected', handlePlayerReconnected)
 
-    // 초기 요청
     console.log('🚀 초기 게임 정보 요청:', { gameId })
     socket.emit('request_player_info', { gameId })
     socket.emit('request_first_round_hint', { gameId })
@@ -147,8 +174,6 @@ const GamePage = ({ params }) => {
     }
 
     if (gameInfo.nextRoundHint !== undefined || gameInfo.lastRoundHintResult !== undefined) {
-      console.log('🔄 힌트 상태 업데이트 전:', hints)
-
       setHints((prev) => {
         const newHints = {
           nextRoundHint:
@@ -158,7 +183,6 @@ const GamePage = ({ params }) => {
               ? gameInfo.lastRoundHintResult
               : prev.lastRoundHintResult,
         }
-        console.log('🔄 힌트 상태 업데이트 후:', newHints)
         return newHints
       })
     }
@@ -255,7 +279,6 @@ const GamePage = ({ params }) => {
   }
 
   const handleGameInfoUpdate = (gameInfo) => {
-    console.log('🔄 게임 정보 업데이트:', gameInfo)
     updateHintsAndGameState(gameInfo, 'updateGameInfo')
   }
 
@@ -264,7 +287,6 @@ const GamePage = ({ params }) => {
   }
 
   const handleRoundSync = (roundData) => {
-    console.log('🔄 라운드 동기화:', roundData)
     updateHintsAndGameState(
       {
         currentDay: roundData.currentRound,
@@ -283,13 +305,6 @@ const GamePage = ({ params }) => {
     if (syncData.gameInfo) {
       const { currentDay, currentFishPrice, nextRoundHint, lastRoundHintResult } = syncData.gameInfo
 
-      console.log('📊 동기화 데이터 적용:', {
-        currentRound: currentDay,
-        fishPrice: currentFishPrice,
-        hint: nextRoundHint,
-        hintResult: lastRoundHintResult,
-      })
-
       if (currentFishPrice !== undefined && currentFishPrice !== gameState.fishPrice) {
         setPrevFishPrice(gameState.fishPrice)
       }
@@ -307,13 +322,6 @@ const GamePage = ({ params }) => {
     }
 
     if (syncData.currentRound !== undefined) {
-      console.log('📊 라운드 동기화:', {
-        currentRound: syncData.currentRound,
-        fishPrice: syncData.fishPrice,
-        hint: syncData.hint,
-        hintResult: syncData.lastRoundResult,
-      })
-
       if (syncData.fishPrice !== undefined && syncData.fishPrice !== gameState.fishPrice) {
         setPrevFishPrice(gameState.fishPrice)
       }
@@ -353,10 +361,26 @@ const GamePage = ({ params }) => {
   }
 
   const totalCoin = gameState.fish * lastFishCoin + gameState.coins
+  const lastHeartbeatTime = getLastHeartbeatTime()
+  const shouldShowHeartbeat = isHeartbeatActive && lastHeartbeatTime > 0
 
   return (
     <main className="relative h-screen min-h-screen w-full flex-col p-3 pt-[0px]">
       <Background desktopImage={backgroundDesktopImage} mobileImage={backgroundMobileImage} />
+      {/* 🌐 연결 상태 표시 */}
+      <div className="fixed right-4 top-4 z-50 flex gap-2">
+        {!isOnline && (
+          <div className="bg-red-500 rounded px-2 py-1 text-xs text-white">오프라인</div>
+        )}
+        {isNetworkOffline && (
+          <div className="rounded bg-yellow-500 px-2 py-1 text-xs text-white">재연결 중...</div>
+        )}
+        {shouldShowHeartbeat && (
+          <div className="rounded bg-green-500 px-2 py-1 text-xs text-white">
+            💓 {Math.floor((Date.now() - lastHeartbeatTime) / 1000)}s
+          </div>
+        )}
+      </div>
       <div className="mx-auto max-w-[420px] flex-col items-center justify-center p-3 md:pt-[50px]">
         <div className="my-4 flex justify-between">
           <div className="flex justify-start">

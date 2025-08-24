@@ -10,6 +10,8 @@ import GameIdCopyButton from '@/components/features/waiting/game-id-copy-button'
 import PlayerGrid from '@/components/features/waiting/player-grid'
 import Background from '@/components/ui/background'
 import Button from '@/components/ui/button'
+import { useGameState } from '@/hooks/game/use-game-state'
+import { useNetworkStatus } from '@/hooks/socket/use-network-status'
 import { useSocket } from '@/hooks/use-socket'
 import { useSocketNavigation } from '@/hooks/use-socket-navigation'
 import backgroundDesktopImage from '@/public/images/background-desktop-2.png'
@@ -29,8 +31,10 @@ const WaitingPage = ({ params }) => {
   const [isModalVisible, setIsModalVisible] = useState(false)
   const [isPreparingGame, setIsPreparingGame] = useState(false)
   const [notReturnedPlayersCount, setNotReturnedPlayersCount] = useState(0)
-
   const { socket } = useSocket()
+  const { isOnline } = useNetworkStatus()
+
+  const { saveGameData } = useGameState()
 
   const showToast = useToastStore((state) => state.showToast)
   const setGameRounds = useGameStore((state) => state.setGameRounds)
@@ -58,6 +62,7 @@ const WaitingPage = ({ params }) => {
         return
       }
 
+      saveGameData(gameId, playerId)
       setPlayers(players)
       setPlayerInfo(playerInfo)
     }
@@ -134,7 +139,11 @@ const WaitingPage = ({ params }) => {
   return (
     <main className="relative mx-auto min-h-screen w-full p-3 pt-[10px]">
       <Background desktopImage={backgroundDesktopImage} mobileImage={backgroundMobileImage} />
-
+      {!isOnline && (
+        <div className="bg-red-500 fixed left-4 top-4 z-50 rounded px-3 py-1 text-sm text-white">
+          연결 불안정
+        </div>
+      )}
       <div className="mx-auto mt-3 max-w-[420px] flex-col items-center justify-center gap-4 p-3 pb-44 md:pt-[50px]">
         <PlayerGrid players={players} />
         <div className="mt-3 flex flex-col items-center justify-center gap-3">
