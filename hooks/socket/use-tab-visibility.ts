@@ -39,7 +39,6 @@ export const useTabVisibility = (): UseTabVisibilityReturn => {
 
     tabSwitchWarningTimerRef.current = setTimeout(() => {
       if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
-        console.log('모바일: 탭 전환 지속 - 확인 모달 표시')
         isTabSwitchModalShown.current = true
         onWarning()
         setTabSwitchTimeLeft(60)
@@ -108,8 +107,6 @@ export const useTabVisibility = (): UseTabVisibilityReturn => {
     isTabSwitchModalShown.current = false
     isTabReturning.current = false
     setTabSwitchTimeLeft(60)
-
-    console.log('탭 전환 타이머 모두 정지됨')
   }
 
   const handleTabReturn = () => {

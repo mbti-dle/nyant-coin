@@ -146,7 +146,7 @@ const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       socket.emit('leave_game', { gameId, playerId, reason: 'tab_switch' })
     }
 
-    forceExitGame('탭 전환으로 인해 게임에서 퇴장되었습니다.')
+    forceExitGame('게임에서 퇴장되었습니다.')
   }
 
   const handleTabReturnWrapper = () => {
@@ -161,7 +161,11 @@ const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
     const cleanup = registerVisibilityListener(
       () => {
-        startTabSwitchWarning(handleTabSwitchWarning, handleTabSwitchExit)
+        setTimeout(() => {
+          if (document.visibilityState === 'hidden') {
+            startTabSwitchWarning(handleTabSwitchWarning, handleTabSwitchExit)
+          }
+        }, 100)
       },
       () => {
         if (errorType === SOCKET_ERROR_TYPES.TAB_SWITCH_WARNING) {
