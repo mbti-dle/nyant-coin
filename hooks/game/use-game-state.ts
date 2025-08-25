@@ -34,7 +34,7 @@ export const useGameState = (): UseGameStateReturn => {
     console.log('🗑️ 게임 데이터 초기화됨')
   }
 
-  const getGameData = (): GameData => {
+  const getGameData = (): GameDataModel => {
     return { ...gameDataRef.current }
   }
 

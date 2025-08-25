@@ -53,7 +53,7 @@ app.prepare().then(() => {
     socket.on('check_not_returned_players', (data) => handleCheckNotReturnedPlayers(socket, data))
 
     socket.on('leave_game', (data) => handleLeaveGame(socket, data))
-    socket.on('disconnect', (reason) => handleDisconnect(io, socket, reason))
+    socket.on('disconnect', () => handleDisconnect(io, socket))
     socket.on('user_disconnect', (data) => handleUserDisconnect(io, socket, data))
 
     socket.on('request_sync', (data) => handleRequestSync(io, socket, data))
