@@ -65,6 +65,7 @@ app.prepare().then(() => {
       process.exit(1)
     })
     .listen(port, () => {
+      // eslint-disable-next-line no-console
       console.log(`> Ready on http://${hostname}:${port}`)
     })
 })

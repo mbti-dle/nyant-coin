@@ -1,10 +1,11 @@
 import { useRef } from 'react'
+
 import { Socket } from 'socket.io-client'
 
 const HEARTBEAT_INTERVAL = 30000
 const HEARTBEAT_TIMEOUT = 10000
 
-interface HeartbeatData {
+interface HeartbeatDataModel {
   gameId: string
   playerId: string
   timestamp: number
@@ -49,7 +50,7 @@ export const useHeartbeat = (): UseHeartbeatReturn => {
         const now = Date.now()
         lastHeartbeatTime.current = now
 
-        const heartbeatData: HeartbeatData = {
+        const heartbeatData: HeartbeatDataModel = {
           gameId,
           playerId,
           timestamp: now,

@@ -62,7 +62,7 @@ module.exports = {
         selector: 'interface',
         format: ['PascalCase'],
         custom: {
-          regex: '(Props|Model)$',
+          regex: '(Props|Model|Return)$',
           match: true
         }
       },

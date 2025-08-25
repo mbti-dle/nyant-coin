@@ -19,7 +19,8 @@ export interface GameStateModel {
   coins: number
   fish: number
   inputValue: string
-  fishPrice: number
+  prevFishPrice: number
+  currentFishPrice: number
   currentRound: number
   isModalOpen: boolean
 }
@@ -59,6 +60,7 @@ export interface GameHistoryModel {
 
 export interface GameInfoModel {
   currentDay: number
+  prevFishPrice: number
   currentFishPrice: number
   lastRoundHintResult: string
   nextRoundHint: string

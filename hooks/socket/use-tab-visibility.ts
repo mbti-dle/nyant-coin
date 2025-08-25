@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+
 import { isMobile } from '@/lib/utils/device'
 
 const TAB_SWITCH_WARNING_TIMEOUT = 10000
