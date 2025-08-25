@@ -1,7 +1,8 @@
 import { useState, useRef } from 'react'
+
 import { Socket, io } from 'socket.io-client'
 
-interface SocketConnectionOptions {
+interface SocketConnectionOptionsModel {
   reconnection?: boolean
   reconnectionAttempts?: number
   reconnectionDelay?: number
@@ -14,7 +15,7 @@ interface UseSocketConnectionReturn {
   socket: Socket | null
   isSocketConnected: boolean
   wasEverConnected: boolean
-  createSocket: (options?: SocketConnectionOptions) => Socket
+  createSocket: (options?: SocketConnectionOptionsModel) => Socket
   handleConnect: () => void
   handleDisconnect: () => void
   disconnect: () => void
@@ -26,12 +27,12 @@ export const useSocketConnection = (): UseSocketConnectionReturn => {
   const [isSocketConnected, setIsSocketConnected] = useState(false)
   const wasEverConnected = useRef(false)
 
-  const createSocket = (options?: SocketConnectionOptions): Socket => {
+  const createSocket = (options?: SocketConnectionOptionsModel): Socket => {
     if (socket) {
       socket.disconnect()
     }
 
-    const defaultOptions: SocketConnectionOptions = {
+    const defaultOptions: SocketConnectionOptionsModel = {
       reconnection: true,
       reconnectionAttempts: 10,
       reconnectionDelay: 1000,

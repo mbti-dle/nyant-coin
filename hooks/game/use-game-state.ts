@@ -1,23 +1,23 @@
 import { useState, useRef } from 'react'
 
-interface GameData {
+interface GameDataModel {
   gameId: string | null
   playerId: string | null
 }
 
 interface UseGameStateReturn {
   isInGame: boolean
-  gameData: GameData
+  gameData: GameDataModel
   saveGameData: (gameId: string, playerId: string) => void
   clearGameData: () => void
-  getGameData: () => GameData
+  getGameData: () => GameDataModel
   updateGameId: (gameId: string) => void
   updatePlayerId: (playerId: string) => void
 }
 
 export const useGameState = (): UseGameStateReturn => {
   const [isInGame, setIsInGame] = useState(false)
-  const gameDataRef = useRef<GameData>({
+  const gameDataRef = useRef<GameDataModel>({
     gameId: null,
     playerId: null,
   })
@@ -34,7 +34,7 @@ export const useGameState = (): UseGameStateReturn => {
     console.log('🗑️ 게임 데이터 초기화됨')
   }
 
-  const getGameData = (): GameData => {
+  const getGameData = (): GameDataModel => {
     return { ...gameDataRef.current }
   }
 

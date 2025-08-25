@@ -4,8 +4,6 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { io } from 'socket.io-client'
 
-import ErrorModal from '@/components/ui/error-modal'
-
 jest.mock('socket.io-client', () => ({
   io: jest.fn(() => ({
     on: jest.fn(),
@@ -28,21 +26,9 @@ describe('📡 Socket.IO - Disconnect Handling', () => {
   })
 
   const TestComponent = () => {
-    const [isOpen, setIsOpen] = useState(false)
+    io().on('disconnect', () => {})
 
-    io().on('disconnect', () => {
-      setIsOpen(true)
-    })
-
-    return (
-      <ErrorModal
-        isOpen={isOpen}
-        title={DISCONNECT_ERROR.title}
-        message={DISCONNECT_ERROR.message}
-        buttonText="홈으로 이동"
-        onClick={() => setIsOpen(false)}
-      />
-    )
+    return <></>
   }
 
   beforeEach(() => {

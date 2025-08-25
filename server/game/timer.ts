@@ -160,19 +160,11 @@ const calculateAndUpdateGameInfo = (
 
   currentRoom.gameInfo = {
     ...currentRoom.gameInfo,
+    prevFishPrice: oldPrice,
     currentFishPrice: newPrice,
     lastRoundHintResult: outcomeMessage,
     nextRoundHint: currentHint?.hint || '',
   }
-
-  console.log(`📊 게임 정보 업데이트:`, {
-    gameId,
-    round: currentRoom.gameInfo.currentDay,
-    priceChange: `${oldPrice} → ${newPrice}`,
-    priceChangeDirection,
-    isHintMatched,
-    hint: currentHint?.hint?.substring(0, 20) + '...' || 'No hint',
-  })
 
   io.to(gameId).emit('update_game_info', {
     ...currentRoom.gameInfo,

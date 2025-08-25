@@ -38,6 +38,7 @@ export const handleCreateGame = async (totalRounds: number, joinGame: (gameId: s
     players: [],
     gameInfo: {
       currentDay: 1,
+      prevFishPrice: gameConfig.INITIAL_FISH_PRICE,
       currentFishPrice: gameConfig.INITIAL_FISH_PRICE,
       lastRoundHintResult: '',
       nextRoundHint: '',
@@ -172,6 +173,7 @@ export const handleStartGame = async (
     room.hints = hints
     room.gameInfo = {
       currentDay: 1,
+      prevFishPrice: gameConfig.INITIAL_FISH_PRICE,
       currentFishPrice: gameConfig.INITIAL_FISH_PRICE,
       lastRoundHintResult: '',
       nextRoundHint: hints[0]?.hint || '',
@@ -417,9 +419,7 @@ export const handleRoundValidationRequest = (
   }
 }
 
-export const handleDisconnect = (io: SocketIOServer, socket: Socket, reason: string) => {
-  console.log(`🔌 플레이어 연결 끊김: ${socket.id}, 이유: ${reason}`)
-
+export const handleDisconnect = (io: SocketIOServer, socket: Socket) => {
   const playerId = getPlayer(socket.id)
   if (!playerId) return
 
@@ -430,8 +430,6 @@ export const handleDisconnect = (io: SocketIOServer, socket: Socket, reason: str
   })
 
   if (!gameId) return
-
-  console.log(`📤 플레이어 ${playerId}가 게임 ${gameId}에서 연결 끊김 (60초 재연결 대기)`)
 
   if (playersDisconnected.has(playerId)) {
     const existingTimeout = playersDisconnected.get(playerId)
@@ -448,8 +446,6 @@ export const handleDisconnect = (io: SocketIOServer, socket: Socket, reason: str
   })
 
   const timeoutId = setTimeout(() => {
-    console.log(`⏰ 플레이어 ${playerId} 60초 타임아웃으로 게임에서 제거`)
-
     const currentStatus = getPlayerStatus(playerId)
     if (!currentStatus) {
       handlePlayerLeave(socket, playerId, gameId)
@@ -607,6 +603,7 @@ const syncGameState = (
     )
 
     if (currentRoundData) {
+      room.gameInfo.prevFishPrice = room.gameInfo.currentFishPrice
       room.gameInfo.currentFishPrice = currentRoundData.fishPrice
       room.gameInfo.nextRoundHint = currentRoundData.hint
     }
@@ -627,7 +624,8 @@ const sendStateSpecificUpdates = (
   } else if (room.state === 'in_progress') {
     socket.emit('complete_round_sync', {
       currentRound: actualCurrentRound,
-      fishPrice: room.gameInfo.currentFishPrice,
+      prevFishPrice: room.gameInfo.prevFishPrice,
+      currentFishPrice: room.gameInfo.currentFishPrice,
       hint: room.gameInfo.nextRoundHint,
       lastRoundResult: room.gameInfo.lastRoundHintResult,
       roundHistory: gameHistory?.rounds || [],
@@ -668,7 +666,8 @@ const createCompleteGameSnapshot = (
     },
     totalRounds: room.totalRounds,
     currentRound: actualCurrentRound,
-    fishPrice: room.gameInfo.currentFishPrice,
+    prevFishPrice: room.gameInfo.prevFishPrice,
+    currentFishPrice: room.gameInfo.currentFishPrice,
     readyPlayersCount: room.readyPlayers.size,
     roundHistory: gameHistory?.rounds || [],
     timerState: timerState

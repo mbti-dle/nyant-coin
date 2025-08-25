@@ -38,7 +38,8 @@ const GamePage = ({ params }) => {
     coins: gameConfig.INITIAL_COINS,
     fish: gameConfig.INITIAL_FISH,
     inputValue: '',
-    fishPrice: gameConfig.INITIAL_FISH_PRICE,
+    prevFishPrice: gameConfig.INITIAL_FISH_PRICE,
+    currentFishPrice: gameConfig.INITIAL_FISH_PRICE,
     currentRound: 1,
     isModalOpen: false,
   }
@@ -52,7 +53,6 @@ const GamePage = ({ params }) => {
     playerId: null,
     message: '',
   })
-  const [prevFishPrice, setPrevFishPrice] = useState(gameConfig.INITIAL_FISH_PRICE)
   const [lastFishCoin, setLastFishCoin] = useState(0)
 
   const {
@@ -169,10 +169,6 @@ const GamePage = ({ params }) => {
       console.log(`🎯 힌트 및 게임 상태 업데이트 (${source}):`, gameInfo)
     }
 
-    if (gameInfo.currentFishPrice && gameInfo.currentFishPrice !== gameState.fishPrice) {
-      setPrevFishPrice(gameState.fishPrice)
-    }
-
     if (gameInfo.nextRoundHint !== undefined || gameInfo.lastRoundHintResult !== undefined) {
       setHints((prev) => {
         const newHints = {
@@ -190,7 +186,10 @@ const GamePage = ({ params }) => {
     if (gameInfo.currentFishPrice !== undefined || gameInfo.currentDay !== undefined) {
       setGameState((prev) => ({
         ...prev,
-        ...(gameInfo.currentFishPrice !== undefined && { fishPrice: gameInfo.currentFishPrice }),
+        ...(gameInfo.prevFishPrice !== undefined && { prevFishPrice: gameInfo.prevFishPrice }),
+        ...(gameInfo.currentFishPrice !== undefined && {
+          currentFishPrice: gameInfo.currentFishPrice,
+        }),
         ...(gameInfo.currentDay !== undefined && { currentRound: gameInfo.currentDay }),
       }))
     }
@@ -198,7 +197,7 @@ const GamePage = ({ params }) => {
 
   const handleTransaction = (action: TransactionType, amount: number) => {
     setGameState((prevState) => {
-      const totalValue = amount * prevState.fishPrice
+      const totalValue = amount * prevState.currentFishPrice
 
       socket.emit('trade_fishes', { gameId, action, amount })
 
@@ -290,7 +289,8 @@ const GamePage = ({ params }) => {
     updateHintsAndGameState(
       {
         currentDay: roundData.currentRound,
-        currentFishPrice: roundData.fishPrice,
+        prevFishPrice: roundData.prevFishPrice,
+        currentFishPrice: roundData.currentFishPrice,
         nextRoundHint: roundData.hint,
         lastRoundHintResult: roundData.lastRoundResult,
       },
@@ -303,16 +303,14 @@ const GamePage = ({ params }) => {
       console.log('🔄 게임 상태 동기화 수신:', syncData)
     }
     if (syncData.gameInfo) {
-      const { currentDay, currentFishPrice, nextRoundHint, lastRoundHintResult } = syncData.gameInfo
-
-      if (currentFishPrice !== undefined && currentFishPrice !== gameState.fishPrice) {
-        setPrevFishPrice(gameState.fishPrice)
-      }
+      const { currentDay, prevFishPrice, currentFishPrice, nextRoundHint, lastRoundHintResult } =
+        syncData.gameInfo
 
       setGameState((prev) => ({
         ...prev,
         currentRound: currentDay || prev.currentRound,
-        fishPrice: currentFishPrice !== undefined ? currentFishPrice : prev.fishPrice,
+        prevFishPrice: prevFishPrice !== undefined ? prevFishPrice : prev.prevFishPrice,
+        fishPrice: currentFishPrice !== undefined ? currentFishPrice : prev.currentFishPrice,
       }))
 
       setHints({
@@ -322,14 +320,13 @@ const GamePage = ({ params }) => {
     }
 
     if (syncData.currentRound !== undefined) {
-      if (syncData.fishPrice !== undefined && syncData.fishPrice !== gameState.fishPrice) {
-        setPrevFishPrice(gameState.fishPrice)
-      }
-
       setGameState((prev) => ({
         ...prev,
         currentRound: syncData.currentRound,
-        fishPrice: syncData.fishPrice !== undefined ? syncData.fishPrice : prev.fishPrice,
+        prevFishPrice:
+          syncData.prevFishPrice !== undefined ? syncData.prevFishPrice : prev.prevFishPrice,
+        currentFishPrice:
+          syncData.fishPrice !== undefined ? syncData.fishPrice : prev.currentFishPrice,
       }))
 
       setHints((prev) => ({
@@ -391,8 +388,8 @@ const GamePage = ({ params }) => {
           </div>
         </div>
         <Hints
-          fishPrice={gameState.fishPrice}
-          prevFishPrice={prevFishPrice}
+          prevFishPrice={gameState.prevFishPrice}
+          currentFishPrice={gameState.currentFishPrice}
           currentRound={gameState.currentRound}
           totalRounds={totalRounds}
           hint={hints?.nextRoundHint}
