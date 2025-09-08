@@ -17,7 +17,6 @@ if (!DATABASE_HOST || !DATABASE_NAME || !DATABASE_USER || !DATABASE_PASSWORD || 
   process.exit(1)
 }
 
-// PostgreSQL 연결
 const sql = postgres({
   host: DATABASE_HOST,
   database: DATABASE_NAME,
