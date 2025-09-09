@@ -41,7 +41,6 @@ export const useHeartbeat = (): UseHeartbeatReturn => {
     heartbeatIntervalRef.current = setInterval(() => {
       const { gameId, playerId } = getGameData()
 
-      // 조건을 명확하게 분리
       const hasValidGameData = gameId && playerId
       const isSocketConnected = socket.connected
       const canSendHeartbeat = hasValidGameData && isSocketConnected
