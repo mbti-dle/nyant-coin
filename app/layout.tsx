@@ -4,6 +4,7 @@ import localFont from 'next/font/local'
 import SocketProvider from '@/components/provider/socket-provider'
 import Toast from '@/components/ui/toast'
 import './global.css'
+import { SITE_URL } from '@/constants/config'
 
 const neodgm = localFont({
   src: '../public/fonts/Neodgm.woff2',
@@ -25,11 +26,11 @@ export const metadata: Metadata = {
   openGraph: {
     title: '냥트코인 - 생선 트레이딩 게임',
     description: '최고의 생선 트레이더는 누구? 생선을 사고팔아 냥코인을 모아보세요!',
-    url: 'https://nyantcoin.koyeb.app/',
+    url: `${SITE_URL}/`,
     siteName: '냥트코인',
     images: [
       {
-        url: 'https://nyantcoin.koyeb.app/og.png',
+        url: `${SITE_URL}/og.png`,
         alt: '냥트코인 로고',
         width: 1200,
         height: 630,

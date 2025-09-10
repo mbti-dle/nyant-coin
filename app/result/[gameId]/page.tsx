@@ -6,6 +6,7 @@ import Image from 'next/image'
 
 import LoadingPage from '@/app/loading'
 import LinkButton from '@/components/ui/link-button'
+import { SITE_URL } from '@/constants/config'
 import { useNetworkStatus } from '@/hooks/socket/use-network-status'
 import { useSocket } from '@/hooks/use-socket'
 import { useSocketNavigation } from '@/hooks/use-socket-navigation'
@@ -39,7 +40,7 @@ ${gameResults
   .join('\n')}
     
 🐱 '${currentUser?.nickname}' 님은 ${gameResults.findIndex((result) => result.id === currentUser?.id) + 1}등을 차지했습니다! 🐟
-🔗 https://nyantcoin.koyeb.app
+🔗 ${SITE_URL}
 최고의 생선 트레이더는 누구? 생선을 사고팔아 냥코인을 모아보세요!`
 
     navigator.clipboard.writeText(resultText)
