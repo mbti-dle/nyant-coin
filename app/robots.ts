@@ -1,5 +1,7 @@
 import { MetadataRoute } from 'next'
 
+import { SITE_URL } from '@/constants/config'
+
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: {
@@ -7,6 +9,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: ['/api/', '/game/', '/waiting/', '/result/'],
     },
-    sitemap: 'https://nyantcoin.koyeb.app/sitemap.xml',
+    sitemap: `${SITE_URL}/sitemap.xml`,
   }
 }

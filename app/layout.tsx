@@ -1,9 +1,11 @@
+import { GoogleAnalytics, GoogleTagManager } from '@next/third-parties/google'
 import { Metadata, Viewport } from 'next'
 import localFont from 'next/font/local'
 
 import SocketProvider from '@/components/provider/socket-provider'
 import Toast from '@/components/ui/toast'
 import './global.css'
+import { SITE_URL } from '@/constants/config'
 
 const neodgm = localFont({
   src: '../public/fonts/Neodgm.woff2',
@@ -14,22 +16,21 @@ const galmuri = localFont({
   src: '../public/fonts/Galmuri9.woff2',
   variable: '--font-galmuri',
 })
-
 export const metadata: Metadata = {
   title: '냥트코인 - 생선 트레이딩 게임',
   description: '최고의 생선 트레이더는 누구? 생선을 사고팔아 냥코인을 모아보세요!',
   keywords: ['냥트코인', '게임', '생선 트레이드', '트레이딩 게임', '멀티플레이어 게임'],
   verification: {
-    google: '1P5OKF9u2FsfsVBFZ47I_BZxoXdaTJX4w_0-TDWxbBw',
+    google: process.env.NEXT_PUBLIC_GOOGLE_VERIFICATION || '',
   },
   openGraph: {
     title: '냥트코인 - 생선 트레이딩 게임',
     description: '최고의 생선 트레이더는 누구? 생선을 사고팔아 냥코인을 모아보세요!',
-    url: 'https://nyantcoin.koyeb.app/',
+    url: `${SITE_URL}/`,
     siteName: '냥트코인',
     images: [
       {
-        url: 'https://nyantcoin.koyeb.app/og.png',
+        url: `${SITE_URL}/og.png`,
         alt: '냥트코인 로고',
         width: 1200,
         height: 630,
@@ -41,6 +42,13 @@ export const metadata: Metadata = {
   robots: {
     index: true,
     follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
   },
 }
 
@@ -57,6 +65,8 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => (
       <SocketProvider>{children}</SocketProvider>
       <Toast />
       <div id="modal-root"></div>
+      <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID || ''} />
+      <GoogleTagManager gtmId={process.env.NEXT_PUBLIC_GTM_ID || ''} />
     </body>
   </html>
 )
