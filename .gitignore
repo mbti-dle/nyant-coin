@@ -42,3 +42,5 @@ next-env.d.ts
 # hints
 /constants/hintsData.ts
 /scripts/init-db.ts
+# Sentry Config File
+.env.sentry-build-plugin
