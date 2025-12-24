@@ -41,7 +41,6 @@ export const useHeartbeat = (): UseHeartbeatReturn => {
     heartbeatIntervalRef.current = setInterval(() => {
       const { gameId, playerId } = getGameData()
 
-      // 조건을 명확하게 분리
       const hasValidGameData = gameId && playerId
       const isSocketConnected = socket.connected
       const canSendHeartbeat = hasValidGameData && isSocketConnected
@@ -68,12 +67,6 @@ export const useHeartbeat = (): UseHeartbeatReturn => {
             onSyncRequired()
           }
         }, HEARTBEAT_TIMEOUT)
-      } else {
-        console.log('💔 Heartbeat 조건 불충족:', {
-          gameId,
-          playerId,
-          connected: socket.connected,
-        })
       }
     }, HEARTBEAT_INTERVAL)
   }
@@ -92,11 +85,7 @@ export const useHeartbeat = (): UseHeartbeatReturn => {
     }
   }
 
-  const handleHeartbeatResponse = ({ timestamp }: { timestamp: number }) => {
-    const now = Date.now()
-    const latency = now - timestamp
-    console.log('💚 Heartbeat 응답 수신 (지연시간:', latency, 'ms)')
-
+  const handleHeartbeatResponse = () => {
     if (heartbeatTimeoutRef.current) {
       clearTimeout(heartbeatTimeoutRef.current)
       heartbeatTimeoutRef.current = null

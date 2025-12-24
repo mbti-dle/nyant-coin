@@ -1,4 +1,6 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
+
+import { appLogger } from '@/lib/utils/app-logger'
 
 const ERROR_MODAL_TIMEOUT = 10000
 const RECONNECT_NOTIFICATION_INTERVAL = 1000
@@ -33,7 +35,7 @@ export const useNetworkStatus = (): UseNetworkStatusReturn => {
     setIsNetworkOffline(true)
     shouldShowErrorModal.current = true
 
-    console.log('🔴 네트워크 오프라인 상태로 변경')
+    appLogger.warn('네트워크 오프라인 감지')
 
     if (errorModalTimerRef.current) {
       clearTimeout(errorModalTimerRef.current)
@@ -42,7 +44,7 @@ export const useNetworkStatus = (): UseNetworkStatusReturn => {
     if (onErrorModal) {
       errorModalTimerRef.current = setTimeout(() => {
         if (shouldShowErrorModal.current) {
-          console.log('🚨 에러 모달 표시 시간 도달')
+          appLogger.debug('네트워크 불안정 지속 — 에러 모달 표시')
           onErrorModal()
         }
       }, ERROR_MODAL_TIMEOUT)
@@ -53,7 +55,7 @@ export const useNetworkStatus = (): UseNetworkStatusReturn => {
     setIsNetworkOffline(false)
     shouldShowErrorModal.current = false
 
-    console.log('🟢 네트워크 온라인 상태로 변경')
+    appLogger.debug('네트워크 복구')
 
     if (errorModalTimerRef.current) {
       clearTimeout(errorModalTimerRef.current)
@@ -66,7 +68,7 @@ export const useNetworkStatus = (): UseNetworkStatusReturn => {
     }
   }
 
-  const clearTimers = () => {
+  const clearTimers = useCallback(() => {
     shouldShowErrorModal.current = false
 
     if (errorModalTimerRef.current) {
@@ -78,16 +80,12 @@ export const useNetworkStatus = (): UseNetworkStatusReturn => {
       clearInterval(reconnectIntervalRef.current)
       reconnectIntervalRef.current = null
     }
-
-    console.log('네트워크 상태 타이머 모두 정리됨')
-  }
+  }, [])
 
   const startReconnectNotifications = (showToast: (msg: string, type: string) => void) => {
     if (reconnectIntervalRef.current) {
       clearInterval(reconnectIntervalRef.current)
     }
-
-    console.log('재연결 알림 시작')
 
     reconnectIntervalRef.current = setInterval(() => {
       if (isNetworkOffline && !shouldShowErrorModal.current) {
@@ -100,25 +98,21 @@ export const useNetworkStatus = (): UseNetworkStatusReturn => {
     if (reconnectIntervalRef.current) {
       clearInterval(reconnectIntervalRef.current)
       reconnectIntervalRef.current = null
-      console.log('재연결 알림 중지')
     }
   }
 
   const registerNetworkListeners = (onOnline: () => void, onOffline: () => void) => {
     if (typeof window === 'undefined') {
-      console.log('서버 환경: 네트워크 이벤트 리스너 등록 불가')
       return () => {}
     }
 
     const handleOnline = () => {
       setIsOnline(true)
-      console.log('브라우저: 온라인 이벤트')
       onOnline()
     }
 
     const handleOffline = () => {
       setIsOnline(false)
-      console.log('브라우저: 오프라인 이벤트')
       onOffline()
     }
 

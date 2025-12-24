@@ -28,15 +28,12 @@ export const useTabVisibility = (): UseTabVisibilityReturn => {
 
   const startTabSwitchWarning = (onWarning: () => void, onFinalExit: () => void) => {
     if (!isMobile()) {
-      console.log('PC 환경: 탭 전환 경고 무시')
       return
     }
 
     if (tabSwitchWarningTimerRef.current) {
       clearTimeout(tabSwitchWarningTimerRef.current)
     }
-
-    console.log('모바일: 10초 후 확인 모달이 표시됩니다')
 
     tabSwitchWarningTimerRef.current = setTimeout(() => {
       if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
@@ -55,8 +52,6 @@ export const useTabVisibility = (): UseTabVisibilityReturn => {
       clearTimeout(tabSwitchFinalTimerRef.current)
     }
 
-    console.log('모바일: 60초 후 최종 자동 퇴장됩니다')
-
     tabSwitchFinalTimerRef.current = setTimeout(() => {
       const isModalShown = isTabSwitchModalShown.current
       const isDocumentAvailable = typeof document !== 'undefined'
@@ -64,7 +59,6 @@ export const useTabVisibility = (): UseTabVisibilityReturn => {
       const shouldFinalExit = isModalShown && isTabHidden
 
       if (shouldFinalExit) {
-        console.log('모바일: 최종 시간 초과 - 강제 퇴장')
         onFinalExit()
       }
     }, TAB_SWITCH_FINAL_TIMEOUT)
@@ -117,8 +111,6 @@ export const useTabVisibility = (): UseTabVisibilityReturn => {
     setTimeout(() => {
       isTabReturning.current = false
     }, 0)
-
-    console.log('탭 복귀 처리 완료')
   }
 
   const registerVisibilityListener = (onTabHidden: () => void, onTabVisible: () => void) => {
@@ -129,10 +121,8 @@ export const useTabVisibility = (): UseTabVisibilityReturn => {
       setIsTabVisible(visible)
 
       if (visible) {
-        console.log('탭 보임')
         onTabVisible()
       } else {
-        console.log('탭 숨김')
         onTabHidden()
       }
     }
