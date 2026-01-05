@@ -336,7 +336,7 @@ const GamePage = ({ params }) => {
 
   const handleDisconnect = (reason) => {
     showToast('연결이 끊겼습니다. 재연결 중...', 'warning')
-    appLogger.debug('socket disconnected', { reason })
+    appLogger.log('socket disconnected', { reason })
   }
 
   const totalCoin = gameState.fish * lastFishCoin + gameState.coins

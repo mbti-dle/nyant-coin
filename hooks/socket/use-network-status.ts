@@ -44,7 +44,7 @@ export const useNetworkStatus = (): UseNetworkStatusReturn => {
     if (onErrorModal) {
       errorModalTimerRef.current = setTimeout(() => {
         if (shouldShowErrorModal.current) {
-          appLogger.debug('네트워크 불안정 지속 — 에러 모달 표시')
+          appLogger.log('네트워크 불안정 지속 — 에러 모달 표시')
           onErrorModal()
         }
       }, ERROR_MODAL_TIMEOUT)
@@ -55,7 +55,7 @@ export const useNetworkStatus = (): UseNetworkStatusReturn => {
     setIsNetworkOffline(false)
     shouldShowErrorModal.current = false
 
-    appLogger.debug('네트워크 복구')
+    appLogger.log('네트워크 복구')
 
     if (errorModalTimerRef.current) {
       clearTimeout(errorModalTimerRef.current)

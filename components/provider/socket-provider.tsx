@@ -119,7 +119,7 @@ const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const handleOnline = () => {
     setOnline()
     if (socket && !socket.connected) {
-      appLogger.debug('네트워크 복구로 소켓 재연결 시도')
+      appLogger.log('네트워크 복구로 소켓 재연결 시도')
       socket.connect()
     }
   }
@@ -312,7 +312,7 @@ const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     setErrorType(null)
 
     if (socket && !socket.connected) {
-      appLogger.debug('사용자 수동 재연결 시도')
+      appLogger.log('사용자 수동 재연결 시도')
       socket.connect()
     }
   }

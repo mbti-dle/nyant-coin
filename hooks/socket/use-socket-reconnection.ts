@@ -25,7 +25,7 @@ export const useSocketReconnection = <T>() => {
     const canRequestSync = hasValidGameData && isSocketConnected
 
     if (canRequestSync) {
-      appLogger.debug('게임 상태 동기화 요청')
+      appLogger.log('게임 상태 동기화 요청')
 
       reconnectionInProgress.current = true
       lastSyncRequestTime.current = now
@@ -34,7 +34,7 @@ export const useSocketReconnection = <T>() => {
 
       setTimeout(() => {
         if (reconnectionInProgress.current) {
-          appLogger.debug('동기화 응답 타임아웃')
+          appLogger.log('동기화 응답 타임아웃')
 
           reconnectionInProgress.current = false
         }
@@ -43,7 +43,7 @@ export const useSocketReconnection = <T>() => {
   }
 
   const handleSyncComplete = (gameSnapshot: T, showToast: (msg: string, type: string) => void) => {
-    appLogger.debug('게임 상태 동기화 완료')
+    appLogger.log('게임 상태 동기화 완료')
 
     reconnectionInProgress.current = false
 
