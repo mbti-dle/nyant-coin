@@ -219,7 +219,7 @@ const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     if (socket) {
       handleSyncFailed(data, socket, getGameData, showToast, forceExitGame)
     } else {
-      appLogger.error('sync_failed 처리 실패: socket 인스턴스 없음')
+      console.error('sync_failed 처리 실패: socket 인스턴스 없음')
     }
   }
 

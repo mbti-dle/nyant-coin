@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /**
  * @file Logging Policy
  *
@@ -5,23 +6,23 @@
  * 공통 로깅 유틸 사용 규칙
  *
  * ## Rules
- * - ❌ console.log 직접 사용 금지
+ * - ❌ console.log / console.warn 직접 사용 금지 (appLogger 사용)
+ * - ✅ console.error 직접 사용 허용 (운영 환경 노출 및 ESLint 허용)
  * - 개발 중 디버깅용 로그: `appLogger.log`
- * - 운영 환경에서도 확인이 필요한 경고성 이벤트: `appLogger.warn`
- * - 오류 및 예외 상황: `appLogger.error`
+ * - 개발 중 경고성 이벤트: `appLogger.warn`
  *
  * ## Environment Policy
- * - development: log / warn / error 출력
- * - production: warn / error 만 출력 (log는 무력화)
+ * - development: log / warn 출력
+ * - production: log / warn 무력화 (에러는 console.error 직접 사용)
  *
  * ## Rationale
  * - 운영 환경 콘솔 노이즈 최소화
- * - 문제 상황(warn/error)만 명확히 드러내기 위함
+ * - 에러 상황은 브라우저/서버 기본 기능을 통해 즉시 확인 가능하도록 함
  *
  * @example
- * appLogger.log('소켓 재연결 시도', { retryCount });
- * appLogger.warn('Heartbeat 지연 감지', { latency });
- * appLogger.error('소켓 연결 실패', error);
+ * appLogger.log('데이터 로드 완료', data);
+ * appLogger.warn('API 응답 지연', { latency });
+ * console.error('네트워크 연결 불가', error);
  */
 
 import { isDev } from '@/constants/env'
@@ -33,9 +34,8 @@ export const appLogger = {
     }
   },
   warn: (...args: unknown[]) => {
-    console.warn(...args)
-  },
-  error: (...args: unknown[]) => {
-    console.error(...args)
+    if (isDev) {
+      console.warn(...args)
+    }
   },
 }
