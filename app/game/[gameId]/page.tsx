@@ -17,6 +17,7 @@ import { useHeartbeat } from '@/hooks/game/use-heartbeat'
 import { useNetworkStatus } from '@/hooks/socket/use-network-status'
 import { useSocket } from '@/hooks/use-socket'
 import { useSocketNavigation } from '@/hooks/use-socket-navigation'
+import { appLogger } from '@/lib/utils/app-logger'
 import backgroundDesktopImage from '@/public/images/background-desktop-3.png'
 import backgroundMobileImage from '@/public/images/background-mobile-3.png'
 import useGameStore from '@/store/game'
@@ -80,7 +81,6 @@ const GamePage = ({ params }) => {
 
     if (canStartHeartbeat) {
       startHeartbeat(socket, getGameData, () => {
-        console.log('💔 하트비트 실패 - 동기화 요청')
         socket.emit('request_sync', {
           gameId,
           playerId,
@@ -111,7 +111,6 @@ const GamePage = ({ params }) => {
     socket.on('player_left', handlePlayerLeft)
     socket.on('player_reconnected', handlePlayerReconnected)
 
-    console.log('🚀 초기 게임 정보 요청:', { gameId })
     socket.emit('request_player_info', { gameId })
     socket.emit('request_first_round_hint', { gameId })
     socket.emit('player_ready', { gameId })
@@ -164,11 +163,7 @@ const GamePage = ({ params }) => {
     )
   }
 
-  const updateHintsAndGameState = (gameInfo: GameInfoModel, source: string) => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`🎯 힌트 및 게임 상태 업데이트 (${source}):`, gameInfo)
-    }
-
+  const updateHintsAndGameState = (gameInfo: GameInfoModel) => {
     if (gameInfo.nextRoundHint !== undefined || gameInfo.lastRoundHintResult !== undefined) {
       setHints((prev) => {
         const newHints = {
@@ -237,14 +232,10 @@ const GamePage = ({ params }) => {
     players: PlayerModel[]
     playerId: string
   }) => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🎮 플레이어 초기화:', { players, playerId })
-    }
     setPlayers(players)
     setPlayerId(playerId)
 
     if (gameId && playerId) {
-      console.log('🔄 동기화 요청 (playerId 설정 후):', { gameId, playerId })
       socket.emit('request_sync', {
         gameId,
         playerId,
@@ -257,8 +248,7 @@ const GamePage = ({ params }) => {
   }
 
   const handleFirstRoundHint = (gameInfo) => {
-    console.log('🎯 첫 라운드 힌트 수신:', gameInfo)
-    updateHintsAndGameState(gameInfo, 'firstRoundHint')
+    updateHintsAndGameState(gameInfo)
 
     if (gameInfo.currentDay === 1) {
       setHints({
@@ -278,7 +268,7 @@ const GamePage = ({ params }) => {
   }
 
   const handleGameInfoUpdate = (gameInfo) => {
-    updateHintsAndGameState(gameInfo, 'updateGameInfo')
+    updateHintsAndGameState(gameInfo)
   }
 
   const handleGameEnded = ({ results }: { results: GameResultModel[] }) => {
@@ -286,22 +276,16 @@ const GamePage = ({ params }) => {
   }
 
   const handleRoundSync = (roundData) => {
-    updateHintsAndGameState(
-      {
-        currentDay: roundData.currentRound,
-        prevFishPrice: roundData.prevFishPrice,
-        currentFishPrice: roundData.currentFishPrice,
-        nextRoundHint: roundData.hint,
-        lastRoundHintResult: roundData.lastRoundResult,
-      },
-      'roundSync'
-    )
+    updateHintsAndGameState({
+      currentDay: roundData.currentRound,
+      prevFishPrice: roundData.prevFishPrice,
+      currentFishPrice: roundData.currentFishPrice,
+      nextRoundHint: roundData.hint,
+      lastRoundHintResult: roundData.lastRoundResult,
+    })
   }
 
   const handleGameSync = (syncData) => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🔄 게임 상태 동기화 수신:', syncData)
-    }
     if (syncData.gameInfo) {
       const { currentDay, prevFishPrice, currentFishPrice, nextRoundHint, lastRoundHintResult } =
         syncData.gameInfo
@@ -345,16 +329,14 @@ const GamePage = ({ params }) => {
   }
 
   const handleReconnect = () => {
-    console.log('🔄 소켓 재연결됨')
     socket.emit('request_player_info', { gameId })
     socket.emit('request_first_round_hint', { gameId })
     socket.emit('player_ready', { gameId })
   }
 
   const handleDisconnect = (reason) => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🔴 소켓 연결 끊김:', reason)
-    }
+    showToast('연결이 끊겼습니다. 재연결 중...', 'warning')
+    appLogger.log('socket disconnected', { reason })
   }
 
   const totalCoin = gameState.fish * lastFishCoin + gameState.coins

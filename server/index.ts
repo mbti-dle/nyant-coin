@@ -1,6 +1,9 @@
+import 'dotenv/config'
 import { createServer } from 'node:http'
 
 import next from 'next'
+
+import { isDev } from '../constants/env.js'
 
 import {
   handleBackToWaiting,
@@ -23,11 +26,10 @@ import {
 } from './game/handlers.js'
 import { createSocketServer } from './socket/config.js'
 
-const dev = process.env.NODE_ENV !== 'production'
 const hostname = 'localhost'
 const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000
 
-const app = next({ dev, hostname, port })
+const app = next({ dev: isDev, hostname, port })
 const handler = app.getRequestHandler()
 
 app.prepare().then(() => {

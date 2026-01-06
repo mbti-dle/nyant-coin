@@ -162,7 +162,8 @@ module.exports = {
     'react/jsx-no-duplicate-props': ['error', { ignoreCase: true }],
 
     // 기타 규칙
-    'no-console': ['warn', { allow: ['warn', 'error'] }],
+    'no-console': ['warn', { allow: ['error'] }],
+
     'react/prop-types': 'off',
     'react/react-in-jsx-scope': 'off',
     'prettier/prettier': ['error', { endOfLine: 'auto' }],

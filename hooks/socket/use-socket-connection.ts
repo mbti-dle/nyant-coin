@@ -55,12 +55,10 @@ export const useSocketConnection = (): UseSocketConnectionReturn => {
   const handleConnect = () => {
     setIsSocketConnected(true)
     wasEverConnected.current = true
-    console.log('🔌 Socket 연결됨')
   }
 
   const handleDisconnect = () => {
     setIsSocketConnected(false)
-    console.log('🔌 Socket 연결 해제됨')
   }
 
   const disconnect = () => {
@@ -68,13 +66,11 @@ export const useSocketConnection = (): UseSocketConnectionReturn => {
       socket.disconnect()
       setSocket(null)
       setIsSocketConnected(false)
-      console.log('🔌 Socket 수동 연결 해제')
     }
   }
 
   const reconnect = () => {
     if (socket && !socket.connected) {
-      console.log('🔄 Socket 재연결 시도')
       socket.connect()
     }
   }

@@ -71,6 +71,9 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.6.3"
   },
+  "overrides": {
+    "glob": "^10.4.5"
+  },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
       "npx next lint --fix --dir .",

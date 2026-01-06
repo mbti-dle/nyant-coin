@@ -12,6 +12,7 @@ import { useNetworkStatus } from '@/hooks/socket/use-network-status'
 import { useSocketConnection } from '@/hooks/socket/use-socket-connection'
 import { useSocketReconnection } from '@/hooks/socket/use-socket-reconnection'
 import { useTabVisibility } from '@/hooks/socket/use-tab-visibility'
+import { appLogger } from '@/lib/utils/app-logger'
 import useToastStore from '@/store/toast'
 import { GameSnapshotModel } from '@/types/game'
 
@@ -52,7 +53,6 @@ const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const [tabSwitchCountdown, setTabSwitchCountdown] = useState<number>(0)
 
   const {
-    isTabVisible,
     tabSwitchTimeLeft,
     startTabSwitchWarning,
     stopTabSwitchTimers,
@@ -119,7 +119,7 @@ const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const handleOnline = () => {
     setOnline()
     if (socket && !socket.connected) {
-      console.log('네트워크 복구 - 소켓 재연결 시도')
+      appLogger.log('네트워크 복구로 소켓 재연결 시도')
       socket.connect()
     }
   }
@@ -185,17 +185,15 @@ const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   }
 
   const handleGameNotFound = ({ message }: { message: string }) => {
-    console.log('🎮 게임을 찾을 수 없음:', message)
+    appLogger.warn('게임을 찾을 수 없음', { reason: message })
     forceExitGame(message || '게임을 찾을 수 없습니다.')
   }
 
   const handlePlayerKicked = ({ message }: { message: string }) => {
-    console.log('👢 플레이어가 추방됨:', message)
     forceExitGame(message || '게임에서 추방되었습니다.')
   }
 
   const handleGameEnded = ({ message }: { message: string }) => {
-    console.log('🏁 게임이 종료됨:', message)
     clearGameData()
     showToast(message || '게임이 종료되었습니다.', 'warning')
   }
@@ -205,7 +203,7 @@ const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   }
 
   const handlePlayerNotFound = ({ message }: { message: string }) => {
-    console.log('❌ 플레이어를 찾을 수 없음:', message)
+    appLogger.warn('플레이어를 찾을 수 없음', { message })
     forceExitGame(message || '플레이어를 찾을 수 없습니다.')
   }
 
@@ -221,7 +219,7 @@ const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     if (socket) {
       handleSyncFailed(data, socket, getGameData, showToast, forceExitGame)
     } else {
-      console.error('Socket is not available to handle sync failure.')
+      console.error('sync_failed 처리 실패: socket 인스턴스 없음')
     }
   }
 
@@ -314,7 +312,7 @@ const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     setErrorType(null)
 
     if (socket && !socket.connected) {
-      console.log('🔄 수동 재연결 시도')
+      appLogger.log('사용자 수동 재연결 시도')
       socket.connect()
     }
   }

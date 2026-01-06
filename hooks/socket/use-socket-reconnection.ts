@@ -2,6 +2,8 @@ import { useRef } from 'react'
 
 import { Socket } from 'socket.io-client'
 
+import { appLogger } from '@/lib/utils/app-logger'
+
 export const useSocketReconnection = <T>() => {
   const reconnectionInProgress = useRef(false)
   const lastSyncRequestTime = useRef(0)
@@ -23,7 +25,7 @@ export const useSocketReconnection = <T>() => {
     const canRequestSync = hasValidGameData && isSocketConnected
 
     if (canRequestSync) {
-      console.log('📡 게임 상태 동기화 요청 전송됨')
+      appLogger.log('게임 상태 동기화 요청')
 
       reconnectionInProgress.current = true
       lastSyncRequestTime.current = now
@@ -32,7 +34,8 @@ export const useSocketReconnection = <T>() => {
 
       setTimeout(() => {
         if (reconnectionInProgress.current) {
-          console.log('⏰ 동기화 타임아웃')
+          appLogger.log('동기화 응답 타임아웃')
+
           reconnectionInProgress.current = false
         }
       }, 10000)
@@ -40,7 +43,7 @@ export const useSocketReconnection = <T>() => {
   }
 
   const handleSyncComplete = (gameSnapshot: T, showToast: (msg: string, type: string) => void) => {
-    console.log('✅ 게임 상태 동기화 완료')
+    appLogger.log('게임 상태 동기화 완료')
 
     reconnectionInProgress.current = false
 
@@ -63,7 +66,7 @@ export const useSocketReconnection = <T>() => {
     showToast: (msg: string, type: string) => void,
     forceExitGame: (reason: string) => void
   ) => {
-    console.log('❌ 동기화 실패:', error)
+    appLogger.warn('게임 상태 동기화 실패', { error })
     reconnectionInProgress.current = false
 
     if (error.includes('not found') || error.includes('찾을 수 없')) {
