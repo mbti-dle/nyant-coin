@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "nodemon --exec node --loader ts-node/esm server/index.ts",
+    "dev": "NODE_ENV=development nodemon --exec node --loader ts-node/esm server/index.ts",
     "build": "next build && tsc -p tsconfig.server.json",
     "start": "NODE_ENV=production node dist/server/index.js",
     "lint": "next lint --fix",
