@@ -170,14 +170,17 @@ const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [])
 
-  const forceExitGame = (reason: string) => {
-    stopTabSwitchTimers()
-    setErrorType(null)
-    clearGameData()
-    clearReconnectionState()
-    showToast(reason, 'warning')
-    router.push('/')
-  }
+  const forceExitGame = useCallback(
+    (reason: string) => {
+      stopTabSwitchTimers()
+      setErrorType(null)
+      clearGameData()
+      clearReconnectionState()
+      showToast(reason, 'warning')
+      router.push('/')
+    },
+    [stopTabSwitchTimers, setErrorType, clearGameData, clearReconnectionState, showToast, router]
+  )
 
   const handleOnline = useCallback(() => {
     enterOnlineState()
