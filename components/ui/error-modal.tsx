@@ -26,7 +26,7 @@ const ErrorModal = ({
     : messageConfig.message
 
   return (
-    <Modal isOpen={isOpen}>
+    <Modal isOpen={isOpen} zIndex={100}>
       <div className="my-3 flex flex-col items-center">
         <ErrorOutlineIcon size={59} className="mb-4 text-red" />
         <p className="mb-4 text-xl">{messageConfig.title}</p>
