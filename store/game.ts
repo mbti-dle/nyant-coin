@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 
+import { gameConfig } from '@/constants/game'
 import { GameResultModel, GameStateModel } from '@/types/game'
 
 interface GameSessionModel {
@@ -10,6 +11,11 @@ interface GameSessionModel {
   hint: string
   hintResult: string
   lastUpdated: number
+}
+
+interface PlayerInventoryModel {
+  coins: number
+  fish: number
 }
 
 export interface GameSyncPayloadModel {
@@ -37,6 +43,7 @@ interface GameStoreModel {
   isLeader: boolean
   results: GameResultModel[] | null
   hintState: GameSessionModel
+  gameState: PlayerInventoryModel
   setGameId: (id: string | null) => void
   setPlayerId: (id: string | null) => void
   setGameRounds: (rounds: number) => void
@@ -50,6 +57,7 @@ interface GameStoreModel {
   setHintResult: (result: string) => void
   resetGameState: () => void
   syncGameInfo: (gameInfo: GameSyncPayloadModel) => void
+  updatePlayerInventory: (update: Partial<PlayerInventoryModel>) => void
 }
 
 const createInitialHintState = (): GameSessionModel => ({
@@ -62,6 +70,11 @@ const createInitialHintState = (): GameSessionModel => ({
   lastUpdated: Date.now(),
 })
 
+const createInitialLocalState = (): PlayerInventoryModel => ({
+  coins: gameConfig.INITIAL_COINS,
+  fish: gameConfig.INITIAL_FISH,
+})
+
 const getInitialState = () => ({
   gameId: null,
   playerId: null,
@@ -69,6 +82,7 @@ const getInitialState = () => ({
   isLeader: false,
   results: null,
   hintState: createInitialHintState(),
+  gameState: createInitialLocalState(),
 })
 
 const useGameStore = create<GameStoreModel>((set, get) => ({
@@ -137,7 +151,16 @@ const useGameStore = create<GameStoreModel>((set, get) => ({
       isLeader: false,
       results: null,
       hintState: createInitialHintState(),
+      gameState: createInitialLocalState(),
     })
+  },
+  updatePlayerInventory: (update) => {
+    set((state) => ({
+      gameState: {
+        ...state.gameState,
+        ...update,
+      },
+    }))
   },
 }))
 

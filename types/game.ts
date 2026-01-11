@@ -1,9 +1,20 @@
+export const PeerConnectionState = {
+  CONNECTING: 'connecting',
+  CONNECTED: 'connected',
+  RECONNECTING: 'reconnecting',
+  DEGRADED: 'degraded',
+  LOST: 'lost',
+} as const
+
+export type PeerConnectionStateType = (typeof PeerConnectionState)[keyof typeof PeerConnectionState]
+
 export interface PlayerModel {
   id: string
   nickname: string
   character: string
   score?: number
   isInWaitingRoom: boolean
+  connectionStatus?: PeerConnectionStateType
 }
 
 export interface AvatarModel extends Pick<PlayerModel, 'id' | 'nickname'> {
