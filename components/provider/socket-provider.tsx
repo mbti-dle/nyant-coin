@@ -1,11 +1,12 @@
 'use client'
 
-import { createContext, useEffect, useRef, useState } from 'react'
+import { createContext, useEffect, useRef, useState, useCallback } from 'react'
 
 import { useRouter } from 'next/navigation'
 import { Socket } from 'socket.io-client'
 
 import ErrorModal from '@/components/ui/error-modal'
+import NetworkBanner from '@/components/ui/network-banner'
 import { SOCKET_ERROR_TYPES, SocketErrorType } from '@/constants/socket'
 import { useGameState } from '@/hooks/game/use-game-state'
 import { useNetworkStatus } from '@/hooks/socket/use-network-status'
@@ -14,12 +15,15 @@ import { useSocketReconnection } from '@/hooks/socket/use-socket-reconnection'
 import { useTabVisibility } from '@/hooks/socket/use-tab-visibility'
 import { appLogger } from '@/lib/utils/app-logger'
 import useToastStore from '@/store/toast'
-import { GameSnapshotModel } from '@/types/game'
+import { GameSnapshotModel, PeerConnectionStateModel, PeerConnectionStateType } from '@/types/game'
 
 interface SocketContextModel {
   socket: Socket | null
   isSocketConnected: boolean
   isInGame: boolean
+  connectionStatus: PeerConnectionStateType
+  isOnline: boolean
+  isNetworkOffline: boolean
 }
 
 export const SocketContext = createContext<SocketContextModel | null>(null)
@@ -27,6 +31,7 @@ export const SocketContext = createContext<SocketContextModel | null>(null)
 const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter()
   const { showToast } = useToastStore()
+
   const {
     socket,
     isSocketConnected,
@@ -39,18 +44,19 @@ const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const { isInGame, saveGameData, clearGameData, getGameData } = useGameState()
 
   const {
-    setOffline,
-    setOnline,
-    clearTimers,
-    registerNetworkListeners,
-    startReconnectNotifications,
-    stopReconnectNotifications,
+    isOnline,
+    isNetworkOffline,
+    enterOfflineState,
+    enterOnlineState,
+    resetNetworkEffects,
+    subscribeNetworkEvents,
+    startReconnectToasts,
+    stopReconnectToasts,
+    checkConnectivity,
   } = useNetworkStatus()
 
   const { handleGameStateSync, handleSyncComplete, handleSyncFailed, clearReconnectionState } =
     useSocketReconnection()
-
-  const [tabSwitchCountdown, setTabSwitchCountdown] = useState<number>(0)
 
   const {
     tabSwitchTimeLeft,
@@ -61,116 +67,211 @@ const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   } = useTabVisibility()
 
   const [errorType, setErrorType] = useState<SocketErrorType | null>(null)
+  const [connectionStatus, setConnectionStatus] = useState<PeerConnectionStateType>(
+    PeerConnectionStateModel.CONNECTING
+  )
+
   const gameRestoreToastShown = useRef(false)
+  const reconnectionAttemptsRef = useRef(0)
+
+  const handleSocketConnect = useCallback(
+    (instance: Socket) => {
+      enterOnlineState()
+      setErrorType(null)
+      setConnectionStatus(PeerConnectionStateModel.CONNECTED)
+      reconnectionAttemptsRef.current = 0
+
+      if (wasEverConnected && !isSocketConnected) {
+        showToast('서버에 다시 연결되었습니다', 'connection')
+        gameRestoreToastShown.current = false
+
+        const { gameId, playerId } = getGameData()
+        if (gameId && playerId) {
+          setTimeout(() => {
+            handleGameStateSync(instance, getGameData)
+          }, 1000)
+        }
+      }
+
+      handleConnect()
+    },
+    [
+      wasEverConnected,
+      isSocketConnected,
+      getGameData,
+      handleGameStateSync,
+      handleConnect,
+      enterOnlineState,
+      showToast,
+    ]
+  )
+
+  const handleSocketDisconnect = useCallback(() => {
+    handleDisconnect()
+    clearReconnectionState()
+    setConnectionStatus(PeerConnectionStateModel.RECONNECTING)
+
+    if (wasEverConnected) {
+      checkConnectivity().then((isActuallyOnline) => {
+        if (!isActuallyOnline) {
+          enterOfflineState(() => {
+            stopReconnectToasts()
+          })
+          startReconnectToasts(showToast)
+        }
+      })
+    }
+  }, [
+    wasEverConnected,
+    handleDisconnect,
+    clearReconnectionState,
+    enterOfflineState,
+    startReconnectToasts,
+    showToast,
+    stopReconnectToasts,
+    checkConnectivity,
+  ])
+
+  const handleConnectionError = useCallback(() => {
+    clearReconnectionState()
+
+    if (reconnectionAttemptsRef.current <= 2) {
+      setConnectionStatus(PeerConnectionStateModel.RECONNECTING)
+    } else {
+      setConnectionStatus(PeerConnectionStateModel.DEGRADED)
+    }
+
+    if (wasEverConnected) {
+      checkConnectivity().then((isActuallyOnline) => {
+        if (!isActuallyOnline) {
+          enterOfflineState(() => {
+            stopReconnectToasts()
+          })
+          startReconnectToasts(showToast)
+        }
+      })
+    }
+  }, [
+    wasEverConnected,
+    clearReconnectionState,
+    enterOfflineState,
+    startReconnectToasts,
+    showToast,
+    stopReconnectToasts,
+    checkConnectivity,
+  ])
+
+  const handleReconnectAttempt = useCallback((attempt: number) => {
+    reconnectionAttemptsRef.current = attempt
+    if (attempt <= 2) {
+      setConnectionStatus(PeerConnectionStateModel.RECONNECTING)
+    } else {
+      setConnectionStatus(PeerConnectionStateModel.DEGRADED)
+    }
+  }, [])
 
   const forceExitGame = (reason: string) => {
+    stopTabSwitchTimers()
+    setErrorType(null)
     clearGameData()
     clearReconnectionState()
     showToast(reason, 'warning')
     router.push('/')
   }
 
-  const handleSocketConnect = (socketInstance: Socket) => {
-    setOnline()
-    setErrorType(null)
-
-    if (wasEverConnected && !isSocketConnected) {
-      showToast('서버에 다시 연결되었습니다', 'connection')
-      gameRestoreToastShown.current = false
-
-      const { gameId, playerId } = getGameData()
-      if (gameId && playerId) {
-        setTimeout(() => {
-          handleGameStateSync(socketInstance, getGameData)
-        }, 1000)
-      }
-    }
-
-    handleConnect()
-  }
-
-  const handleSocketDisconnect = () => {
-    handleDisconnect()
-    clearReconnectionState()
-
-    if (wasEverConnected) {
-      setOffline(() => {
-        setErrorType(SOCKET_ERROR_TYPES.DISCONNECT)
-        stopReconnectNotifications()
-      })
-
-      startReconnectNotifications(showToast)
-    }
-  }
-
-  const handleConnectionError = () => {
-    clearReconnectionState()
-
-    if (wasEverConnected) {
-      setOffline(() => {
-        setErrorType(SOCKET_ERROR_TYPES.DISCONNECT)
-        stopReconnectNotifications()
-      })
-
-      startReconnectNotifications(showToast)
-    }
-  }
-
-  const handleOnline = () => {
-    setOnline()
+  const handleOnline = useCallback(() => {
+    enterOnlineState()
     if (socket && !socket.connected) {
       appLogger.log('네트워크 복구로 소켓 재연결 시도')
       socket.connect()
     }
-  }
+  }, [socket, enterOnlineState])
 
-  const handleOffline = () => {
-    setOffline(() => {
-      setErrorType(SOCKET_ERROR_TYPES.NETWORK_ERROR)
-    })
-  }
+  const handleOffline = useCallback(() => {
+    enterOfflineState()
+    setConnectionStatus(PeerConnectionStateModel.RECONNECTING)
+  }, [enterOfflineState])
 
-  const handleTabSwitchWarning = () => {
+  const handleTabSwitchWarning = useCallback(() => {
+    appLogger.log('[SOCKET] setting errorType to TAB_SWITCH_WARNING')
     setErrorType(SOCKET_ERROR_TYPES.TAB_SWITCH_WARNING)
     showToast('탭을 전환하셨습니다. 게임으로 돌아와 주세요.', 'warning')
-  }
+  }, [showToast])
 
-  const handleTabSwitchExit = () => {
+  const handleTabSwitchExit = useCallback(() => {
     const { gameId, playerId } = getGameData()
 
-    const hasValidGameData = gameId && playerId
-    const hasSocket = socket
-    const canLeaveGame = hasValidGameData && hasSocket
-
+    const canLeaveGame = !!gameId && !!playerId && !!socket
     if (canLeaveGame) {
       socket.emit('leave_game', { gameId, playerId, reason: 'tab_switch' })
     }
 
-    forceExitGame('게임에서 퇴장되었습니다.')
-  }
-
-  const handleTabReturnWrapper = () => {
-    handleTabReturn()
     setErrorType(null)
-    setTabSwitchCountdown(0)
-    showToast('게임으로 돌아오셨습니다.')
+    forceExitGame('게임에서 퇴장되었습니다.')
+  }, [getGameData, socket, forceExitGame])
+
+  const handleTabReturnWrapper = useCallback(() => {
+    handleTabReturn(handleTabSwitchWarning, handleTabSwitchExit)
+
+    // 소켓이 연결된 상태로 복귀했다면, 서버의 최신 상태(유예 종료 여부 등)를 확인하기 위해 싱크를 시도합니다.
+    if (socket && socket.connected) {
+      handleGameStateSync(socket, getGameData)
+    }
+  }, [
+    handleTabReturn,
+    handleTabSwitchWarning,
+    handleTabSwitchExit,
+    socket,
+    handleGameStateSync,
+    getGameData,
+  ])
+
+  const handlersRef = useRef({
+    onWarning: handleTabSwitchWarning,
+    onExit: handleTabSwitchExit,
+    onReturn: handleTabReturnWrapper,
+    onHidden: () => {
+      const { gameId } = getGameData()
+      socket?.emit('tab_hidden', { gameId })
+    },
+  })
+
+  useEffect(() => {
+    handlersRef.current = {
+      onWarning: handleTabSwitchWarning,
+      onExit: handleTabSwitchExit,
+      onReturn: handleTabReturnWrapper,
+      onHidden: () => {
+        const { gameId } = getGameData()
+        socket?.emit('tab_hidden', { gameId })
+      },
+    }
+  }, [handleTabSwitchWarning, handleTabSwitchExit, handleTabReturnWrapper, getGameData, socket])
+
+  const handleResumeFromTabSwitch = () => {
+    stopTabSwitchTimers()
+    setErrorType(null)
+    socket?.emit('tab_visible')
   }
 
   const enableTabSwitchDetection = () => {
     if (!isInGame) return
 
+    appLogger.log('[SOCKET] Enabling Tab Switch Detection')
     const cleanup = registerVisibilityListener(
       () => {
         setTimeout(() => {
           if (document.visibilityState === 'hidden') {
-            startTabSwitchWarning(handleTabSwitchWarning, handleTabSwitchExit)
+            startTabSwitchWarning(
+              () => handlersRef.current.onWarning(),
+              () => handlersRef.current.onExit(),
+              () => handlersRef.current.onHidden()
+            )
           }
         }, 100)
       },
       () => {
-        if (errorType === SOCKET_ERROR_TYPES.TAB_SWITCH_WARNING) {
-          handleTabReturnWrapper()
-        }
+        handlersRef.current.onReturn()
       }
     )
 
@@ -209,7 +310,6 @@ const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
   const handleSyncCompleteWrapper = (gameSnapshot: GameSnapshotModel) => {
     handleSyncComplete(gameSnapshot, showToast)
-
     if (!gameRestoreToastShown.current) {
       gameRestoreToastShown.current = true
     }
@@ -228,15 +328,31 @@ const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   }
 
   useEffect(() => {
-    const cleanupNetwork = registerNetworkListeners(handleOnline, handleOffline)
+    const cleanupNetwork = subscribeNetworkEvents(handleOnline, handleOffline)
     return cleanupNetwork
-  }, [registerNetworkListeners])
+  }, [subscribeNetworkEvents, handleOnline, handleOffline])
 
   useEffect(() => {
-    if (errorType === SOCKET_ERROR_TYPES.TAB_SWITCH_WARNING) {
-      setTabSwitchCountdown(tabSwitchTimeLeft)
+    if (!isOnline) {
+      const targetStatus =
+        reconnectionAttemptsRef.current <= 2
+          ? PeerConnectionStateModel.RECONNECTING
+          : PeerConnectionStateModel.DEGRADED
+
+      if (connectionStatus !== targetStatus) {
+        setConnectionStatus(targetStatus)
+      }
+      return
     }
-  }, [tabSwitchTimeLeft, errorType])
+
+    if (
+      isSocketConnected &&
+      (connectionStatus === PeerConnectionStateModel.RECONNECTING ||
+        connectionStatus === PeerConnectionStateModel.DEGRADED)
+    ) {
+      setConnectionStatus(PeerConnectionStateModel.CONNECTED)
+    }
+  }, [isSocketConnected, connectionStatus, isOnline])
 
   useEffect(() => {
     if (isInGame) {
@@ -258,8 +374,10 @@ const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     })
 
     socketInstance.on('connect', () => handleSocketConnect(socketInstance))
+    socketInstance.on('reconnect', () => handleSocketConnect(socketInstance))
     socketInstance.on('disconnect', handleSocketDisconnect)
     socketInstance.on('connect_error', handleConnectionError)
+    socketInstance.on('reconnect_attempt', handleReconnectAttempt)
     socketInstance.on('sync_complete', handleSyncCompleteWrapper)
     socketInstance.on('sync_failed', handleSyncFailedWrapper)
     socketInstance.on('join_success', handleJoinSuccess)
@@ -272,11 +390,9 @@ const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     socketInstance.on('player_disconnected', ({ message }) => {
       showToast(message, 'warning')
     })
-
     socketInstance.on('player_removed', ({ message }) => {
       showToast(message, 'warning')
     })
-
     socketInstance.on('player_left', ({ message }) => {
       showToast(message, 'warning')
     })
@@ -286,12 +402,14 @@ const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     return () => {
-      clearTimers()
+      resetNetworkEffects()
       clearReconnectionState()
 
       socketInstance.off('connect')
+      socketInstance.off('reconnect')
       socketInstance.off('disconnect')
       socketInstance.off('connect_error')
+      socketInstance.off('reconnect_attempt')
       socketInstance.off('sync_complete')
       socketInstance.off('sync_failed')
       socketInstance.off('player_reconnected')
@@ -322,13 +440,7 @@ const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       case SOCKET_ERROR_TYPES.TAB_SWITCH_WARNING:
         return {
           onPrimaryAction: handleTabSwitchExit,
-          onSecondaryAction: handleTabReturnWrapper,
-        }
-      case SOCKET_ERROR_TYPES.DISCONNECT:
-      case SOCKET_ERROR_TYPES.NETWORK_ERROR:
-        return {
-          onPrimaryAction: handleReconnect,
-          onSecondaryAction: () => setErrorType(null),
+          onSecondaryAction: handleResumeFromTabSwitch,
         }
       default:
         return {
@@ -339,14 +451,24 @@ const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   }
 
   const getCountdownMessage = (errorType: SocketErrorType) => {
-    if (errorType === SOCKET_ERROR_TYPES.TAB_SWITCH_WARNING && tabSwitchCountdown > 0) {
-      return `${tabSwitchCountdown}초 후 자동으로 게임에서 나가집니다.`
+    if (errorType === SOCKET_ERROR_TYPES.TAB_SWITCH_WARNING && tabSwitchTimeLeft > 0) {
+      return `${tabSwitchTimeLeft}초 후 자동으로 게임에서 나가집니다.`
     }
     return undefined
   }
 
   return (
-    <SocketContext.Provider value={{ socket, isSocketConnected, isInGame }}>
+    <SocketContext.Provider
+      value={{
+        socket,
+        isSocketConnected,
+        isInGame,
+        connectionStatus,
+        isOnline,
+        isNetworkOffline,
+      }}
+    >
+      <NetworkBanner status={connectionStatus} />
       {children}
       {errorType && (
         <ErrorModal
