@@ -518,14 +518,6 @@ export const handleUserDisconnect = (
   startGraceTimer(io, socket, playerId, gameId, 'disconnect')
 }
 
-export const handleSetIntentToLeave = (socket: Socket) => {
-  ;(socket as Socket & { isIntendingToLeave: boolean }).isIntendingToLeave = true
-}
-
-export const handleClearIntentToLeave = (socket: Socket) => {
-  ;(socket as Socket & { isIntendingToLeave: boolean }).isIntendingToLeave = false
-}
-
 export const handleTradeFishes = (
   io: SocketIOServer,
   socket: Socket,

@@ -7,15 +7,12 @@ import { useSocket } from './use-socket'
 const AUTO_EXIT_TIMEOUT = 5000
 
 /**
- * 게임 진행 중 "페이지 이탈"을 감지해 안전하게 퇴장 처리하는 훅입니다.
+ * 게임 진행 중 "페이지 이탈"을 감지해 처리하는 훅입니다.
  *
  * [처리 대상]
- * - 뒤로가기(popstate): 사용자 확인 후 즉시 퇴장 처리
- * - 새로고침/창닫기(beforeunload): 서버에 '의도적 퇴장' 신호를 먼저 전달
- *
- * [의도적 퇴장 신호]
- * - beforeunload 발생 시 set_intent_to_leave 전송
- * - 사용자가 '페이지에 머물기'를 선택하면 1초 후 clear_intent_to_leave 전송
+ * - 뒤로가기(popstate): 사용자 확인 후 즉시 퇴장 처리 (leave_game)
+ * - 새로고침/창닫기(beforeunload): 브라우저 기본 경고 표시.
+ *   (실제 이탈 시 서버의 유예 기간 로직에 의해 60초간 세션 유지됨)
  */
 export const useSocketNavigation = (gameId: string | null) => {
   const router = useRouter()
@@ -24,8 +21,8 @@ export const useSocketNavigation = (gameId: string | null) => {
 
   const cleanupAndRedirect = useCallback(() => {
     if (gameId && socket) {
+      // 명시적 퇴장이므로 즉시 제거 요청
       socket.emit('leave_game', { gameId })
-      socket.emit('user_disconnect', { gameId })
     }
     router.push('/')
   }, [gameId, socket, router])
@@ -72,18 +69,6 @@ export const useSocketNavigation = (gameId: string | null) => {
     }
 
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      // 브라우저 종료/새로고침 시
-      // 서버에 "의도적 퇴장 가능성"을 먼저 알립니다.
-      // 실제로 페이지를 떠나면 이 상태가 유지되어 즉시 퇴장 처리되고,
-      // '페이지에 머물기'를 선택하면 1초 후 퇴장 의사를 철회합니다.
-      if (socket && socket.connected) {
-        socket.emit('set_intent_to_leave')
-
-        setTimeout(() => {
-          socket.emit('clear_intent_to_leave')
-        }, 1000)
-      }
-
       event.preventDefault()
       event.returnValue = ''
       return ''
