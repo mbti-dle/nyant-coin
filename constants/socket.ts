@@ -25,3 +25,11 @@ export const SOCKET_ERROR_BUTTONS: Record<
     showTwoButtons: true,
   },
 }
+
+export const SOCKET_TIMEOUTS = {
+  TAB_SWITCH_WARNING: 20000,
+  TAB_SWITCH_FINAL: 40000,
+} as const
+
+export const TOTAL_GRACE_PERIOD =
+  SOCKET_TIMEOUTS.TAB_SWITCH_WARNING + SOCKET_TIMEOUTS.TAB_SWITCH_FINAL
