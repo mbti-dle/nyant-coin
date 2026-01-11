@@ -1,52 +1,32 @@
-import { useState, useRef } from 'react'
+import useGameStore from '@/store/game'
 
-interface GameDataModel {
+type GameDataType = {
   gameId: string | null
   playerId: string | null
 }
 
-interface UseGameStateReturn {
-  isInGame: boolean
-  gameData: GameDataModel
-  saveGameData: (gameId: string, playerId: string) => void
-  clearGameData: () => void
-  getGameData: () => GameDataModel
-  updateGameId: (gameId: string) => void
-  updatePlayerId: (playerId: string) => void
-}
+export const useGameState = () => {
+  const { gameId, playerId, setGameId, setPlayerId } = useGameStore()
+  const isInGame = gameId !== null && playerId !== null
 
-export const useGameState = (): UseGameStateReturn => {
-  const [isInGame, setIsInGame] = useState(false)
-  const gameDataRef = useRef<GameDataModel>({
-    gameId: null,
-    playerId: null,
-  })
-
-  const saveGameData = (gameId: string, playerId: string) => {
-    gameDataRef.current = { gameId, playerId }
-    setIsInGame(true)
+  const saveGameData = (newGameId: string, newPlayerId: string) => {
+    setGameId(newGameId)
+    setPlayerId(newPlayerId)
   }
 
   const clearGameData = () => {
-    gameDataRef.current = { gameId: null, playerId: null }
-    setIsInGame(false)
+    setGameId(null)
+    setPlayerId(null)
   }
 
-  const getGameData = (): GameDataModel => {
-    return { ...gameDataRef.current }
-  }
+  const getGameData = (): GameDataType => ({ gameId, playerId })
 
-  const updateGameId = (gameId: string) => {
-    gameDataRef.current.gameId = gameId
-  }
-
-  const updatePlayerId = (playerId: string) => {
-    gameDataRef.current.playerId = playerId
-  }
+  const updateGameId = (newGameId: string) => setGameId(newGameId)
+  const updatePlayerId = (newPlayerId: string) => setPlayerId(newPlayerId)
 
   return {
     isInGame,
-    gameData: gameDataRef.current,
+    gameData: { gameId, playerId },
     saveGameData,
     clearGameData,
     getGameData,
@@ -54,3 +34,5 @@ export const useGameState = (): UseGameStateReturn => {
     updatePlayerId,
   }
 }
+
+export type UseGameStateType = ReturnType<typeof useGameState>
