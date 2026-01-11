@@ -14,7 +14,6 @@ import Toast from '@/components/ui/toast'
 import { gameConfig } from '@/constants/game'
 import { useGameState } from '@/hooks/game/use-game-state'
 import { useHeartbeat } from '@/hooks/game/use-heartbeat'
-import { useNetworkStatus } from '@/hooks/socket/use-network-status'
 import { useSocket } from '@/hooks/use-socket'
 import { useSocketNavigation } from '@/hooks/use-socket-navigation'
 import { appLogger } from '@/lib/utils/app-logger'
@@ -63,10 +62,11 @@ const GamePage = ({ params }) => {
     results: gameResults,
     setResults: setGameResults,
     resetResults,
+    gameState: playerInventory,
+    updatePlayerInventory,
   } = useGameStore()
   const { showToast } = useToastStore()
   const { socket } = useSocket()
-  const { isOnline, isNetworkOffline } = useNetworkStatus()
   const { gameData, getGameData } = useGameState()
   const { startHeartbeat, stopHeartbeat, isHeartbeatActive, getLastHeartbeatTime } = useHeartbeat()
 
@@ -102,14 +102,11 @@ const GamePage = ({ params }) => {
     socket.on('update_game_info', handleGameInfoUpdate)
     socket.on('game_ended', handleGameEnded)
     socket.on('round_sync', handleRoundSync)
-    socket.on('reconnect', handleReconnect)
     socket.on('disconnect', handleDisconnect)
     socket.on('sync_complete', handleGameSync)
     socket.on('complete_round_sync', handleGameSync)
-    socket.on('player_disconnected', handlePlayerDisconnected)
     socket.on('player_removed', handlePlayerRemoved)
     socket.on('player_left', handlePlayerLeft)
-    socket.on('player_reconnected', handlePlayerReconnected)
 
     socket.emit('request_player_info', { gameId })
     socket.emit('request_first_round_hint', { gameId })
@@ -124,14 +121,11 @@ const GamePage = ({ params }) => {
       socket.off('update_game_info')
       socket.off('game_ended')
       socket.off('round_sync')
-      socket.off('reconnect')
       socket.off('disconnect')
       socket.off('sync_complete')
       socket.off('complete_round_sync')
-      socket.off('player_disconnected')
       socket.off('player_removed')
       socket.off('player_left')
-      socket.off('player_reconnected')
     }
   }, [gameId])
 
@@ -139,28 +133,12 @@ const GamePage = ({ params }) => {
     resetResults()
   }, [])
 
-  const handlePlayerDisconnected = ({ playerId, message }) => {
-    showToast(message, 'warning')
-
-    setPlayers((prev) =>
-      prev.map((player) => (player.id === playerId ? { ...player, isOnline: false } : player))
-    )
-  }
-
   const handlePlayerRemoved = ({ message }) => {
     showToast(message, 'warning')
   }
 
   const handlePlayerLeft = ({ message }) => {
     showToast(message, 'warning')
-  }
-
-  const handlePlayerReconnected = ({ playerId, nickname }) => {
-    showToast(`${nickname}님이 재연결되었습니다`, 'connection')
-
-    setPlayers((prev) =>
-      prev.map((player) => (player.id === playerId ? { ...player, isOnline: true } : player))
-    )
   }
 
   const updateHintsAndGameState = (gameInfo: GameInfoModel) => {
@@ -191,24 +169,22 @@ const GamePage = ({ params }) => {
   }
 
   const handleTransaction = (action: TransactionType, amount: number) => {
-    setGameState((prevState) => {
-      const totalValue = amount * prevState.currentFishPrice
+    const totalValue = amount * gameState.currentFishPrice
 
-      socket.emit('trade_fishes', { gameId, action, amount })
+    socket.emit('trade_fishes', { gameId, action, amount })
 
-      if (action === 'buy' && totalValue > prevState.coins) {
-        showToast('보유 코인이 부족합니다', 'check')
-        return prevState
-      } else if (action === 'sell' && amount > prevState.fish) {
-        showToast('보유 생선이 부족합니다', 'check')
-        return prevState
-      }
+    if (action === 'buy' && totalValue > playerInventory.coins) {
+      showToast('보유 코인이 부족합니다', 'check')
+      return
+    } else if (action === 'sell' && amount > playerInventory.fish) {
+      showToast('보유 생선이 부족합니다', 'check')
+      return
+    }
 
-      return {
-        ...prevState,
-        coins: action === 'buy' ? prevState.coins - totalValue : prevState.coins + totalValue,
-        fish: action === 'buy' ? prevState.fish + amount : prevState.fish - amount,
-      }
+    updatePlayerInventory({
+      coins:
+        action === 'buy' ? playerInventory.coins - totalValue : playerInventory.coins + totalValue,
+      fish: action === 'buy' ? playerInventory.fish + amount : playerInventory.fish - amount,
     })
   }
 
@@ -315,7 +291,7 @@ const GamePage = ({ params }) => {
 
       setHints((prev) => ({
         nextRoundHint:
-          syncData.hint !== undefined && syncData.hint !== '' ? syncData.hint : prev.nextRoundHint, // 기존 값 유지
+          syncData.hint !== undefined && syncData.hint !== '' ? syncData.hint : prev.nextRoundHint,
         lastRoundHintResult:
           syncData.lastRoundResult !== undefined && syncData.lastRoundResult !== ''
             ? syncData.lastRoundResult
@@ -328,42 +304,22 @@ const GamePage = ({ params }) => {
     }
   }
 
-  const handleReconnect = () => {
-    socket.emit('request_player_info', { gameId })
-    socket.emit('request_first_round_hint', { gameId })
-    socket.emit('player_ready', { gameId })
-  }
-
   const handleDisconnect = (reason) => {
     showToast('연결이 끊겼습니다. 재연결 중...', 'warning')
     appLogger.log('socket disconnected', { reason })
   }
 
-  const totalCoin = gameState.fish * lastFishCoin + gameState.coins
+  const totalCoin = playerInventory.fish * lastFishCoin + playerInventory.coins
   const lastHeartbeatTime = getLastHeartbeatTime()
   const shouldShowHeartbeat = isHeartbeatActive && lastHeartbeatTime > 0
 
   return (
     <main className="relative h-screen min-h-screen w-full flex-col p-3 pt-[0px]">
       <Background desktopImage={backgroundDesktopImage} mobileImage={backgroundMobileImage} />
-      {/* 🌐 연결 상태 표시 */}
-      <div className="fixed right-4 top-4 z-50 flex gap-2">
-        {!isOnline && (
-          <div className="bg-red-500 rounded px-2 py-1 text-xs text-white">오프라인</div>
-        )}
-        {isNetworkOffline && (
-          <div className="rounded bg-yellow-500 px-2 py-1 text-xs text-white">재연결 중...</div>
-        )}
-        {shouldShowHeartbeat && (
-          <div className="rounded bg-green-500 px-2 py-1 text-xs text-white">
-            💓 {Math.floor((Date.now() - lastHeartbeatTime) / 1000)}s
-          </div>
-        )}
-      </div>
       <div className="mx-auto max-w-[420px] flex-col items-center justify-center p-3 md:pt-[50px]">
         <div className="my-4 flex justify-between">
           <div className="flex justify-start">
-            <FishCoinsAssets coins={gameState.coins} fish={gameState.fish} />
+            <FishCoinsAssets coins={playerInventory.coins} fish={playerInventory.fish} />
           </div>
           <div className="ml-auto mt-2">
             <Timer />
