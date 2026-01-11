@@ -1,4 +1,4 @@
-export const PeerConnectionState = {
+export const PeerConnectionStateModel = {
   CONNECTING: 'connecting',
   CONNECTED: 'connected',
   RECONNECTING: 'reconnecting',
@@ -6,7 +6,8 @@ export const PeerConnectionState = {
   LOST: 'lost',
 } as const
 
-export type PeerConnectionStateType = (typeof PeerConnectionState)[keyof typeof PeerConnectionState]
+export type PeerConnectionStateType =
+  (typeof PeerConnectionStateModel)[keyof typeof PeerConnectionStateModel]
 
 export interface PlayerModel {
   id: string
