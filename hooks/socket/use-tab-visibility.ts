@@ -1,89 +1,97 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 
+import { SOCKET_TIMEOUTS } from '@/constants/socket'
+import { appLogger } from '@/lib/utils/app-logger'
 import { isMobile } from '@/lib/utils/device'
 
-const TAB_SWITCH_WARNING_TIMEOUT = 10000
-const TAB_SWITCH_FINAL_TIMEOUT = 60000
-
-interface UseTabVisibilityReturn {
-  isTabVisible: boolean
-  tabSwitchTimeLeft: number
-  isTabSwitchModalShown: boolean
-  isTabReturning: boolean
-  startTabSwitchWarning: (onWarning: () => void, onFinalExit: () => void) => void
-  stopTabSwitchTimers: () => void
-  handleTabReturn: () => void
-  registerVisibilityListener: (onTabHidden: () => void, onTabVisible: () => void) => () => void
-}
-
-export const useTabVisibility = (): UseTabVisibilityReturn => {
+/**
+ * 게임 중 탭 전환(비활성화) 시 '유예 기간(Grace Period)'을 관리하는 훅입니다.
+ * [정책]
+ * 1. PC: 멀티태스킹 배려를 위해 탭 전환을 허용하며 제재하지 않습니다.
+ * 2. 모바일: 탭 전환 시 총 60초의 유예 기간을 줍니다. (20초 대약 -> 40초 경고 모달)
+ */
+export const useTabVisibility = () => {
   const [isTabVisible, setIsTabVisible] = useState(true)
-  const [tabSwitchTimeLeft, setTabSwitchTimeLeft] = useState(60)
+  const [tabSwitchTimeLeft, setTabSwitchTimeLeft] = useState(
+    SOCKET_TIMEOUTS.TAB_SWITCH_FINAL / 1000
+  )
 
   const tabSwitchWarningTimerRef = useRef<NodeJS.Timeout | null>(null)
   const tabSwitchFinalTimerRef = useRef<NodeJS.Timeout | null>(null)
   const tabSwitchCountdownRef = useRef<NodeJS.Timeout | null>(null)
+  const hiddenTimestampRef = useRef<number | null>(null)
   const isTabSwitchModalShown = useRef(false)
   const isTabReturning = useRef(false)
 
-  const startTabSwitchWarning = (onWarning: () => void, onFinalExit: () => void) => {
-    if (!isMobile()) {
-      return
-    }
-
-    if (tabSwitchWarningTimerRef.current) {
-      clearTimeout(tabSwitchWarningTimerRef.current)
-    }
-
-    tabSwitchWarningTimerRef.current = setTimeout(() => {
-      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
-        isTabSwitchModalShown.current = true
-        onWarning()
-        setTabSwitchTimeLeft(60)
-
-        startFinalExitTimer(onFinalExit)
-        startCountdown()
-      }
-    }, TAB_SWITCH_WARNING_TIMEOUT)
-  }
-
-  const startFinalExitTimer = (onFinalExit: () => void) => {
-    if (tabSwitchFinalTimerRef.current) {
-      clearTimeout(tabSwitchFinalTimerRef.current)
-    }
-
-    tabSwitchFinalTimerRef.current = setTimeout(() => {
-      const isModalShown = isTabSwitchModalShown.current
-      const isDocumentAvailable = typeof document !== 'undefined'
-      const isTabHidden = isDocumentAvailable && document.visibilityState === 'hidden'
-      const shouldFinalExit = isModalShown && isTabHidden
-
-      if (shouldFinalExit) {
-        onFinalExit()
-      }
-    }, TAB_SWITCH_FINAL_TIMEOUT)
-  }
-
-  const startCountdown = () => {
+  const stopCountdown = useCallback(() => {
     if (tabSwitchCountdownRef.current) {
       clearInterval(tabSwitchCountdownRef.current)
+      tabSwitchCountdownRef.current = null
     }
+  }, [])
 
+  const startCountdown = useCallback(() => {
+    stopCountdown()
     tabSwitchCountdownRef.current = setInterval(() => {
       setTabSwitchTimeLeft((prev) => {
         if (prev <= 1) {
-          if (tabSwitchCountdownRef.current) {
-            clearInterval(tabSwitchCountdownRef.current)
-            tabSwitchCountdownRef.current = null
-          }
+          stopCountdown()
           return 0
         }
         return prev - 1
       })
     }, 1000)
-  }
+  }, [stopCountdown])
 
-  const stopTabSwitchTimers = () => {
+  const startFinalExitTimer = useCallback((onFinalExit: () => void, duration: number) => {
+    if (tabSwitchFinalTimerRef.current) {
+      clearTimeout(tabSwitchFinalTimerRef.current)
+    }
+
+    tabSwitchFinalTimerRef.current = setTimeout(() => {
+      if (isTabSwitchModalShown.current) {
+        appLogger.log('[GRACE] Final exit timer fired. Executing exit logic.')
+        onFinalExit()
+      }
+    }, duration)
+  }, [])
+
+  const triggerWarning = useCallback(
+    (
+      onWarning: () => void,
+      onFinalExit: () => void,
+      initialTime: number = SOCKET_TIMEOUTS.TAB_SWITCH_FINAL
+    ) => {
+      isTabSwitchModalShown.current = true
+      onWarning()
+
+      const initialSeconds = Math.ceil(initialTime / 1000)
+      setTabSwitchTimeLeft(initialSeconds)
+
+      startFinalExitTimer(onFinalExit, initialTime)
+      startCountdown()
+    },
+    [startFinalExitTimer, startCountdown]
+  )
+
+  const startTabSwitchWarning = useCallback(
+    (onWarning: () => void, onFinalExit: () => void, onGraceStart?: () => void) => {
+      if (!isMobile()) return // PC는 멀티태스킹 허용 정책
+
+      onGraceStart?.()
+      hiddenTimestampRef.current = Date.now()
+
+      // 20초 대기 후에도 복귀하지 않으면 경고 모달 표시
+      tabSwitchWarningTimerRef.current = setTimeout(() => {
+        if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+          triggerWarning(onWarning, onFinalExit)
+        }
+      }, SOCKET_TIMEOUTS.TAB_SWITCH_WARNING)
+    },
+    [triggerWarning]
+  )
+
+  const stopTabSwitchTimers = useCallback(() => {
     if (tabSwitchWarningTimerRef.current) {
       clearTimeout(tabSwitchWarningTimerRef.current)
       tabSwitchWarningTimerRef.current = null
@@ -94,49 +102,64 @@ export const useTabVisibility = (): UseTabVisibilityReturn => {
       tabSwitchFinalTimerRef.current = null
     }
 
-    if (tabSwitchCountdownRef.current) {
-      clearInterval(tabSwitchCountdownRef.current)
-      tabSwitchCountdownRef.current = null
-    }
+    stopCountdown()
 
     isTabSwitchModalShown.current = false
     isTabReturning.current = false
-    setTabSwitchTimeLeft(60)
-  }
+    setTabSwitchTimeLeft(SOCKET_TIMEOUTS.TAB_SWITCH_FINAL / 1000)
+  }, [stopCountdown])
 
-  const handleTabReturn = () => {
-    stopTabSwitchTimers()
-    isTabReturning.current = true
+  const handleTabReturn = useCallback(
+    (onWarning?: () => void, onFinalExit?: () => void) => {
+      const now = Date.now()
+      const hiddenTime = hiddenTimestampRef.current ? now - hiddenTimestampRef.current : 0
+      appLogger.log(`[GRACE] Tab Returned. Hidden duration: ${hiddenTime}ms`)
 
-    setTimeout(() => {
-      isTabReturning.current = false
-    }, 0)
-  }
+      const TOTAL_GRACE = SOCKET_TIMEOUTS.TAB_SWITCH_WARNING + SOCKET_TIMEOUTS.TAB_SWITCH_FINAL
 
-  const registerVisibilityListener = (onTabHidden: () => void, onTabVisible: () => void) => {
-    const handleVisibilityChange = () => {
-      if (typeof document === 'undefined') return
+      // 1. 이미 총 유예 시간(60초)을 초과했다면 즉시 퇴장 (네트워크 오차 고려 500ms 여유)
+      if (hiddenTime >= TOTAL_GRACE - 500) {
+        appLogger.log('[GRACE] Hidden duration exceeded total grace period. Triggering final exit.')
+        onFinalExit?.()
+        return
+      }
 
-      const visible = document.visibilityState === 'visible'
-      setIsTabVisible(visible)
-
-      if (visible) {
-        onTabVisible()
+      // 2. 20초 이상 비웠다면 남은 시간만큼만 모달 표시
+      if (hiddenTime >= SOCKET_TIMEOUTS.TAB_SWITCH_WARNING) {
+        if (!isTabSwitchModalShown.current && onWarning && onFinalExit) {
+          const remainingTime = TOTAL_GRACE - hiddenTime
+          triggerWarning(onWarning, onFinalExit, remainingTime)
+        }
       } else {
-        onTabHidden()
+        stopTabSwitchTimers()
       }
-    }
 
-    if (typeof document !== 'undefined') {
+      isTabReturning.current = true
+      setTimeout(() => {
+        isTabReturning.current = false
+      }, 0)
+    },
+    [stopTabSwitchTimers, triggerWarning]
+  )
+
+  const registerVisibilityListener = useCallback(
+    (onTabHidden: () => void, onTabVisible: () => void) => {
+      const handleVisibilityChange = () => {
+        if (typeof document === 'undefined') return
+        const visible = document.visibilityState === 'visible'
+        setIsTabVisible(visible)
+        if (visible) {
+          onTabVisible()
+        } else {
+          onTabHidden()
+        }
+      }
+
       document.addEventListener('visibilitychange', handleVisibilityChange)
-    }
-
-    return () => {
-      if (typeof document !== 'undefined') {
-        document.removeEventListener('visibilitychange', handleVisibilityChange)
-      }
-    }
-  }
+      return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+    },
+    []
+  )
 
   useEffect(() => {
     if (typeof document !== 'undefined') {
