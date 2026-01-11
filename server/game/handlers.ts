@@ -40,6 +40,49 @@ const clearGraceTimer = (playerId: string) => {
   playersGraceTimers.delete(playerId)
 }
 
+const startGraceTimer = (
+  io: SocketIOServer,
+  socket: Socket,
+  playerId: string,
+  gameId: string,
+  reason: 'tab_hidden' | 'disconnect' = 'disconnect'
+) => {
+  if (playersGraceTimers.has(playerId)) return
+
+  const room = getRoom(gameId)
+  const player = room?.players.find((p) => p.id === playerId)
+  if (player && room) {
+    player.connectionStatus = PeerConnectionStateModel.RECONNECTING
+    io.to(gameId).emit('update_players', room.players)
+  }
+
+  const timer = setTimeout(() => {
+    if (!playersGraceTimers.has(playerId)) return
+
+    handlePlayerLeave(socket, playerId, gameId, io)
+
+    if (socket.connected) {
+      socket.emit('player_not_found', {
+        gameId,
+        message: '유예 시간이 초과되어 게임에서 제거되었습니다.',
+        errorCode: 'PLAYER_NOT_FOUND',
+      })
+    }
+
+    io.to(gameId).emit('player_left', {
+      playerId,
+      message:
+        reason === 'tab_hidden'
+          ? '플레이어가 유예 시간 초과로 게임에서 나갔습니다.'
+          : '플레이어의 연결이 끊겨 게임에서 제거되었습니다.',
+    })
+
+    playersGraceTimers.delete(playerId)
+  }, TOTAL_GRACE_PERIOD)
+
+  playersGraceTimers.set(playerId, timer)
+}
+
 export const handleCreateGame = async (totalRounds: number, joinGame: (gameId: string) => void) => {
   const gameId = generateGameId(gameRooms)
 
@@ -158,8 +201,6 @@ export const handleTabHidden = (io: SocketIOServer, socket: Socket, data?: { gam
   const playerId = getPlayer(socket.id)
   if (!playerId) return
 
-  if (playersGraceTimers.has(playerId)) return
-
   let gameId = data?.gameId
   if (!gameId) {
     gameId = Array.from(socket.rooms).find((room) => {
@@ -169,32 +210,7 @@ export const handleTabHidden = (io: SocketIOServer, socket: Socket, data?: { gam
   }
 
   if (!gameId) return
-
-  const room = getRoom(gameId)
-  if (!room) return
-
-  const resolvedGameId = gameId
-
-  const timer = setTimeout(() => {
-    if (!playersGraceTimers.has(playerId)) return
-
-    handlePlayerLeave(socket, playerId, resolvedGameId, io)
-
-    socket.emit('player_not_found', {
-      gameId: resolvedGameId,
-      message: '유예 시간이 초과되어 게임에서 제거되었습니다.',
-      errorCode: 'PLAYER_NOT_FOUND',
-    })
-
-    io.to(resolvedGameId).emit('player_left', {
-      playerId,
-      message: '플레이어가 유예 시간 초과로 게임에서 나갔습니다.',
-    })
-
-    playersGraceTimers.delete(playerId)
-  }, TOTAL_GRACE_PERIOD)
-
-  playersGraceTimers.set(playerId, timer)
+  startGraceTimer(io, socket, playerId, gameId, 'tab_hidden')
 }
 
 export const handleTabVisible = (_io: SocketIOServer, socket: Socket) => {
@@ -473,23 +489,22 @@ export const handleDisconnecting = (io: SocketIOServer, socket: Socket) => {
   const playerId = getPlayer(socket.id)
   if (!playerId) return
 
-  if (playersGraceTimers.has(playerId)) return
+  const rooms = Array.from(socket.rooms)
 
-  const gameId = Array.from(socket.rooms).find((room) => {
+  let gameId = rooms.find((room) => {
     if (room === socket.id) return false
     return getRoom(room) !== undefined
   })
+
+  if (!gameId && playerId) {
+    gameId = Array.from(gameRooms.entries()).find(([_id, room]) =>
+      room.players.some((p) => p.id === playerId)
+    )?.[0]
+  }
+
   if (!gameId) return
 
-  const room = getRoom(gameId)
-  if (!room) return
-
-  handlePlayerLeave(socket, playerId, gameId, io)
-
-  io.to(gameId).emit('player_left', {
-    playerId,
-    message: '플레이어가 게임에서 나갔습니다.',
-  })
+  startGraceTimer(io, socket, playerId, gameId, 'disconnect')
 }
 
 export const handleUserDisconnect = (
@@ -500,13 +515,7 @@ export const handleUserDisconnect = (
   const playerId = getPlayer(socket.id)
   if (!playerId) return
 
-  clearGraceTimer(playerId)
-  handlePlayerLeave(socket, playerId, gameId, io)
-
-  io.to(gameId).emit('player_left', {
-    playerId,
-    message: '플레이어가 게임에서 나갔습니다.',
-  })
+  startGraceTimer(io, socket, playerId, gameId, 'disconnect')
 }
 
 export const handleSetIntentToLeave = (socket: Socket) => {

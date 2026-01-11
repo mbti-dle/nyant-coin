@@ -8,7 +8,7 @@ import { isMobile } from '@/lib/utils/device'
  * 게임 중 탭 전환(비활성화) 시 '유예 기간(Grace Period)'을 관리하는 훅입니다.
  * [정책]
  * 1. PC: 멀티태스킹 배려를 위해 탭 전환을 허용하며 제재하지 않습니다.
- * 2. 모바일: 탭 전환 시 총 60초의 유예 기간을 줍니다. (20초 대약 -> 40초 경고 모달)
+ * 2. 모바일: 탭 전환 시 총 60초의 유예 기간을 줍니다. (20초 경고모달 -> 40초후 자동퇴장)
  */
 export const useTabVisibility = () => {
   const [isTabVisible, setIsTabVisible] = useState(true)
@@ -50,7 +50,6 @@ export const useTabVisibility = () => {
 
     tabSwitchFinalTimerRef.current = setTimeout(() => {
       if (isTabSwitchModalShown.current) {
-        appLogger.log('[GRACE] Final exit timer fired. Executing exit logic.')
         onFinalExit()
       }
     }, duration)
@@ -76,12 +75,11 @@ export const useTabVisibility = () => {
 
   const startTabSwitchWarning = useCallback(
     (onWarning: () => void, onFinalExit: () => void, onGraceStart?: () => void) => {
-      if (!isMobile()) return // PC는 멀티태스킹 허용 정책
+      if (!isMobile()) return
 
       onGraceStart?.()
       hiddenTimestampRef.current = Date.now()
 
-      // 20초 대기 후에도 복귀하지 않으면 경고 모달 표시
       tabSwitchWarningTimerRef.current = setTimeout(() => {
         if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
           triggerWarning(onWarning, onFinalExit)
@@ -111,20 +109,21 @@ export const useTabVisibility = () => {
 
   const handleTabReturn = useCallback(
     (onWarning?: () => void, onFinalExit?: () => void) => {
+      if (!hiddenTimestampRef.current) {
+        stopTabSwitchTimers()
+        return
+      }
+
       const now = Date.now()
-      const hiddenTime = hiddenTimestampRef.current ? now - hiddenTimestampRef.current : 0
-      appLogger.log(`[GRACE] Tab Returned. Hidden duration: ${hiddenTime}ms`)
+      const hiddenTime = now - hiddenTimestampRef.current
 
       const TOTAL_GRACE = SOCKET_TIMEOUTS.TAB_SWITCH_WARNING + SOCKET_TIMEOUTS.TAB_SWITCH_FINAL
 
-      // 1. 이미 총 유예 시간(60초)을 초과했다면 즉시 퇴장 (네트워크 오차 고려 500ms 여유)
       if (hiddenTime >= TOTAL_GRACE - 500) {
-        appLogger.log('[GRACE] Hidden duration exceeded total grace period. Triggering final exit.')
         onFinalExit?.()
         return
       }
 
-      // 2. 20초 이상 비웠다면 남은 시간만큼만 모달 표시
       if (hiddenTime >= SOCKET_TIMEOUTS.TAB_SWITCH_WARNING) {
         if (!isTabSwitchModalShown.current && onWarning && onFinalExit) {
           const remainingTime = TOTAL_GRACE - hiddenTime

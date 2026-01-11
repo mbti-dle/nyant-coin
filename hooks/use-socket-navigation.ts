@@ -57,6 +57,12 @@ export const useSocketNavigation = (gameId: string | null) => {
     window.history.pushState(null, '', window.location.pathname)
 
     const handlePopState = (event: PopStateEvent) => {
+      // 탭이 전환되거나 숨겨진 상태에서 사파리가 popstate를 잘못 트리거하는 경우 무시
+      if (document.visibilityState === 'hidden') {
+        window.history.pushState(null, '', window.location.pathname)
+        return
+      }
+
       event.preventDefault()
       if (window.confirm('뒤로가기 시, 게임에 다시 입장할 수 없습니다.')) {
         cleanupAndRedirect()
