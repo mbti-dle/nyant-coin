@@ -14,8 +14,8 @@ export const playersStatus = new Map<
 >()
 
 export const playersReconnecting = new Map<PlayerIdType, number>()
-export const playersDisconnected = new Map<PlayerIdType, NodeJS.Timeout>()
 export const playersReconnectingSet = new Set<string>()
+export const playersGraceTimers = new Map<PlayerIdType, NodeJS.Timeout>()
 
 export const gameTimers = new Map<string, NodeJS.Timeout>()
 export const roundTimers = new Map<string, NodeJS.Timeout>()
