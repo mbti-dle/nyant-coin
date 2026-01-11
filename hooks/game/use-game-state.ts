@@ -34,5 +34,3 @@ export const useGameState = () => {
     updatePlayerId,
   }
 }
-
-export type UseGameStateType = ReturnType<typeof useGameState>
