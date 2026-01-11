@@ -10,7 +10,9 @@ import {
   handleCheckGameAvailability,
   handleCheckNotReturnedPlayers,
   handleCreateGame,
-  handleDisconnect,
+  handleDisconnecting,
+  handleTabHidden,
+  handleTabVisible,
   handleEndGame,
   handleJoinGame,
   handleLeaveGame,
@@ -54,11 +56,14 @@ app.prepare().then(() => {
     socket.on('back_to_waiting', (data) => handleBackToWaiting(io, socket, data))
     socket.on('check_not_returned_players', (data) => handleCheckNotReturnedPlayers(socket, data))
 
-    socket.on('leave_game', (data) => handleLeaveGame(socket, data))
-    socket.on('disconnect', () => handleDisconnect(io, socket))
+    socket.on('leave_game', (data) => handleLeaveGame(io, socket, data))
+    socket.on('disconnecting', () => handleDisconnecting(io, socket))
     socket.on('user_disconnect', (data) => handleUserDisconnect(io, socket, data))
 
     socket.on('request_sync', (data) => handleRequestSync(io, socket, data))
+
+    socket.on('tab_hidden', (data) => handleTabHidden(io, socket, data))
+    socket.on('tab_visible', () => handleTabVisible(io, socket))
   })
 
   httpServer
