@@ -10,7 +10,6 @@ import { ArrowBackIcon } from '@/components/icons'
 import AvatarSelector from '@/components/ui/avatar-selector'
 import Button from '@/components/ui/button'
 import CountInput from '@/components/ui/count-input'
-import { useNetworkStatus } from '@/hooks/socket/use-network-status'
 import { useSocket } from '@/hooks/use-socket'
 import { validateNickname } from '@/lib/utils/nickname-validation'
 import useGameStore from '@/store/game'
@@ -26,7 +25,6 @@ const UserInfoPage = () => {
   const [errorMessage, setErrorMessage] = useState('')
 
   const { socket } = useSocket()
-  const { isOnline } = useNetworkStatus()
 
   const showToast = useToastStore((state) => state.showToast)
 
@@ -64,11 +62,6 @@ const UserInfoPage = () => {
   }
 
   const handleJoinClick = () => {
-    if (!isOnline) {
-      showToast('네트워크 연결을 확인해주세요', 'warning')
-      return
-    }
-
     const error = validateNickname(nickname)
     if (error) {
       setErrorMessage(error)
@@ -107,11 +100,6 @@ const UserInfoPage = () => {
       >
         <ArrowBackIcon className="text-gray-300 hover:text-gray-500" size={24} />
       </Link>
-      {!isOnline && (
-        <div className="bg-red-500 fixed right-4 top-4 z-50 rounded px-3 py-1 text-sm text-white">
-          연결 불안정
-        </div>
-      )}
 
       <AvatarSelector
         currentAvatarIndex={currentAvatarIndex}

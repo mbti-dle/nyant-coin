@@ -7,7 +7,6 @@ import Image from 'next/image'
 import LoadingPage from '@/app/loading'
 import LinkButton from '@/components/ui/link-button'
 import { SITE_URL } from '@/constants/config'
-import { useNetworkStatus } from '@/hooks/socket/use-network-status'
 import { useSocket } from '@/hooks/use-socket'
 import { useSocketNavigation } from '@/hooks/use-socket-navigation'
 import ConfettiComponent from '@/lib/confetti'
@@ -20,7 +19,6 @@ const ResultPage = ({ params }) => {
   const { gameId } = params
   const [currentUser, setCurrentUser] = useState<GameResultModel | null>(null)
   const { socket } = useSocket()
-  const { isOnline } = useNetworkStatus()
   const { playerId: currentPlayerId, results: gameResults } = useGameStore()
   const { showToast } = useToastStore()
   useSocketNavigation(gameId)
@@ -57,11 +55,6 @@ ${gameResults
 
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center">
-      {!isOnline && (
-        <div className="bg-red-500 fixed left-4 top-4 z-50 rounded px-3 py-1 text-sm text-white">
-          오프라인 - 공유 기능 제한됨
-        </div>
-      )}
       <div className="relative ml-1 flex h-[100px] w-[100px] items-center justify-center md:h-[150px] md:w-[150px]">
         <Image src={`/images/cat-${gameResults[0].character}.png`} alt="고양이" fill />
       </div>
