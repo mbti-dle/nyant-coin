@@ -1,6 +1,6 @@
 import useGameStore from '@/store/game'
 
-type GameDataType = {
+interface GameDataModel {
   gameId: string | null
   playerId: string | null
 }
@@ -19,7 +19,7 @@ export const useGameState = () => {
     setPlayerId(null)
   }
 
-  const getGameData = (): GameDataType => ({ gameId, playerId })
+  const getGameData = (): GameDataModel => ({ gameId, playerId })
 
   const updateGameId = (newGameId: string) => setGameId(newGameId)
   const updatePlayerId = (newPlayerId: string) => setPlayerId(newPlayerId)
