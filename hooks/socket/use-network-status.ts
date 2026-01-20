@@ -6,10 +6,10 @@ const ERROR_MODAL_TIMEOUT = 10000
 const RECONNECT_NOTIFICATION_INTERVAL = 1000
 
 export const useNetworkStatus = () => {
-  const [isOnline, setIsOnline] = useState(true)
-  const [isNetworkOffline, setIsNetworkOffline] = useState(false)
+  const [hasNetworkConnection, setHasNetworkConnection] = useState(true) // 물리적 네트워크 연결 여부 (navigator.onLine 기반)
+  const [isInOfflineMode, setIsInOfflineMode] = useState(false) // UI 레벨의 오프라인 모드 상태 (사용자 경험 제어용)
 
-  const isOnlineRef = useRef(true)
+  const hasNetworkConnectionRef = useRef(true)
   const errorModalTimerRef = useRef<NodeJS.Timeout | null>(null)
   const reconnectIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const shouldShowErrorModal = useRef(false)
@@ -17,13 +17,13 @@ export const useNetworkStatus = () => {
   useEffect(() => {
     if (typeof navigator !== 'undefined') {
       const status = navigator.onLine
-      setIsOnline(status)
-      isOnlineRef.current = status
+      setHasNetworkConnection(status)
+      hasNetworkConnectionRef.current = status
     }
   }, [])
 
   const enterOfflineState = useCallback((onErrorModal?: () => void) => {
-    setIsNetworkOffline(true)
+    setIsInOfflineMode(true)
     shouldShowErrorModal.current = true
 
     appLogger.warn('네트워크 오프라인 감지')
@@ -43,7 +43,7 @@ export const useNetworkStatus = () => {
   }, [])
 
   const enterOnlineState = useCallback(() => {
-    setIsNetworkOffline(false)
+    setIsInOfflineMode(false)
     shouldShowErrorModal.current = false
 
     appLogger.log('네트워크 복구')
@@ -80,12 +80,12 @@ export const useNetworkStatus = () => {
       }
 
       reconnectIntervalRef.current = setInterval(() => {
-        if (isNetworkOffline && !shouldShowErrorModal.current) {
+        if (isInOfflineMode && !shouldShowErrorModal.current) {
           showToast('연결이 불안정합니다. 다시 연결 중...', 'warning')
         }
       }, RECONNECT_NOTIFICATION_INTERVAL)
     },
-    [isNetworkOffline]
+    [isInOfflineMode]
   )
 
   const stopReconnectToasts = useCallback(() => {
@@ -100,9 +100,9 @@ export const useNetworkStatus = () => {
 
     // navigator가 오프라인이라고 하면 이를 우선 신뢰합니다 (로컬 환경 네트워크 토글/시뮬레이션 대응)
     if (!navOnline) {
-      if (isOnlineRef.current) {
-        setIsOnline(false)
-        isOnlineRef.current = false
+      if (hasNetworkConnectionRef.current) {
+        setHasNetworkConnection(false)
+        hasNetworkConnectionRef.current = false
       }
       return false
     }
@@ -116,16 +116,16 @@ export const useNetworkStatus = () => {
 
       const isActuallyOnline = response.ok
 
-      if (isActuallyOnline !== isOnlineRef.current) {
-        setIsOnline(isActuallyOnline)
-        isOnlineRef.current = isActuallyOnline
+      if (isActuallyOnline !== hasNetworkConnectionRef.current) {
+        setHasNetworkConnection(isActuallyOnline)
+        hasNetworkConnectionRef.current = isActuallyOnline
       }
 
       return isActuallyOnline
     } catch {
-      if (isOnlineRef.current) {
-        setIsOnline(false)
-        isOnlineRef.current = false
+      if (hasNetworkConnectionRef.current) {
+        setHasNetworkConnection(false)
+        hasNetworkConnectionRef.current = false
       }
       return false
     }
@@ -138,14 +138,14 @@ export const useNetworkStatus = () => {
       }
 
       const handleOnline = () => {
-        setIsOnline(true)
-        isOnlineRef.current = true
+        setHasNetworkConnection(true)
+        hasNetworkConnectionRef.current = true
         onOnline()
       }
 
       const handleOffline = () => {
-        setIsOnline(false)
-        isOnlineRef.current = false
+        setHasNetworkConnection(false)
+        hasNetworkConnectionRef.current = false
         onOffline()
       }
 
@@ -173,8 +173,8 @@ export const useNetworkStatus = () => {
   }, [resetNetworkEffects])
 
   return {
-    isOnline,
-    isNetworkOffline,
+    hasNetworkConnection,
+    isInOfflineMode,
     shouldShowErrorModal: shouldShowErrorModal.current,
     enterOfflineState,
     enterOnlineState,

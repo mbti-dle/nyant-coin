@@ -22,8 +22,8 @@ interface SocketContextModel {
   isSocketConnected: boolean
   isInGame: boolean
   connectionStatus: PeerConnectionStateType
-  isOnline: boolean
-  isNetworkOffline: boolean
+  hasNetworkConnection: boolean // 물리적 네트워크 연결 여부
+  isInOfflineMode: boolean // UI 레벨의 오프라인 모드 상태
 }
 
 export const SocketContext = createContext<SocketContextModel | null>(null)
@@ -44,8 +44,8 @@ const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const { isInGame, saveGameData, clearGameData, getGameData } = useGameState()
 
   const {
-    isOnline,
-    isNetworkOffline,
+    hasNetworkConnection,
+    isInOfflineMode,
     enterOfflineState,
     enterOnlineState,
     resetNetworkEffects,
@@ -336,7 +336,7 @@ const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   }, [subscribeNetworkEvents, handleOnline, handleOffline])
 
   useEffect(() => {
-    if (!isOnline) {
+    if (!hasNetworkConnection) {
       const targetStatus =
         reconnectionAttemptsRef.current <= 2
           ? PeerConnectionStateModel.RECONNECTING
@@ -355,7 +355,7 @@ const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     ) {
       setConnectionStatus(PeerConnectionStateModel.CONNECTED)
     }
-  }, [isSocketConnected, connectionStatus, isOnline])
+  }, [isSocketConnected, connectionStatus, hasNetworkConnection])
 
   useEffect(() => {
     if (isInGame) {
@@ -467,8 +467,8 @@ const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         isSocketConnected,
         isInGame,
         connectionStatus,
-        isOnline,
-        isNetworkOffline,
+        hasNetworkConnection,
+        isInOfflineMode,
       }}
     >
       <NetworkBanner status={connectionStatus} />
