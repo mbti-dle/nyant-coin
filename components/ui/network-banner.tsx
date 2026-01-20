@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from 'react'
 
-import { FiRefreshCw } from 'react-icons/fi'
-
-import { WifiOffIcon } from '@/components/icons'
+import { RefreshCwIcon, WifiOffIcon } from '@/components/icons'
 import { PeerConnectionStateModel, PeerConnectionStateType } from '@/types/game'
 
 import SnackBar from './snack-bar'
@@ -45,7 +43,7 @@ const NetworkBanner = ({ status, className }: NetworkBannerProps) => {
   const icon = isLost ? (
     <WifiOffIcon className="text-red-500" size={24} />
   ) : (
-    <FiRefreshCw className="animate-spin-slow h-5 w-5 text-yellow-400" />
+    <RefreshCwIcon className="animate-spin-slow h-5 w-5 text-yellow-400" />
   )
 
   return (
