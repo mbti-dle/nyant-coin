@@ -43,7 +43,7 @@ const NetworkBanner = ({ status, className }: NetworkBannerProps) => {
   const icon = isLost ? (
     <WifiOffIcon className="text-red-500" size={24} />
   ) : (
-    <RefreshCwIcon className="animate-spin-slow h-5 w-5 text-yellow-400" />
+    <RefreshCwIcon className="h-5 w-5 animate-spin text-yellow-400" />
   )
 
   return (
@@ -58,20 +58,6 @@ const NetworkBanner = ({ status, className }: NetworkBannerProps) => {
         }}
         className={className}
       />
-
-      <style jsx global>{`
-        @keyframes spin-slow {
-          from {
-            transform: rotate(0deg);
-          }
-          to {
-            transform: rotate(360deg);
-          }
-        }
-        .animate-spin-slow {
-          animation: spin-slow 2s linear infinite;
-        }
-      `}</style>
     </>
   )
 }
