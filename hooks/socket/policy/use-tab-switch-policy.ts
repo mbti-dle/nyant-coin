@@ -113,8 +113,8 @@ export const useTabSwitchPolicy = (socket: Socket | null) => {
 
   const handleTabReturn = useCallback(
     (onFinalExit: () => void) => {
+      // 탭이 가려진 적이 없으면(hiddenTimestamp가 없으면) 타이머를 멈출 필요가 없습니다.
       if (!hiddenTimestampRef.current) {
-        stopTabSwitchTimers()
         return
       }
 
