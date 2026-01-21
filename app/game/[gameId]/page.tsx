@@ -68,7 +68,7 @@ const GamePage = ({ params }) => {
   const { showToast } = useToastStore()
   const { socket } = useSocket()
   const { gameData, getGameData } = useGameState()
-  const { startHeartbeat, stopHeartbeat, isHeartbeatActive, getLastHeartbeatTime } = useHeartbeat()
+  const { startHeartbeat, stopHeartbeat } = useHeartbeat()
 
   useSocketNavigation(gameId)
 

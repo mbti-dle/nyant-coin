@@ -1,3 +1,7 @@
+/**
+ * 사용자의 현재 게임 세션 정보(방 번호, 플레이어 ID)를 관리하는 훅입니다.
+ * zustand 스토어의 데이터를 컴포넌트나 다른 훅에서 쉽게 접근하고 수정할 수 있는 인터페이스를 제공합니다.
+ */
 import useGameStore from '@/store/game'
 
 interface GameDataModel {

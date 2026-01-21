@@ -1,3 +1,7 @@
+/**
+ * 클라이언트와 서버 간의 연결 상태를 주기적으로 체크하는 '생존 신호(Heartbeat)' 관리 훅입니다.
+ * 30초마다 신호를 발송하며, 10초 내 응답이 없을 경우 동기화(Sync)를 트리거하여 연결 안전성을 보장합니다.
+ */
 import { useRef } from 'react'
 
 import { Socket } from 'socket.io-client'
@@ -11,19 +15,7 @@ interface HeartbeatDataModel {
   timestamp: number
 }
 
-interface UseHeartbeatReturn {
-  isHeartbeatActive: boolean
-  startHeartbeat: (
-    socket: Socket,
-    getGameData: () => { gameId: string | null; playerId: string | null },
-    onSyncRequired?: () => void
-  ) => void
-  stopHeartbeat: () => void
-  handleHeartbeatResponse: (data: { timestamp: number }) => void
-  getLastHeartbeatTime: () => number
-}
-
-export const useHeartbeat = (): UseHeartbeatReturn => {
+export const useHeartbeat = () => {
   const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const heartbeatTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const lastHeartbeatTime = useRef(0)
