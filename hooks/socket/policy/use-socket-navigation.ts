@@ -26,16 +26,6 @@ export const useSocketNavigation = (gameId: string | null) => {
     router.push('/')
   }, [gameId, socket, router])
 
-  const startExitTimer = useCallback(() => {
-    if (timeoutId.current) {
-      clearTimeout(timeoutId.current)
-    }
-
-    timeoutId.current = setTimeout(() => {
-      cleanupAndRedirect()
-    }, AUTO_EXIT_TIMEOUT)
-  }, [cleanupAndRedirect])
-
   const stopExitTimer = useCallback(() => {
     if (timeoutId.current) {
       clearTimeout(timeoutId.current)
@@ -86,9 +76,4 @@ export const useSocketNavigation = (gameId: string | null) => {
   useEffect(() => {
     return stopExitTimer
   }, [stopExitTimer])
-
-  return {
-    startExitTimer,
-    stopExitTimer,
-  }
 }
