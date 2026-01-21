@@ -1,16 +1,16 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 
 import { SOCKET_TIMEOUTS } from '@/constants/socket'
-import { appLogger } from '@/lib/utils/app-logger'
 import { isMobile } from '@/lib/utils/device'
 
 /**
- * 게임 중 탭 전환(비활성화) 시 '유예 기간(Grace Period)'을 관리하는 훅입니다.
+ * [Policy Layer] 게임 중 탭 전환(비활성화) 시 '유예 기간(Grace Period)' 정책을 관리하는 훅입니다.
+ *
  * [정책]
  * 1. PC: 멀티태스킹 배려를 위해 탭 전환을 허용하며 제재하지 않습니다.
  * 2. 모바일: 탭 전환 시 총 60초의 유예 기간을 줍니다. (20초 경고모달 -> 40초후 자동퇴장)
  */
-export const useTabVisibility = () => {
+export const useTabSwitchPolicy = () => {
   const [isTabVisible, setIsTabVisible] = useState(true)
   const [tabSwitchTimeLeft, setTabSwitchTimeLeft] = useState(
     SOCKET_TIMEOUTS.TAB_SWITCH_FINAL / 1000
@@ -141,29 +141,15 @@ export const useTabVisibility = () => {
     [stopTabSwitchTimers, triggerWarning]
   )
 
-  const registerVisibilityListener = useCallback(
-    (onTabHidden: () => void, onTabVisible: () => void) => {
-      const handleVisibilityChange = () => {
-        if (typeof document === 'undefined') return
-        const visible = document.visibilityState === 'visible'
-        setIsTabVisible(visible)
-        if (visible) {
-          onTabVisible()
-        } else {
-          onTabHidden()
-        }
-      }
-
-      document.addEventListener('visibilitychange', handleVisibilityChange)
-      return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
-    },
-    []
-  )
-
   useEffect(() => {
-    if (typeof document !== 'undefined') {
-      setIsTabVisible(!document.hidden)
+    const handleVisibilityChange = () => {
+      if (typeof document === 'undefined') return
+      const visible = document.visibilityState === 'visible'
+      setIsTabVisible(visible)
     }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
   }, [])
 
   useEffect(() => {
@@ -180,6 +166,5 @@ export const useTabVisibility = () => {
     startTabSwitchWarning,
     stopTabSwitchTimers,
     handleTabReturn,
-    registerVisibilityListener,
   }
 }
