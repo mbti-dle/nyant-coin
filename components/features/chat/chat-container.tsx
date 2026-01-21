@@ -28,11 +28,13 @@ const ChatContainer = ({ gameId, player, setIsPreparingGame, className }: ChatCo
   const chatContainerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const handleNewChatMessage = (newChatMessage) => {
+    if (!socket) return
+
+    const handleNewChatMessage = (newChatMessage: ChatType) => {
       setChats((prevChat) => [...prevChat, newChatMessage])
     }
 
-    const handleNewChatNotice = (newChatNotice) => {
+    const handleNewChatNotice = (newChatNotice: any) => {
       setChats((prevChat) => [...prevChat, { type: 'notice', ...newChatNotice }])
       if (newChatNotice.notice !== '잠시 후 게임이 시작됩니다') {
         setIsPreparingGame(false)
@@ -47,14 +49,14 @@ const ChatContainer = ({ gameId, player, setIsPreparingGame, className }: ChatCo
     socket.on('NETWORK_ERROR', handleNewChatNotice)
 
     return () => {
-      socket.off('new_chat_message')
-      socket.off('new_chat_notice')
-      socket.off('SERVER_ERROR')
-      socket.off('HINTS_NOT_LOADED')
-      socket.off('INITIALIZATION_ERROR')
-      socket.off('NETWORK_ERROR')
+      socket.off('new_chat_message', handleNewChatMessage)
+      socket.off('new_chat_notice', handleNewChatNotice)
+      socket.off('SERVER_ERROR', handleNewChatNotice)
+      socket.off('HINTS_NOT_LOADED', handleNewChatNotice)
+      socket.off('INITIALIZATION_ERROR', handleNewChatNotice)
+      socket.off('NETWORK_ERROR', handleNewChatNotice)
     }
-  }, [])
+  }, [socket, setIsPreparingGame])
 
   useEffect(() => {
     if (chatContainerRef.current) {

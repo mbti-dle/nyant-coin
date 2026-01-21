@@ -40,6 +40,8 @@ const WaitingPage = ({ params }) => {
   useSocketNavigation(gameId)
 
   useEffect(() => {
+    if (!socket) return
+
     const handlePlayerInfo = ({ players, playerId }) => {
       if (!playerId) {
         router.replace('/')
@@ -81,11 +83,11 @@ const WaitingPage = ({ params }) => {
     socket.on('game_started', handleGameStarted)
 
     return () => {
-      socket.off('player_info')
-      socket.off('update_players')
-      socket.off('game_started')
+      socket.off('player_info', handlePlayerInfo)
+      socket.off('update_players', handleUpdatePlayers)
+      socket.off('game_started', handleGameStarted)
     }
-  }, [gameId, router, setGameRounds, showToast])
+  }, [gameId, router, setGameRounds, showToast, socket, saveGameData])
 
   useEffect(() => {
     if (players.length > 0 && players[0].id === playerInfo.id) {
@@ -94,6 +96,8 @@ const WaitingPage = ({ params }) => {
   }, [players, playerInfo])
 
   useEffect(() => {
+    if (!socket) return
+
     const handleNotReturnedCount = ({ count }) => {
       if (count > 0) {
         setNotReturnedPlayersCount(count)
@@ -108,9 +112,9 @@ const WaitingPage = ({ params }) => {
     socket.on('not_returned_players_count', handleNotReturnedCount)
 
     return () => {
-      socket.off('not_returned_players_count')
+      socket.off('not_returned_players_count', handleNotReturnedCount)
     }
-  }, [isModalVisible])
+  }, [isModalVisible, socket])
 
   const handleModalConfirm = () => {
     setIsModalVisible(false)
@@ -119,10 +123,12 @@ const WaitingPage = ({ params }) => {
   const handleModalClose = () => setIsModalVisible(false)
 
   const handleStartClick = () => {
-    socket.emit('check_not_returned_players', { gameId })
+    socket?.emit('check_not_returned_players', { gameId })
   }
 
   const startGame = (removePlayers: boolean) => {
+    if (!socket) return
+
     setIsPreparingGame(true)
     socket.emit('send_notice', {
       gameId,

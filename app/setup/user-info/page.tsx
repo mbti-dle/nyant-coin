@@ -35,6 +35,8 @@ const UserInfoPage = () => {
   const rounds = useGameStore((state) => state.rounds)
 
   useEffect(() => {
+    if (!socket) return
+
     const handleJoinSuccess = (data) => {
       router.push(`/waiting/${data.gameId}`)
     }
@@ -51,7 +53,7 @@ const UserInfoPage = () => {
       socket.off('join_success', handleJoinSuccess)
       socket.off('join_failure', handleJoinFailure)
     }
-  }, [router, showToast])
+  }, [router, showToast, socket])
 
   const handlePrevClick = () => {
     setCurrentAvatarIndex((prevIndex) => (prevIndex === 1 ? AVATAR_COUNT : prevIndex - 1))
