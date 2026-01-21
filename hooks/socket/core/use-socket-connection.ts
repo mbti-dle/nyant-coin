@@ -1,7 +1,3 @@
-/**
- * [Core Layer] Socket.io 인스턴스의 '물리적 연결' 자체를 관리하는 훅입니다.
- * 연결 생성(io), 연결(connect), 해제(disconnect) 및 실시간 연결 상태를 추적합니다.
- */
 import { useState, useRef } from 'react'
 
 import { Socket, io } from 'socket.io-client'
@@ -15,18 +11,12 @@ interface SocketConnectionOptionsModel {
   forceNew?: boolean
 }
 
-interface UseSocketConnectionReturn {
-  socket: Socket | null
-  isSocketConnected: boolean
-  wasEverConnected: boolean
-  createSocket: (options?: SocketConnectionOptionsModel) => Socket
-  handleConnect: () => void
-  handleDisconnect: () => void
-  disconnect: () => void
-  reconnect: () => void
-}
-
-export const useSocketConnection = (): UseSocketConnectionReturn => {
+/**
+ * [Core Layer] Socket.io 인스턴스의 '생성' 및 '물리적 연결 상태'를 관리하는 훅입니다.
+ * 소켓 객체 생성(io) 및 연결 상태(connected)를 실시간으로 추적하며,
+ * 인스턴스 자체의 생명주기와 기본적인 연결 플래그 관리에 집중합니다.
+ */
+export const useSocketConnection = () => {
   const [socket, setSocket] = useState<Socket | null>(null)
   const [isSocketConnected, setIsSocketConnected] = useState(false)
   const wasEverConnected = useRef(false)
@@ -65,20 +55,6 @@ export const useSocketConnection = (): UseSocketConnectionReturn => {
     setIsSocketConnected(false)
   }
 
-  const disconnect = () => {
-    if (socket) {
-      socket.disconnect()
-      setSocket(null)
-      setIsSocketConnected(false)
-    }
-  }
-
-  const reconnect = () => {
-    if (socket && !socket.connected) {
-      socket.connect()
-    }
-  }
-
   return {
     socket,
     isSocketConnected,
@@ -86,7 +62,5 @@ export const useSocketConnection = (): UseSocketConnectionReturn => {
     createSocket,
     handleConnect,
     handleDisconnect,
-    disconnect,
-    reconnect,
   }
 }
