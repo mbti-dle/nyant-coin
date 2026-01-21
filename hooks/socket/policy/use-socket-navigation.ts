@@ -2,17 +2,16 @@ import { useCallback, useEffect, useRef } from 'react'
 
 import { useRouter } from 'next/navigation'
 
-import { useSocket } from './use-socket'
+import { useSocket } from '../core/use-socket'
 
 const AUTO_EXIT_TIMEOUT = 5000
 
 /**
- * 게임 진행 중 "페이지 이탈"을 감지해 처리하는 훅입니다.
+ * [Policy Layer] 페이지 이탈(뒤로가기, 새로고침 등) 시의 대응 정책을 관리하는 훅입니다.
  *
- * [처리 대상]
+ * [정책]
  * - 뒤로가기(popstate): 사용자 확인 후 즉시 퇴장 처리 (leave_game)
  * - 새로고침/창닫기(beforeunload): 브라우저 기본 경고 표시.
- *   (실제 이탈 시 서버의 유예 기간 로직에 의해 60초간 세션 유지됨)
  */
 export const useSocketNavigation = (gameId: string | null) => {
   const router = useRouter()

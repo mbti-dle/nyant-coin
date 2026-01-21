@@ -1,6 +1,6 @@
 import { useState, useEffect, memo } from 'react'
 
-import { useSocket } from '@/hooks/use-socket'
+import { useSocket } from '@/hooks/socket/core/use-socket'
 
 const Timer = memo(() => {
   const [timer, setTimer] = useState(20)

@@ -1,3 +1,7 @@
+/**
+ * [Core Layer] Socket.io 인스턴스의 '물리적 연결' 자체를 관리하는 훅입니다.
+ * 연결 생성(io), 연결(connect), 해제(disconnect) 및 실시간 연결 상태를 추적합니다.
+ */
 import { useState, useRef } from 'react'
 
 import { Socket, io } from 'socket.io-client'

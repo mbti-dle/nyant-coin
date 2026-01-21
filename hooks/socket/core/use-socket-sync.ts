@@ -1,10 +1,14 @@
+/**
+ * [Core Layer] 재연결 이후의 '데이터 정합성(Synchronization)'을 책임지는 훅입니다.
+ * 서버와 클라이언트 간의 게임 스냅샷을 동기화하고, 실패 시의 재시도 정책을 관리합니다.
+ */
 import { useRef } from 'react'
 
 import { Socket } from 'socket.io-client'
 
 import { appLogger } from '@/lib/utils/app-logger'
 
-export const useSocketReconnection = <T>() => {
+export const useSocketSync = <T>() => {
   const reconnectionInProgress = useRef(false)
   const lastSyncRequestTime = useRef(0)
   const gameRestoreToastShown = useRef(false)

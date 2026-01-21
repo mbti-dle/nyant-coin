@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 
 import CatBox from '@/components/ui/cat-box'
 import { useGameState } from '@/hooks/game/use-game-state'
-import { useSocket } from '@/hooks/use-socket'
+import { useSocket } from '@/hooks/socket/core/use-socket'
 import { PeerConnectionStateModel, PlayerModel, TransactionResultModel } from '@/types/game'
 
 interface PlayerGridProps {

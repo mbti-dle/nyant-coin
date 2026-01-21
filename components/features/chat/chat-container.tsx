@@ -9,7 +9,7 @@ import ChatInput from '@/components/features/chat/chat-input'
 import ChatMessage from '@/components/features/chat/chat-message'
 import ChatNotice from '@/components/features/chat/chat-notice'
 import { ExpandLessIcon, ExpandMoreIcon } from '@/components/icons'
-import { useSocket } from '@/hooks/use-socket'
+import { useSocket } from '@/hooks/socket/core/use-socket'
 import { ChatType } from '@/types/chat'
 import { PlayerModel } from '@/types/game'
 

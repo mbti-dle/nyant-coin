@@ -14,8 +14,8 @@ import Toast from '@/components/ui/toast'
 import { gameConfig } from '@/constants/game'
 import { useGameState } from '@/hooks/game/use-game-state'
 import { useHeartbeat } from '@/hooks/game/use-heartbeat'
-import { useSocket } from '@/hooks/use-socket'
-import { useSocketNavigation } from '@/hooks/use-socket-navigation'
+import { useSocket } from '@/hooks/socket/core/use-socket'
+import { useSocketNavigation } from '@/hooks/socket/policy/use-socket-navigation'
 import { appLogger } from '@/lib/utils/app-logger'
 import backgroundDesktopImage from '@/public/images/background-desktop-3.png'
 import backgroundMobileImage from '@/public/images/background-mobile-3.png'
@@ -310,8 +310,6 @@ const GamePage = ({ params }) => {
   }
 
   const totalCoin = playerInventory.fish * lastFishCoin + playerInventory.coins
-  const lastHeartbeatTime = getLastHeartbeatTime()
-  const shouldShowHeartbeat = isHeartbeatActive && lastHeartbeatTime > 0
 
   return (
     <main className="relative h-screen min-h-screen w-full flex-col p-3 pt-[0px]">
