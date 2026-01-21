@@ -1,9 +1,9 @@
+import { useState, useRef, useEffect, useCallback } from 'react'
+
 /**
  * [Infra Layer] 기기의 물리적인 네트워크 연결 상태를 감지하는 훅입니다.
  * navigator.onLine 이벤트와 실제 fetch 요청(Heartbeat)을 결합하여 가짜 온라인 상태를 구분합니다.
  */
-import { useState, useRef, useEffect, useCallback } from 'react'
-
 export const useNetworkConnectivity = () => {
   const [hasNetworkConnection, setHasNetworkConnection] = useState(true)
   const hasNetworkConnectionRef = useRef(true)
@@ -80,6 +80,5 @@ export const useNetworkConnectivity = () => {
 
   return {
     hasNetworkConnection,
-    checkConnectivity,
   }
 }
