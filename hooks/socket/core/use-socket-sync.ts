@@ -51,11 +51,6 @@ export const useSocketSync = <T>() => {
 
     reconnectionInProgress.current = false
 
-    if (!gameRestoreToastShown.current) {
-      showToast('게임 상태가 복원되었습니다', 'connection')
-      gameRestoreToastShown.current = true
-    }
-
     window.dispatchEvent(
       new CustomEvent('gameStateRestored', {
         detail: gameSnapshot,
