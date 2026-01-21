@@ -89,16 +89,6 @@ export interface GameModel {
   gameStartTime?: number
 }
 
-export interface GameSnapshotModel {
-  gameId: string
-  players: PlayerModel[]
-  gameInfo: GameInfoModel
-  gameState: GameStateModel
-  gameHistory: GameHistoryModel
-  gameResults: GameResultModel[]
-  currentPlayerId: string
-}
-
 export type SocketIdType = string
 export type PlayerIdType = string
 export type TransactionType = 'buy' | 'sell'
