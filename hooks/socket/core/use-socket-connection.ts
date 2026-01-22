@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useCallback } from 'react'
 
 import { Socket, io } from 'socket.io-client'
 
@@ -21,39 +21,42 @@ export const useSocketConnection = () => {
   const [isSocketConnected, setIsSocketConnected] = useState(false)
   const wasEverConnected = useRef(false)
 
-  const createSocket = (options?: SocketConnectionOptionsModel): Socket => {
-    if (socket) {
-      socket.disconnect()
-    }
+  const createSocket = useCallback(
+    (options?: SocketConnectionOptionsModel): Socket => {
+      if (socket) {
+        socket.disconnect()
+      }
 
-    const defaultOptions: SocketConnectionOptionsModel = {
-      reconnection: true,
-      reconnectionAttempts: 10,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
-      timeout: 15000,
-      forceNew: false,
-    }
+      const defaultOptions: SocketConnectionOptionsModel = {
+        reconnection: true,
+        reconnectionAttempts: 10,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000,
+        timeout: 15000,
+        forceNew: false,
+      }
 
-    const socketInstance = io({
-      ...defaultOptions,
-      ...options,
-    })
+      const socketInstance = io({
+        ...defaultOptions,
+        ...options,
+      })
 
-    setSocket(socketInstance)
-    setIsSocketConnected(socketInstance.connected)
+      setSocket(socketInstance)
+      setIsSocketConnected(socketInstance.connected)
 
-    return socketInstance
-  }
+      return socketInstance
+    },
+    [socket]
+  )
 
-  const handleConnect = () => {
+  const handleConnect = useCallback(() => {
     setIsSocketConnected(true)
     wasEverConnected.current = true
-  }
+  }, [])
 
-  const handleDisconnect = () => {
+  const handleDisconnect = useCallback(() => {
     setIsSocketConnected(false)
-  }
+  }, [])
 
   return {
     socket,
