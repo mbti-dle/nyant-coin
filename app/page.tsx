@@ -9,8 +9,8 @@ import { useRouter } from 'next/navigation'
 import GuideButton from '@/components/features/guide-button'
 import { TrendingFlatIcon } from '@/components/icons'
 import Background from '@/components/ui/background'
+import Button from '@/components/ui/button'
 import Input from '@/components/ui/input'
-import LinkButton from '@/components/ui/link-button'
 import { useSocket } from '@/hooks/socket/core/use-socket'
 import { isValidId } from '@/lib/utils/generate-game-id'
 import backgroundDesktopImage from '@/public/images/background-desktop-1.png'
@@ -26,8 +26,12 @@ const HomePage = () => {
   const gameIdInputRef = useRef(null)
 
   const { socket } = useSocket()
-  const setGameId = useGameStore((state) => state.setGameId)
-  const setIsLeader = useGameStore((state) => state.setIsLeader)
+  const { setGameId, setIsLeader, resetGameState } = useGameStore()
+
+  const handleCreateRoomClick = () => {
+    resetGameState()
+    router.push('/setup/select-rounds')
+  }
 
   const handleGameIdChange = (event) => {
     setInputGameId(event.target.value)
@@ -42,6 +46,8 @@ const HomePage = () => {
       }
       return
     }
+
+    resetGameState()
 
     socket.emit('check_game_availability', { inputGameId })
     socket.on('is_available_game', ({ isAvailable, message }) => {
@@ -67,7 +73,7 @@ const HomePage = () => {
       </h1>
 
       <div className="flex flex-col items-center gap-4">
-        <LinkButton href="/setup/select-rounds">방 만들기</LinkButton>
+        <Button onClick={handleCreateRoomClick}>방 만들기</Button>
 
         <div className="relative flex items-center">
           <Input

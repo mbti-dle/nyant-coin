@@ -2,58 +2,15 @@ import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 
 import { gameConfig } from '@/constants/game'
-import { GameResultModel, GameStateModel } from '@/types/game'
+import {
+  GameResultModel,
+  GameSessionModel,
+  PlayerInventoryModel,
+  GameStoreStateModel,
+  GameSyncPayloadModel,
+} from '@/types/game'
 
-interface GameSessionModel {
-  fishPrice: number
-  prevFishPrice: number
-  currentRound: number
-  totalRounds: number
-  hint: string
-  hintResult: string
-  lastRemainingMs: number | null
-  savedAtClientTime: number
-  lastUpdated: number
-  isResultModalOpen: boolean
-  finalFishPrice: number
-  serverState: 'waiting' | 'in_progress' | 'ended'
-}
-
-interface PlayerInventoryModel {
-  coins: number
-  fish: number
-}
-
-export interface GameSyncPayloadModel {
-  currentDay?: number
-  currentRound?: number
-  currentFishPrice?: number
-  fishPrice?: number
-  nextRoundHint?: string
-  hint?: string
-  lastRoundHintResult?: string
-  lastRoundResult?: string
-  hintResult?: string
-  totalRounds?: number
-  results?: GameResultModel[]
-  playerInventory?: PlayerInventoryModel
-  serverStatus?: 'waiting' | 'in_progress' | 'ended'
-  gameStartTime?: number
-  timestamp?: number
-  forceUpdate?: boolean
-  forceHintUpdate?: boolean
-  syncVersion?: string
-}
-
-interface GameStoreModel {
-  gameId: string | null
-  playerId: string | null
-  rounds: number
-  isLeader: boolean
-  gameStartTime: number
-  results: GameResultModel[] | null
-  hintState: GameSessionModel
-  gameState: PlayerInventoryModel
+export interface GameStoreModel extends GameStoreStateModel {
   setGameId: (id: string | null) => void
   setPlayerId: (id: string | null) => void
   setGameRounds: (rounds: number) => void
