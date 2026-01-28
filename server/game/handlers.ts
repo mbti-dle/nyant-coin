@@ -5,6 +5,7 @@ import { ERROR_NOTICE } from '../../constants/chat.js'
 import { gameConfig } from '../../constants/game.js'
 import { TOTAL_GRACE_PERIOD } from '../../constants/socket.js'
 import { loadGameHints } from '../../lib/api/hints.js'
+import { appLogger } from '../../lib/utils/app-logger.js'
 import { generateGameId } from '../../lib/utils/generate-game-id.js'
 import {
   GameHistoryModel,
@@ -14,6 +15,7 @@ import {
   RoundRecordModel,
 } from '../../types/game.js'
 
+import { finalizeGameResults, createCompleteGameSnapshot } from './ending.js'
 import { getGameHistory } from './history.js'
 import {
   addPlayer,
@@ -22,7 +24,7 @@ import {
   handlePlayerLeave,
   updatePlayerStatus,
 } from './player.js'
-import { addRoom, getRoom } from './room.js'
+import { addRoom, getRoom, cancelRoomCleanup } from './room.js'
 import {
   gameRooms,
   gameTimers,
@@ -100,6 +102,8 @@ export const handleCreateGame = async (totalRounds: number, joinGame: (gameId: s
       nextRoundHint: '',
     },
     gameResults: [],
+    chatLogs: [],
+    gameStartTime: 0,
     readyPlayers: new Set(),
   }
 
@@ -131,6 +135,7 @@ export const handleJoinGame = (
   socket: Socket,
   { gameId, nickname, character }: { gameId: string; nickname: string; character: string }
 ) => {
+  cancelRoomCleanup(gameId)
   const room = getRoom(gameId)
 
   if (!room) {
@@ -164,7 +169,8 @@ export const handleJoinGame = (
       id: playerId,
       nickname,
       character,
-      score: 0,
+      coins: gameConfig.INITIAL_COINS,
+      fish: gameConfig.INITIAL_FISH,
       isInWaitingRoom: true,
       connectionStatus: PeerConnectionStateModel.CONNECTED,
     }
@@ -268,7 +274,32 @@ export const handleStartGame = async (
     }
 
     room.state = 'in_progress'
-    io.to(gameId).emit('game_started', { totalRounds: room.totalRounds })
+    room.gameStartTime = Date.now()
+
+    room.gameResults = []
+    room.readyPlayers.clear()
+
+    room.players.forEach((player) => {
+      delete player.score
+      player.isInWaitingRoom = false
+      player.coins = gameConfig.INITIAL_COINS
+      player.fish = gameConfig.INITIAL_FISH
+
+      if (getPlayerStatus(player.id)) {
+        player.connectionStatus = PeerConnectionStateModel.CONNECTED
+      }
+    })
+
+    io.to(gameId).emit('game_started', {
+      totalRounds: room.totalRounds,
+      serverStatus: room.state,
+      gameStartTime: room.gameStartTime,
+      players: room.players.map((player) => ({
+        ...player,
+        isOnline: getPlayerStatus(player.id),
+      })),
+      results: [],
+    })
   } catch {
     socket.emit('SERVER_ERROR', { notice: ERROR_NOTICE.server_error })
   }
@@ -288,8 +319,11 @@ export const handlePlayerReady = (
   room.readyPlayers.add(playerId)
 
   if (room.readyPlayers.size === room.players.length) {
-    startRoundTimer(io, gameId, room)
-    io.to(gameId).emit('all_players_ready')
+    const timerState = gameTimersState.get(gameId)
+    if (!timerState?.isRunning) {
+      startRoundTimer(io, gameId, room)
+      io.to(gameId).emit('all_players_ready')
+    }
   }
 }
 
@@ -302,6 +336,16 @@ export const handleEndGame = (
     const room = getRoom(gameId)
     if (!room) return
 
+    const isActuallyEndable = room.gameInfo.currentDay >= room.totalRounds || room.state === 'ended'
+    if (!isActuallyEndable) {
+      appLogger.warn('[EndGame] invalid end signal ignored', {
+        gameId,
+        currentDay: room.gameInfo.currentDay,
+        totalRounds: room.totalRounds,
+        state: room.state,
+      })
+      return
+    }
     room.readyPlayers.clear()
     room.players.forEach((player) => (player.isInWaitingRoom = false))
 
@@ -311,23 +355,7 @@ export const handleEndGame = (
     }
 
     const updateGameResults = () => {
-      const submittedPlayers = room.players.filter(
-        (player) => typeof player.score === 'number' && player.score >= 0
-      )
-
-      if (submittedPlayers.length > 0) {
-        room.gameResults = submittedPlayers
-          .map((player) => ({
-            id: player.id,
-            nickname: player.nickname,
-            character: player.character,
-            score: player.score || 0,
-          }))
-          .sort((a, b) => b.score - a.score)
-
-        room.state = 'ended'
-        io.to(gameId).emit('game_ended', { results: room.gameResults })
-      }
+      finalizeGameResults(io, gameId, room)
     }
 
     if (!gameTimers.has(gameId)) {
@@ -340,9 +368,10 @@ export const handleEndGame = (
       gameTimers.set(gameId, timer)
     }
 
+    const onlinePlayers = room.players.filter((player) => getPlayerStatus(player.id))
     const allPlayersSubmitted =
-      room.players.length > 0 &&
-      room.players.every((player) => typeof player.score === 'number' && player.score >= 0)
+      onlinePlayers.length > 0 &&
+      onlinePlayers.every((player) => typeof player.score === 'number' && player.score >= 0)
 
     if (allPlayersSubmitted) {
       const timer = gameTimers.get(gameId)
@@ -362,35 +391,91 @@ export const handleEndGame = (
 export const handleBackToWaiting = (
   io: SocketIOServer,
   socket: Socket,
-  { gameId }: { gameId: string }
+  { gameId, playerId: providedPlayerId }: { gameId: string; playerId?: string }
 ) => {
   const room = getRoom(gameId)
-  const playerId = getPlayer(socket.id)
-  if (!room || !playerId) return
+  const playerId = providedPlayerId || getPlayer(socket.id)
 
-  room.state = 'waiting'
-  room.readyPlayers.add(playerId)
+  if (!room || !playerId) {
+    return
+  }
 
-  const playerIndex = room.players.findIndex((player) => player.id === playerId)
-  if (playerIndex !== -1) {
-    room.players[playerIndex] = {
-      ...room.players[playerIndex],
-      isInWaitingRoom: true,
-    }
+  if (room.state === 'ended') {
+    room.state = 'waiting'
+    room.gameStartTime = 0
+  }
+
+  const player = room.players.find((p) => p.id === playerId)
+  if (player) {
+    player.isInWaitingRoom = true
+    room.readyPlayers.add(playerId)
   }
 
   io.to(gameId).emit('update_players', room.players)
+
+  const gameHistory = getGameHistory(gameId)
+  const snapshot = createCompleteGameSnapshot(room, gameId, gameHistory)
+  socket.emit('sync_complete', snapshot)
 }
 
-export const handleRequestPlayerInfo = (socket: Socket, { gameId }: { gameId: string }) => {
+export const handleRequestPlayerInfo = (
+  socket: Socket,
+  { gameId, playerId: clientPlayerId }: { gameId: string; playerId?: string }
+) => {
   const room = getRoom(gameId)
-  const playerId = getPlayer(socket.id)
-  if (room) socket.emit('player_info', { players: room.players, playerId })
+  let playerIdFromSocket = getPlayer(socket.id)
+
+  if (room && clientPlayerId && !playerIdFromSocket) {
+    const player = room.players.find((p) => p.id === clientPlayerId)
+    if (player) {
+      playerIdFromSocket = clientPlayerId
+      clearGraceTimer(playerIdFromSocket)
+      addPlayer(socket.id, playerIdFromSocket)
+      updatePlayerStatus(playerIdFromSocket, true, socket.id)
+      socket.join(gameId)
+
+      player.connectionStatus = PeerConnectionStateModel.CONNECTED
+
+      if (room.state === 'waiting') {
+        player.isInWaitingRoom = true
+        room.readyPlayers.add(playerIdFromSocket)
+      }
+
+      socket.to(gameId).emit('update_players', room.players)
+    }
+  }
+
+  if (room && room.state === 'waiting' && playerIdFromSocket) {
+    const player = room.players.find((p) => p.id === playerIdFromSocket)
+    if (player && !player.isInWaitingRoom) {
+      player.isInWaitingRoom = true
+      room.readyPlayers.add(playerIdFromSocket)
+      socket.to(gameId).emit('update_players', room.players)
+    }
+  }
+
+  if (room) {
+    socket.emit('player_info', {
+      players: room.players.map((player) => ({
+        ...player,
+        isOnline: getPlayerStatus(player.id),
+      })),
+      playerId: playerIdFromSocket,
+      playerInfo: room.players.find((p) => p.id === playerIdFromSocket),
+      serverStatus: room.state,
+      chatLogs: room.chatLogs,
+    })
+  }
 }
 
 export const handleRequestFirstRoundHint = (socket: Socket, { gameId }: { gameId: string }) => {
   const room = getRoom(gameId)
-  if (room) socket.emit('first_round_hint', room.gameInfo)
+  if (room) {
+    socket.emit('first_round_hint', {
+      ...room.gameInfo,
+      serverStatus: room.state,
+    })
+  }
 }
 
 export const handleCheckNotReturnedPlayers = (socket: Socket, { gameId }: { gameId: string }) => {
@@ -423,6 +508,8 @@ export const handleRequestSync = (
     })
     return
   }
+
+  if (gameId) cancelRoomCleanup(gameId)
 
   const room = getRoom(gameId)
   if (!room) {
@@ -523,9 +610,46 @@ export const handleTradeFishes = (
   socket: Socket,
   { gameId, action, amount }: { gameId: string; action: 'buy' | 'sell'; amount: number }
 ) => {
+  const room = getRoom(gameId)
+  if (!room) return
+
   const playerId = getPlayer(socket.id)
+  if (!playerId) return
+
+  const player = room.players.find((p) => p.id === playerId)
+  if (!player) return
+
   const message = `${amount}마리 ${action === 'buy' ? '사요!' : '팔아요!'}`
   io.to(gameId).emit('trade_message', { playerId, message })
+
+  const currentPrice = room.gameInfo.currentFishPrice
+  const totalValue = amount * currentPrice
+
+  if (action === 'buy') {
+    if ((player.coins || 0) < totalValue) {
+      socket.emit('error', { message: '보유 코인이 부족합니다.' })
+      return
+    }
+    player.coins = (player.coins || 0) - totalValue
+    player.fish = (player.fish || 0) + amount
+  } else {
+    if ((player.fish || 0) < amount) {
+      socket.emit('error', { message: '보유 생선이 부족합니다.' })
+      return
+    }
+    player.fish = (player.fish || 0) - amount
+    player.coins = (player.coins || 0) + totalValue
+  }
+
+  socket.emit('inventory_update', {
+    coins: player.coins,
+    fish: player.fish,
+    action,
+    amount,
+    totalValue,
+  })
+
+  socket.broadcast.to(gameId).emit('update_players', room.players)
 }
 
 export const handleSendMessage = (
@@ -552,12 +676,20 @@ export const handleSendMessage = (
   const player = room.players.find((player) => player.id === playerId)
   if (!player) return
 
-  io.to(gameId).emit('new_chat_message', {
-    type: 'message',
+  const chatData = {
+    type: 'message' as const,
     nickname,
     imageUrl: `/images/cat-${character}.png`,
     message,
-  })
+    timestamp: Date.now(),
+  }
+
+  room.chatLogs.push(chatData)
+  if (room.chatLogs.length > 50) {
+    room.chatLogs.shift()
+  }
+
+  io.to(gameId).emit('new_chat_message', chatData)
 }
 
 export const handleSendNotice = (
@@ -566,6 +698,17 @@ export const handleSendNotice = (
 ) => {
   const room = getRoom(gameId)
   if (!room) return
+  const chatData = {
+    type: 'notice' as const,
+    notice,
+    timestamp: Date.now(),
+  }
+
+  room.chatLogs.push(chatData)
+  if (room.chatLogs.length > 50) {
+    room.chatLogs.shift()
+  }
+
   io.to(gameId).emit('new_chat_notice', { notice })
 }
 
@@ -583,7 +726,7 @@ const performPlayerReconnection = (
   room.readyPlayers.add(playerId)
 
   player.connectionStatus = PeerConnectionStateModel.CONNECTED
-  io.to(gameId).emit('update_players', room.players)
+  socket.broadcast.to(gameId).emit('update_players', room.players)
 
   const gameHistory = getGameHistory(gameId)
   syncGameState(room, gameHistory)
@@ -646,9 +789,9 @@ const sendStateSpecificUpdates = (
     return
   }
 
-  if (room.state !== 'in_progress') return
+  const timerState = gameTimersState.get(gameId)
 
-  socket.emit('complete_round_sync', {
+  const payload = {
     currentRound: actualCurrentRound,
     prevFishPrice: room.gameInfo.prevFishPrice,
     currentFishPrice: room.gameInfo.currentFishPrice,
@@ -656,60 +799,23 @@ const sendStateSpecificUpdates = (
     lastRoundResult: room.gameInfo.lastRoundHintResult,
     roundHistory: gameHistory?.rounds || [],
     totalRounds: room.totalRounds,
-    gameState: room.state,
-  })
-
-  const timerState = gameTimersState.get(gameId)
-  if (timerState?.isRunning) {
-    const remainingTime = Math.max(0, timerState.duration - (Date.now() - timerState.startTime))
-    socket.emit('timer_started', {
-      startTime: timerState.startTime,
-      duration: timerState.duration,
-      remainingTime,
-    })
-  }
-}
-
-const createCompleteGameSnapshot = (
-  room: GameModel & { readyPlayers: Set<string> },
-  _gameId: string,
-  gameHistory: GameHistoryModel
-) => {
-  const timerState = gameTimersState.get(room.gameId)
-  const actualCurrentRound = gameHistory?.currentRound || room.gameInfo.currentDay
-
-  return {
-    gameId: room.gameId,
-    gameState: room.state,
+    serverStatus: room.state,
     players: room.players.map((player) => ({
       ...player,
       isOnline: getPlayerStatus(player.id),
     })),
-    gameInfo: {
-      ...room.gameInfo,
-      currentDay: actualCurrentRound,
-    },
-    totalRounds: room.totalRounds,
-    currentRound: actualCurrentRound,
-    prevFishPrice: room.gameInfo.prevFishPrice,
-    currentFishPrice: room.gameInfo.currentFishPrice,
-    readyPlayersCount: room.readyPlayers.size,
-    roundHistory: gameHistory?.rounds || [],
-    timerState: timerState
-      ? {
-          startTime: timerState.startTime,
-          duration: timerState.duration,
-          isRunning: timerState.isRunning,
-          remainingTime: timerState.isRunning
-            ? Math.max(0, timerState.duration - (Date.now() - timerState.startTime))
-            : 0,
-        }
-      : null,
-    timestamp: Date.now(),
-    debugInfo: {
-      serverTime: new Date().toISOString(),
-      gameStartTime: room.gameStartTime || null,
-    },
+    serverNow: Date.now(),
+    gameEndAt: timerState?.isRunning ? timerState.startTime + timerState.duration : null,
+    results: room.gameResults,
+  }
+
+  socket.emit('complete_round_sync', payload)
+
+  if (timerState?.isRunning) {
+    socket.emit('timer_started', {
+      serverNow: Date.now(),
+      gameEndAt: timerState.startTime + timerState.duration,
+    })
   }
 }
 

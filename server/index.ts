@@ -5,6 +5,7 @@ import next from 'next'
 
 import { isDev } from '../constants/env.js'
 
+import { startInactivityMonitor } from './game/cleanup.js'
 import {
   handleBackToWaiting,
   handleCheckGameAvailability,
@@ -26,6 +27,7 @@ import {
   handleTradeFishes,
   handleUserDisconnect,
 } from './game/handlers.js'
+import { activityTracker } from './game/middleware/activity.js'
 import { createSocketServer } from './socket/config.js'
 
 const hostname = 'localhost'
@@ -38,7 +40,11 @@ app.prepare().then(() => {
   const httpServer = createServer(handler)
   const io = createSocketServer(httpServer)
 
+  startInactivityMonitor(io)
+
   io.on('connection', (socket) => {
+    activityTracker(socket)
+
     socket.on('check_game_availability', (data) => handleCheckGameAvailability(socket, data))
     socket.on('create_game', handleCreateGame)
     socket.on('join_game', (data) => handleJoinGame(socket, data))

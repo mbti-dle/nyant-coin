@@ -1,9 +1,9 @@
 import { Server as SocketIOServer, Socket } from 'socket.io'
 
-import { PlayerIdType, SocketIdType } from '../../types/game'
+import { PlayerIdType, SocketIdType, SocketModel } from '../../types/game'
 
 import { getRoom, removeRoom } from './room.js'
-import { gameRooms, playersStatus, playersMap } from './store.js'
+import { gameRooms, playersStatus, playersMap, roomCleanupTimers } from './store.js'
 import { clearAllGameTimers } from './timer.js'
 
 export const addPlayer = (socketId: SocketIdType, playerId: PlayerIdType) =>
@@ -14,7 +14,7 @@ export const removePlayer = (socketId: SocketIdType) => playersMap.delete(socket
 export const getPlayer = (socketId: SocketIdType) => playersMap.get(socketId)
 
 const removePlayerFromRoom = (
-  socket: Socket,
+  socket: SocketModel,
   playerId: string,
   gameId: string,
   io?: SocketIOServer
@@ -32,23 +32,31 @@ const removePlayerFromRoom = (
   room.players.splice(playerIndex, 1)
   room.readyPlayers.delete(playerId)
 
-  // io 객체가 있으면 전체 방송, 없으면 socket.to 방송 (근데 socket이 끊겼을 수 있으니 io 권장)
+  // io 객체가 있으면 전체 방송, 없으면 socket.broadcast.to 방송 (불필요한 자기 자신 수신 차단)
   if (io) {
     io.to(gameId).emit('update_players', room.players)
   } else {
-    socket.to(gameId).emit('update_players', room.players)
+    socket.broadcast.to(gameId).emit('update_players', room.players)
   }
 
   if (room.players.length === 0) {
-    clearAllGameTimers(gameId)
-    removeRoom(gameId)
+    const cleanupTimer = setTimeout(() => {
+      const currentRoom = getRoom(gameId)
+      if (currentRoom && currentRoom.players.length === 0) {
+        clearAllGameTimers(gameId)
+        removeRoom(gameId)
+      }
+      roomCleanupTimers.delete(gameId)
+    }, 5000)
+
+    roomCleanupTimers.set(gameId, cleanupTimer)
   }
 
   return true
 }
 
 export const handlePlayerLeave = (
-  socket: Socket,
+  socket: SocketModel,
   playerId: string,
   leaveGameId?: string,
   io?: SocketIOServer
