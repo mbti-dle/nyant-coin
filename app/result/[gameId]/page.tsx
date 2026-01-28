@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 
 import Image from 'next/image'
+import { useParams } from 'next/navigation'
 
 import LoadingPage from '@/app/loading'
 import LinkButton from '@/components/ui/link-button'
@@ -15,20 +16,37 @@ import useGameStore from '@/store/game'
 import useToastStore from '@/store/toast'
 import { GameResultModel } from '@/types/game'
 
-const ResultPage = ({ params }) => {
-  const { gameId } = params
-  const [currentUser, setCurrentUser] = useState<GameResultModel | null>(null)
+const EMPTY_RESULTS: GameResultModel[] = []
+
+const ResultPage = () => {
+  const params = useParams()
+  const gameId = params.gameId as string
+
   const { socket } = useSocket()
-  const { playerId: currentPlayerId, results: gameResults } = useGameStore()
-  const { showToast } = useToastStore()
+  const playerId = useGameStore((state) => state.playerId)
+  const gameResults = useGameStore((state) => state.results) || EMPTY_RESULTS
+  const closeResultModal = useGameStore((state) => state.closeResultModal)
+  const showToast = useToastStore((state) => state.showToast)
+
+  const [currentUser, setCurrentUser] = useState<GameResultModel | null>(null)
+
   useSocketNavigation(gameId)
 
   useEffect(() => {
-    const currentPlayer = gameResults.find((result) => result.id === currentPlayerId) || null
+    if (gameResults.length === 0 && socket && gameId && playerId) {
+      socket.emit('request_sync', { gameId, playerId })
+    }
+  }, [gameId, playerId, gameResults.length, socket])
+
+  useEffect(() => {
+    if (!gameResults || !playerId) return
+    const currentPlayer = gameResults.find((result) => result.id === playerId) || null
     setCurrentUser(currentPlayer)
-  }, [gameId])
+  }, [gameId, gameResults, playerId])
 
   const handleButtonClick = () => {
+    if (!gameResults.length) return
+
     const resultText = `🏆 냥트코인 게임 결과 🏆 
 ${gameResults
   .map((user, index) => {
@@ -46,11 +64,8 @@ ${gameResults
   }
 
   const handleLinkButtonClick = () => {
-    socket.emit('back_to_waiting', { gameId })
-  }
-
-  if (!gameResults.length) {
-    return <LoadingPage />
+    socket.emit('back_to_waiting', { gameId, playerId })
+    closeResultModal()
   }
 
   return (
