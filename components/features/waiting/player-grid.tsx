@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import CatBox from '@/components/ui/cat-box'
 import { useGameState } from '@/hooks/game/use-game-state'
 import { useSocket } from '@/hooks/socket/core/use-socket'
+import useGameStore from '@/store/game'
 import { PeerConnectionStateModel, PlayerModel, TransactionResultModel } from '@/types/game'
 
 interface PlayerGridProps {
@@ -18,8 +19,8 @@ interface PlayerMessageProps {
 const PlayerGrid = ({ players, transactionResult }: PlayerGridProps) => {
   const [playerMessages, setPlayerMessages] = useState<Record<string, PlayerMessageProps>>({})
   const { connectionStatus } = useSocket()
-  const { gameData } = useGameState()
-  const localPlayerId = gameData.playerId
+  const { playerId: localPlayerId } = useGameState()
+  const serverState = useGameStore((state) => state.hintState.serverState)
 
   useEffect(() => {
     if (transactionResult?.playerId && transactionResult?.message) {
@@ -77,7 +78,7 @@ const PlayerGrid = ({ players, transactionResult }: PlayerGridProps) => {
             isLeader={index === 0}
             message={message?.content}
             messageKey={message?.timestamp}
-            className={!player.isInWaitingRoom ? 'opacity-40' : ''}
+            className={serverState === 'waiting' && !player.isInWaitingRoom ? 'opacity-40' : ''}
             connectionStatus={getPlayerStatus(player)}
           />
         )

@@ -3,6 +3,7 @@ import { useState, useEffect, memo, useRef } from 'react'
 import clsx from 'clsx'
 
 import { useSocket } from '@/hooks/socket/core/use-socket'
+import { GameSyncPayloadModel } from '@/types/game'
 
 /**
  * Timer Synchronization Policy
@@ -109,7 +110,7 @@ const Timer = memo(() => {
       handleSync(data.serverNow, data.gameEndAt, data.currentRound)
     }
 
-    const handleGameSync = (syncData: any) => {
+    const handleGameSync = (syncData: GameSyncPayloadModel) => {
       const serverStatus = syncData.serverStatus || syncData.gameState
       const gameEndAt = syncData.gameEndAt ?? syncData.timerState?.gameEndAt
       const serverNow = syncData.serverNow || syncData.timestamp || Date.now()
