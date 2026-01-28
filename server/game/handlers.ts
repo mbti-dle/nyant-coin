@@ -681,7 +681,6 @@ export const handleSendMessage = (
     nickname,
     imageUrl: `/images/cat-${character}.png`,
     message,
-    timestamp: Date.now(),
   }
 
   room.chatLogs.push(chatData)
@@ -701,7 +700,6 @@ export const handleSendNotice = (
   const chatData = {
     type: 'notice' as const,
     notice,
-    timestamp: Date.now(),
   }
 
   room.chatLogs.push(chatData)

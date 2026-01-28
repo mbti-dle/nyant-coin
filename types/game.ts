@@ -1,3 +1,5 @@
+import { ChatType } from './chat'
+
 export const PeerConnectionStateModel = {
   CONNECTING: 'connecting',
   CONNECTED: 'connected',
@@ -18,15 +20,6 @@ export interface PlayerModel {
   fish?: number
   isInWaitingRoom: boolean
   connectionStatus?: PeerConnectionStateType
-}
-
-export interface ChatMessageModel {
-  type: 'message' | 'notice'
-  nickname?: string
-  imageUrl?: string
-  message?: string
-  notice?: string
-  timestamp: number
 }
 
 export interface AvatarModel extends Pick<PlayerModel, 'id' | 'nickname'> {
@@ -97,7 +90,7 @@ export interface GameModel {
   gameInfo: GameInfoModel
   players: PlayerModel[]
   gameResults: GameResultModel[]
-  chatLogs: ChatMessageModel[]
+  chatLogs: ChatType[]
   gameStartTime?: number
 }
 
