@@ -1,4 +1,4 @@
-import { GameModel } from '../../types/game'
+import { GameModel } from '../../types/game.js'
 
 import { gameRooms, roomCleanupTimers } from './store.js'
 

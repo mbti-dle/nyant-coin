@@ -1,6 +1,6 @@
 import { Server as SocketIOServer, Socket } from 'socket.io'
 
-import { PlayerIdType, SocketIdType, SocketModel } from '../../types/game'
+import { PlayerIdType, SocketIdType, SocketModel } from '../../types/game.js'
 
 import { getRoom, removeRoom } from './room.js'
 import {
