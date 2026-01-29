@@ -2,8 +2,9 @@ import { GoogleAnalytics, GoogleTagManager } from '@next/third-parties/google'
 import { Metadata, Viewport } from 'next'
 import localFont from 'next/font/local'
 
+import GlobalUIOverlay from '@/components/layout/global-ui-overlay'
+import { PageValidationProvider } from '@/components/provider/page-validation-provider'
 import SocketProvider from '@/components/provider/socket-provider'
-import Toast from '@/components/ui/toast'
 import './global.css'
 import { SITE_URL } from '@/constants/config'
 
@@ -62,8 +63,10 @@ export const viewport: Viewport = {
 const RootLayout = ({ children }: { children: React.ReactNode }) => (
   <html lang="ko">
     <body className={`${neodgm.variable} ${galmuri.variable}`}>
-      <SocketProvider>{children}</SocketProvider>
-      <Toast />
+      <SocketProvider>
+        <PageValidationProvider>{children}</PageValidationProvider>
+      </SocketProvider>
+      <GlobalUIOverlay />
       <div id="modal-root"></div>
       <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID || ''} />
       <GoogleTagManager gtmId={process.env.NEXT_PUBLIC_GTM_ID || ''} />

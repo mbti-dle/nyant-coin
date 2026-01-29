@@ -13,6 +13,7 @@ import {
   MdCheckCircle,
   MdOutlineWifi,
   MdOutlineWifiOff,
+  MdRefresh,
 } from 'react-icons/md'
 
 export const TrendingFlatIcon = MdOutlineTrendingFlat
@@ -29,3 +30,4 @@ export const CloseIcon = MdClose
 export const CheckCircleIcon = MdCheckCircle
 export const WifiIcon = MdOutlineWifi
 export const WifiOffIcon = MdOutlineWifiOff
+export const RefreshCwIcon = MdRefresh

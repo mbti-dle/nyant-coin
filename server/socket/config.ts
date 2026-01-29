@@ -9,8 +9,8 @@ export const createSocketServer = (httpServer: HttpServer) => {
       origin: ['https://admin.socket.io'],
       credentials: true,
     },
-    pingInterval: 25000,
-    pingTimeout: 60000,
+    pingInterval: 10000,
+    pingTimeout: 5000,
     connectTimeout: 45000,
   })
 

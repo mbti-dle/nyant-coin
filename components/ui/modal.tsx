@@ -15,6 +15,7 @@ interface ModalProps {
   onModalClose?: () => void
   isOpen: boolean
   shouldCloseOnBackgroundClick?: boolean
+  zIndex?: number
 }
 
 const Modal = ({
@@ -24,6 +25,7 @@ const Modal = ({
   onModalClose,
   isOpen,
   shouldCloseOnBackgroundClick = false,
+  zIndex = 30,
 }: ModalProps) => {
   if (!isOpen) return null
 
@@ -34,10 +36,14 @@ const Modal = ({
     <>
       <div
         aria-hidden="true"
-        className="pointer-events-auto fixed inset-0 z-20 flex items-center justify-center bg-black/20"
+        className="pointer-events-auto fixed inset-0 flex items-center justify-center bg-black/20"
+        style={{ zIndex: zIndex - 1 }}
         onClick={shouldCloseOnBackgroundClick ? onModalClose : undefined}
       />
-      <div className="pointer-events-none fixed inset-0 z-30 flex items-center justify-center">
+      <div
+        className="pointer-events-none fixed inset-0 flex items-center justify-center"
+        style={{ zIndex }}
+      >
         <div
           role="dialog"
           aria-modal="true"

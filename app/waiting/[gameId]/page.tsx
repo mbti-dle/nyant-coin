@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 
-import { useRouter } from 'next/navigation'
+import { useRouter, useParams } from 'next/navigation'
 
 import ChatContainer from '@/components/features/chat/chat-container'
 import PlayerReturnStatusModal from '@/components/features/player-return-status-modal'
@@ -10,20 +10,26 @@ import GameIdCopyButton from '@/components/features/waiting/game-id-copy-button'
 import PlayerGrid from '@/components/features/waiting/player-grid'
 import Background from '@/components/ui/background'
 import Button from '@/components/ui/button'
+import { STARTING_NOTICE } from '@/constants/chat'
 import { useGameState } from '@/hooks/game/use-game-state'
-import { useNetworkStatus } from '@/hooks/socket/use-network-status'
-import { useSocket } from '@/hooks/use-socket'
-import { useSocketNavigation } from '@/hooks/use-socket-navigation'
+import { useSocket } from '@/hooks/socket/core/use-socket'
+import { useSocketNavigation } from '@/hooks/socket/policy/use-socket-navigation'
 import backgroundDesktopImage from '@/public/images/background-desktop-2.png'
 import backgroundMobileImage from '@/public/images/background-mobile-2.png'
 import useGameStore from '@/store/game'
 import useToastStore from '@/store/toast'
 import { PlayerModel } from '@/types/game'
 
-const WaitingPage = ({ params }) => {
-  const { gameId = 'N09C14' } = params
-
+const WaitingPage = () => {
+  const params = useParams()
+  const gameId = (params?.gameId as string) || 'N09C14'
   const router = useRouter()
+
+  const { socket } = useSocket()
+  const { playerId, saveGameData } = useGameState()
+  const showToast = useToastStore((state) => state.showToast)
+  const setGameRounds = useGameStore((state) => state.setGameRounds)
+  const hardResetSession = useGameStore((state) => state.hardResetSession)
 
   const [players, setPlayers] = useState<PlayerModel[]>([])
   const [playerInfo, setPlayerInfo] = useState<PlayerModel>()
@@ -31,21 +37,28 @@ const WaitingPage = ({ params }) => {
   const [isModalVisible, setIsModalVisible] = useState(false)
   const [isPreparingGame, setIsPreparingGame] = useState(false)
   const [notReturnedPlayersCount, setNotReturnedPlayersCount] = useState(0)
-  const { socket } = useSocket()
-  const { isOnline } = useNetworkStatus()
-
-  const { saveGameData } = useGameState()
-
-  const showToast = useToastStore((state) => state.showToast)
-  const setGameRounds = useGameStore((state) => state.setGameRounds)
 
   useSocketNavigation(gameId)
 
   useEffect(() => {
-    const handlePlayerInfo = ({ players, playerId }) => {
-      if (!playerId) {
+    hardResetSession()
+  }, [hardResetSession])
+
+  useEffect(() => {
+    if (!socket) return
+
+    const handlePlayerInfo = ({
+      players,
+      playerId: serverPlayerId,
+      serverStatus,
+    }: {
+      players: PlayerModel[]
+      playerId: string
+      serverStatus?: 'waiting' | 'in_progress' | 'ended'
+    }) => {
+      if (!serverPlayerId) {
         router.replace('/')
-        showToast('이미 게임이 시작되었습니다')
+        showToast('다시 방에 입장해주세요')
         return
       }
 
@@ -55,14 +68,18 @@ const WaitingPage = ({ params }) => {
         return
       }
 
-      const playerInfo = players.filter((player) => player.id === playerId)[0]
+      if (serverStatus) {
+        useGameStore.getState().updateHintState({ serverState: serverStatus })
+      }
+
+      const playerInfo = players.filter((player) => player.id === serverPlayerId)[0]
       if (!playerInfo) {
         router.replace('/')
         showToast('다시 방에 입장해주세요')
         return
       }
 
-      saveGameData(gameId, playerId)
+      saveGameData(gameId, serverPlayerId)
       setPlayers(players)
       setPlayerInfo(playerInfo)
     }
@@ -71,23 +88,23 @@ const WaitingPage = ({ params }) => {
       setPlayers(updatedPlayers)
     }
 
-    const handleGameStarted = ({ totalRounds }) => {
-      setGameRounds(totalRounds)
+    const handleGameStarted = (syncData) => {
+      useGameStore.getState().syncGameInfo(syncData)
       router.push(`/game/${gameId}`)
       setIsPreparingGame(false)
     }
 
-    socket.emit('request_player_info', { gameId })
+    socket.emit('request_player_info', { gameId, playerId })
     socket.on('player_info', handlePlayerInfo)
     socket.on('update_players', handleUpdatePlayers)
     socket.on('game_started', handleGameStarted)
 
     return () => {
-      socket.off('player_info')
-      socket.off('update_players')
-      socket.off('game_started')
+      socket.off('player_info', handlePlayerInfo)
+      socket.off('update_players', handleUpdatePlayers)
+      socket.off('game_started', handleGameStarted)
     }
-  }, [gameId, router, setGameRounds, showToast])
+  }, [gameId, router, setGameRounds, showToast, socket, playerId])
 
   useEffect(() => {
     if (players.length > 0 && players[0].id === playerInfo.id) {
@@ -95,7 +112,20 @@ const WaitingPage = ({ params }) => {
     }
   }, [players, playerInfo])
 
+  const startGame = (removePlayers: boolean) => {
+    if (!socket) return
+
+    setIsPreparingGame(true)
+    socket.emit('send_notice', { gameId, notice: STARTING_NOTICE })
+
+    setTimeout(() => {
+      socket.emit('start_game', { gameId, removePlayers })
+    }, 2000)
+  }
+
   useEffect(() => {
+    if (!socket) return
+
     const handleNotReturnedCount = ({ count }) => {
       if (count > 0) {
         setNotReturnedPlayersCount(count)
@@ -110,40 +140,24 @@ const WaitingPage = ({ params }) => {
     socket.on('not_returned_players_count', handleNotReturnedCount)
 
     return () => {
-      socket.off('not_returned_players_count')
+      socket.off('not_returned_players_count', handleNotReturnedCount)
     }
-  }, [isModalVisible])
+  }, [isModalVisible, socket])
 
   const handleModalConfirm = () => {
     setIsModalVisible(false)
     startGame(true)
   }
+
   const handleModalClose = () => setIsModalVisible(false)
 
   const handleStartClick = () => {
-    socket.emit('check_not_returned_players', { gameId })
-  }
-
-  const startGame = (removePlayers: boolean) => {
-    setIsPreparingGame(true)
-    socket.emit('send_notice', {
-      gameId,
-      notice: '잠시 후 게임이 시작됩니다',
-    })
-
-    setTimeout(() => {
-      socket.emit('start_game', { gameId, removePlayers })
-    }, 2000)
+    socket?.emit('check_not_returned_players', { gameId })
   }
 
   return (
     <main className="relative mx-auto min-h-screen w-full p-3 pt-[10px]">
       <Background desktopImage={backgroundDesktopImage} mobileImage={backgroundMobileImage} />
-      {!isOnline && (
-        <div className="bg-red-500 fixed left-4 top-4 z-50 rounded px-3 py-1 text-sm text-white">
-          연결 불안정
-        </div>
-      )}
       <div className="mx-auto mt-3 max-w-[420px] flex-col items-center justify-center gap-4 p-3 pb-44 md:pt-[50px]">
         <PlayerGrid players={players} />
         <div className="mt-3 flex flex-col items-center justify-center gap-3">
