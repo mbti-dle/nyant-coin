@@ -60,6 +60,7 @@ export const useTabSwitchPolicy = (socket: Socket | null) => {
     }
     stopCountdown()
     isTabSwitchModalShown.current = false
+    hiddenTimestampRef.current = null
     setTabSwitchTimeLeft(SOCKET_TIMEOUTS.TAB_SWITCH_FINAL / 1000)
     closeModal()
   }, [stopCountdown, closeModal])
@@ -85,6 +86,10 @@ export const useTabSwitchPolicy = (socket: Socket | null) => {
 
       const initialSeconds = Math.ceil(initialTime / 1000)
       setTabSwitchTimeLeft(initialSeconds)
+
+      if (tabSwitchFinalTimerRef.current) {
+        clearTimeout(tabSwitchFinalTimerRef.current)
+      }
 
       tabSwitchFinalTimerRef.current = setTimeout(() => {
         if (isTabSwitchModalShown.current) {
@@ -112,28 +117,28 @@ export const useTabSwitchPolicy = (socket: Socket | null) => {
   )
 
   const handleTabReturn = useCallback(
-    (onFinalExit: () => void) => {
-      // 탭이 가려진 적이 없으면(hiddenTimestamp가 없으면) 타이머를 멈출 필요가 없습니다.
+    (onFinalExit: () => void): boolean => {
       if (!hiddenTimestampRef.current) {
-        return
+        return false
       }
 
       const now = Date.now()
       const hiddenTime = now - hiddenTimestampRef.current
       const TOTAL_GRACE = SOCKET_TIMEOUTS.TAB_SWITCH_WARNING + SOCKET_TIMEOUTS.TAB_SWITCH_FINAL
 
+      hiddenTimestampRef.current = null
+
       if (hiddenTime >= TOTAL_GRACE - 500) {
         onFinalExit()
-        return
+        return true
       }
 
       if (hiddenTime >= SOCKET_TIMEOUTS.TAB_SWITCH_WARNING) {
-        if (!isTabSwitchModalShown.current) {
-          const remainingTime = TOTAL_GRACE - hiddenTime
-          triggerWarning(onFinalExit, remainingTime)
-        }
+        triggerWarning(onFinalExit, SOCKET_TIMEOUTS.TAB_SWITCH_FINAL)
+        return false
       } else {
         stopTabSwitchTimers()
+        return false
       }
     },
     [stopTabSwitchTimers, triggerWarning]
