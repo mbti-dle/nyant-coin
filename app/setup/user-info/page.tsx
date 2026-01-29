@@ -34,6 +34,20 @@ const UserInfoPage = () => {
     }
   }, [playerId, gameId, router])
 
+  useEffect(() => {
+    if (!socket) return
+
+    const handleJoinFailure = ({ message }: { message: string }) => {
+      setErrorMessage(message)
+    }
+
+    socket.on('join_failure', handleJoinFailure)
+
+    return () => {
+      socket.off('join_failure', handleJoinFailure)
+    }
+  }, [socket])
+
   const isButtonDisabled = !nickname.trim() || !isSocketConnected
 
   const handlePrevClick = () => {

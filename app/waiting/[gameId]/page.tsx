@@ -58,7 +58,7 @@ const WaitingPage = () => {
     }) => {
       if (!serverPlayerId) {
         router.replace('/')
-        showToast('이미 게임이 시작되었습니다')
+        showToast('다시 방에 입장해주세요')
         return
       }
 
@@ -104,7 +104,7 @@ const WaitingPage = () => {
       socket.off('update_players', handleUpdatePlayers)
       socket.off('game_started', handleGameStarted)
     }
-  }, [gameId, router, setGameRounds, showToast, socket])
+  }, [gameId, router, setGameRounds, showToast, socket, playerId])
 
   useEffect(() => {
     if (players.length > 0 && players[0].id === playerInfo.id) {
