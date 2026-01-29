@@ -1,54 +1,37 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useState, useRef } from 'react'
 
-import TrendingFlatIcon from '@mui/icons-material/TrendingFlat'
 import clsx from 'clsx'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 
 import GuideButton from '@/components/features/guide-button'
+import { TrendingFlatIcon } from '@/components/icons'
+import Background from '@/components/ui/background'
+import Button from '@/components/ui/button'
 import Input from '@/components/ui/input'
-import LinkButton from '@/components/ui/link-button'
-import { socket } from '@/lib/socket'
+import { useSocket } from '@/hooks/socket/core/use-socket'
 import { isValidId } from '@/lib/utils/generate-game-id'
+import backgroundDesktopImage from '@/public/images/background-desktop-1.png'
+import backgroundMobileImage from '@/public/images/background-mobile-1.png'
 import logo from '@/public/images/logo.png'
 import useGameStore from '@/store/game'
 
 const HomePage = () => {
   const router = useRouter()
-  const gameIdInputRef = useRef(null)
-
   const [inputGameId, setInputGameId] = useState('')
-  const [isConnected, setIsConnected] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
 
-  const setGameId = useGameStore((state) => state.setGameId)
-  const setIsLeader = useGameStore((state) => state.setIsLeader)
+  const gameIdInputRef = useRef(null)
 
-  useEffect(() => {
-    const handleSocketConnect = () => {
-      setIsConnected(true)
-    }
+  const { socket } = useSocket()
+  const { setGameId, setIsLeader, resetGameState } = useGameStore()
 
-    const handleSocketDisconnect = () => {
-      setIsConnected(false)
-    }
-
-    socket.on('connect', handleSocketConnect)
-    socket.on('disconnect', handleSocketDisconnect)
-
-    setIsConnected(socket.connected)
-
-    if (!socket.connected) {
-      socket.connect()
-    }
-
-    return () => {
-      socket.off('connect', handleSocketConnect)
-      socket.off('disconnect', handleSocketDisconnect)
-    }
-  }, [])
+  const handleCreateRoomClick = () => {
+    resetGameState()
+    router.push('/setup/select-rounds')
+  }
 
   const handleGameIdChange = (event) => {
     setInputGameId(event.target.value)
@@ -63,6 +46,8 @@ const HomePage = () => {
       }
       return
     }
+
+    resetGameState()
 
     socket.emit('check_game_availability', { inputGameId })
     socket.on('is_available_game', ({ isAvailable, message }) => {
@@ -80,13 +65,15 @@ const HomePage = () => {
   }
 
   return (
-    <main className="flex min-h-dvh flex-col justify-center bg-sky-mobile bg-cover bg-fixed bg-center md:bg-sky-desktop">
+    <main className="flex min-h-dvh flex-col justify-center">
+      <Background desktopImage={backgroundDesktopImage} mobileImage={backgroundMobileImage} />
+
       <h1 className="mb-20 flex justify-center">
-        <Image src={logo} alt="냥트코인" width={280} height={140} />
+        <Image src={logo} alt="냥트코인" width={280} height={140} priority />
       </h1>
 
       <div className="flex flex-col items-center gap-4">
-        <LinkButton href="/setup/select-rounds">방 만들기</LinkButton>
+        <Button onClick={handleCreateRoomClick}>방 만들기</Button>
 
         <div className="relative flex items-center">
           <Input
@@ -100,7 +87,7 @@ const HomePage = () => {
             className="absolute right-3 top-[14px] cursor-pointer"
             onClick={handleGameIdSubmit}
           >
-            <TrendingFlatIcon className="text-gray-300 hover:text-gray-500" />
+            <TrendingFlatIcon className="text-gray-300 hover:text-gray-500" size={24} />
           </button>
 
           {errorMessage && (

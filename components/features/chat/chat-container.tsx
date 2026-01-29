@@ -2,16 +2,17 @@
 
 import { useState, useRef, useEffect } from 'react'
 
-import ExpandLessIcon from '@mui/icons-material/ExpandLess'
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import clsx from 'clsx'
 import { twMerge } from 'tailwind-merge'
 
 import ChatInput from '@/components/features/chat/chat-input'
 import ChatMessage from '@/components/features/chat/chat-message'
 import ChatNotice from '@/components/features/chat/chat-notice'
-import { socket } from '@/lib/socket'
-import { ChatType } from '@/types/chat'
+import { ExpandLessIcon, ExpandMoreIcon } from '@/components/icons'
+import { STARTING_NOTICE, ERROR_NOTICE } from '@/constants/chat'
+import { useSocket } from '@/hooks/socket/core/use-socket'
+import useChatStore from '@/store/chat'
+import { ChatType, ChatNoticeModel, ChatSyncModel } from '@/types/chat'
 import { PlayerModel } from '@/types/game'
 
 interface ChatContainerProps {
@@ -21,40 +22,89 @@ interface ChatContainerProps {
   className?: string
 }
 
+const EMPTY_CHATS: ChatType[] = []
+
 const ChatContainer = ({ gameId, player, setIsPreparingGame, className }: ChatContainerProps) => {
   const [isChatExpanded, setIsChatExpanded] = useState(true)
-  const [chats, setChats] = useState<ChatType[]>([])
-
+  const { socket } = useSocket()
   const chatContainerRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    const handleNewChatMessage = (newChatMessage) => {
-      setChats((prevChat) => [...prevChat, newChatMessage])
-    }
+  const chats = useChatStore((state) => state.chats[gameId]) || EMPTY_CHATS
+  const addMessage = useChatStore((state) => state.addMessage)
+  const { setMessages } = useChatStore.getState()
 
-    const handleNewChatNotice = (newChatNotice) => {
-      setChats((prevChat) => [...prevChat, { type: 'notice', ...newChatNotice }])
-      if (newChatNotice.notice !== '잠시 후 게임이 시작됩니다') {
-        setIsPreparingGame(false)
-      }
+  const handleNewChatMessage = (newChatMessage: ChatType) => {
+    addMessage(gameId, newChatMessage)
+  }
+
+  const handleNewChatNotice = (newChatNotice: ChatNoticeModel & Record<string, unknown>) => {
+    const isStartingNotice = newChatNotice.notice === STARTING_NOTICE
+
+    addMessage(gameId, {
+      type: 'notice',
+      notice: newChatNotice.notice || '',
+      ...newChatNotice,
+    })
+
+    setIsPreparingGame(isStartingNotice)
+  }
+
+  const handleSyncHistory = (data: ChatSyncModel) => {
+    if (data.chatLogs) {
+      setMessages(gameId, data.chatLogs)
     }
+  }
+
+  const handleServerError = (data: unknown) =>
+    handleNewChatNotice({
+      type: 'notice',
+      notice: ERROR_NOTICE.server_error,
+      ...((data as object) || {}),
+    })
+  const handleHintsError = (data: unknown) =>
+    handleNewChatNotice({
+      type: 'notice',
+      notice: ERROR_NOTICE.hints_not_loaded,
+      ...((data as object) || {}),
+    })
+  const handleInitError = (data: unknown) =>
+    handleNewChatNotice({
+      type: 'notice',
+      notice: ERROR_NOTICE.initialization_error,
+      ...((data as object) || {}),
+    })
+  const handleNetworkError = (data: unknown) =>
+    handleNewChatNotice({
+      type: 'notice',
+      notice: ERROR_NOTICE.network_error,
+      ...((data as object) || {}),
+    })
+
+  useEffect(() => {
+    if (!socket) return
 
     socket.on('new_chat_message', handleNewChatMessage)
     socket.on('new_chat_notice', handleNewChatNotice)
-    socket.on('SERVER_ERROR', handleNewChatNotice)
-    socket.on('HINTS_NOT_LOADED', handleNewChatNotice)
-    socket.on('INITIALIZATION_ERROR', handleNewChatNotice)
-    socket.on('NETWORK_ERROR', handleNewChatNotice)
+    socket.on('player_info', handleSyncHistory)
+    socket.on('sync_complete', handleSyncHistory)
+    socket.on('complete_round_sync', handleSyncHistory)
+    socket.on('SERVER_ERROR', handleServerError)
+    socket.on('HINTS_NOT_LOADED', handleHintsError)
+    socket.on('INITIALIZATION_ERROR', handleInitError)
+    socket.on('NETWORK_ERROR', handleNetworkError)
 
     return () => {
-      socket.off('new_chat_message')
-      socket.off('new_chat_notice')
-      socket.off('SERVER_ERROR')
-      socket.off('HINTS_NOT_LOADED')
-      socket.off('INITIALIZATION_ERROR')
-      socket.off('NETWORK_ERROR')
+      socket.off('new_chat_message', handleNewChatMessage)
+      socket.off('new_chat_notice', handleNewChatNotice)
+      socket.off('player_info', handleSyncHistory)
+      socket.off('sync_complete', handleSyncHistory)
+      socket.off('complete_round_sync', handleSyncHistory)
+      socket.off('SERVER_ERROR', handleServerError)
+      socket.off('HINTS_NOT_LOADED', handleHintsError)
+      socket.off('INITIALIZATION_ERROR', handleInitError)
+      socket.off('NETWORK_ERROR', handleNetworkError)
     }
-  }, [])
+  }, [socket, gameId])
 
   useEffect(() => {
     if (chatContainerRef.current) {
@@ -82,9 +132,9 @@ const ChatContainer = ({ gameId, player, setIsPreparingGame, className }: ChatCo
           onClick={toggleChatExpansion}
         >
           {isChatExpanded ? (
-            <ExpandMoreIcon className="text-[#626262]" fontSize="medium" />
+            <ExpandMoreIcon className="text-[#626262]" size={24} />
           ) : (
-            <ExpandLessIcon className="text-[#626262]" fontSize="medium" />
+            <ExpandLessIcon className="text-[#626262]" size={24} />
           )}
         </button>
         <div
@@ -99,9 +149,9 @@ const ChatContainer = ({ gameId, player, setIsPreparingGame, className }: ChatCo
         >
           {chats.map((chat, index) => {
             return chat.type === 'message' ? (
-              <ChatMessage key={index} chat={chat} />
+              <ChatMessage key={`${gameId}-${index}`} chat={chat} />
             ) : (
-              <ChatNotice key={index} chat={chat} />
+              <ChatNotice key={`${gameId}-${index}`} chat={chat} />
             )
           })}
         </div>

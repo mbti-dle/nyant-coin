@@ -4,6 +4,7 @@ import Image from 'next/image'
 
 import Button from '@/components/ui/button'
 import Modal from '@/components/ui/modal'
+import notFoundCatImage from '@/public/images/cat-404.png'
 
 interface PlayerReturnStatusModalProps {
   notReturnedPlayerCount: number
@@ -21,7 +22,7 @@ const PlayerReturnStatusModal = ({
   return (
     <Modal isOpen={isOpen} isShowCloseButton={true} onModalClose={onModalClose}>
       <div className="mb-3 mt-8 flex flex-col items-center justify-center gap-6 p-2 font-galmuri">
-        <Image src="/images/cat-404.png" alt="404고양이" width={50} height={50} />
+        <Image src={notFoundCatImage} alt="404 고양이" width={50} height={50} />
         <p>현재 {notReturnedPlayerCount}명이 대기실에 없습니다.</p>
         <p>그래도 게임을 시작하시겠습니까?</p>
         <div className="mb-1 mt-4 flex w-full justify-center text-xl">

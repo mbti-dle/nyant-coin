@@ -3,33 +3,50 @@
 import { useEffect, useState } from 'react'
 
 import Image from 'next/image'
+import { useParams } from 'next/navigation'
 
 import LoadingPage from '@/app/loading'
 import LinkButton from '@/components/ui/link-button'
-import { useSocketNavigation } from '@/hooks/use-socket-navigation'
+import { SITE_URL } from '@/constants/config'
+import { useSocket } from '@/hooks/socket/core/use-socket'
+import { useSocketNavigation } from '@/hooks/socket/policy/use-socket-navigation'
 import ConfettiComponent from '@/lib/confetti'
-import { socket } from '@/lib/socket'
 import coin from '@/public/images/coin.png'
 import useGameStore from '@/store/game'
 import useToastStore from '@/store/toast'
 import { GameResultModel } from '@/types/game'
 
-const ResultPage = ({ params }) => {
-  const { gameId } = params
+const EMPTY_RESULTS: GameResultModel[] = []
+
+const ResultPage = () => {
+  const params = useParams()
+  const gameId = params.gameId as string
+
+  const { socket } = useSocket()
+  const playerId = useGameStore((state) => state.playerId)
+  const gameResults = useGameStore((state) => state.results) || EMPTY_RESULTS
+  const closeResultModal = useGameStore((state) => state.closeResultModal)
+  const showToast = useToastStore((state) => state.showToast)
 
   const [currentUser, setCurrentUser] = useState<GameResultModel | null>(null)
-
-  const { playerId: currentPlayerId, results: gameResults } = useGameStore()
-  const { showToast } = useToastStore()
 
   useSocketNavigation(gameId)
 
   useEffect(() => {
-    const currentPlayer = gameResults.find((result) => result.id === currentPlayerId) || null
+    if (gameResults.length === 0 && socket && gameId && playerId) {
+      socket.emit('request_sync', { gameId, playerId })
+    }
+  }, [gameId, playerId, gameResults.length, socket])
+
+  useEffect(() => {
+    if (!gameResults || !playerId) return
+    const currentPlayer = gameResults.find((result) => result.id === playerId) || null
     setCurrentUser(currentPlayer)
-  }, [gameId])
+  }, [gameId, gameResults, playerId])
 
   const handleButtonClick = () => {
+    if (!gameResults.length) return
+
     const resultText = `🏆 냥트코인 게임 결과 🏆 
 ${gameResults
   .map((user, index) => {
@@ -39,7 +56,7 @@ ${gameResults
   .join('\n')}
     
 🐱 '${currentUser?.nickname}' 님은 ${gameResults.findIndex((result) => result.id === currentUser?.id) + 1}등을 차지했습니다! 🐟
-🔗 https://nyantcoin.koyeb.app
+🔗 ${SITE_URL}
 최고의 생선 트레이더는 누구? 생선을 사고팔아 냥코인을 모아보세요!`
 
     navigator.clipboard.writeText(resultText)
@@ -47,11 +64,8 @@ ${gameResults
   }
 
   const handleLinkButtonClick = () => {
-    socket.emit('back_to_waiting', { gameId })
-  }
-
-  if (!gameResults.length) {
-    return <LoadingPage />
+    socket.emit('back_to_waiting', { gameId, playerId })
+    closeResultModal()
   }
 
   return (

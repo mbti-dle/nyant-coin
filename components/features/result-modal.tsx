@@ -1,22 +1,19 @@
 'use client'
 
-import { useEffect } from 'react'
-
 import Image from 'next/image'
-import { useRouter } from 'next/navigation'
+import { useRouter, useParams } from 'next/navigation'
 
 import Button from '@/components/ui/button'
 import Modal from '@/components/ui/modal'
-import { GameResultModel } from '@/types/game'
+import coinImage from '@/public/images/coin.png'
+import fishImage from '@/public/images/fish.png'
 
 interface ResultModalProps {
   coin: number
   totalCoin: number
   isOpen: boolean
   onModalClose: () => void
-  onGameEnd: () => void
-  gameId: string
-  gameResults: GameResultModel[] | null
+  gameId?: string
 }
 
 const ResultModal = ({
@@ -24,29 +21,22 @@ const ResultModal = ({
   totalCoin,
   isOpen,
   onModalClose,
-  onGameEnd,
-  gameId,
-  gameResults,
+  gameId: propGameId,
 }: ResultModalProps) => {
   const router = useRouter()
-
-  useEffect(() => {
-    if (isOpen && !gameResults) {
-      onGameEnd()
-    }
-  }, [isOpen, onGameEnd, gameResults])
+  const params = useParams()
+  const gameId = propGameId || (params?.gameId as string)
 
   const handleResultButtonClick = () => {
-    if (gameResults && gameId) {
-      router.push(`/result/${gameId}`)
-    }
+    const targetPath = `/result/${gameId}`
+    router.push(targetPath)
   }
 
   return (
     <Modal isOpen={isOpen} onModalClose={onModalClose}>
       <div className="mt-8 text-center">
         <div className="mb-3 flex justify-center">
-          <Image src="/images/fish.png" alt="생선" width={36} height={36} />
+          <Image src={fishImage} alt="생선" width={36} height={36} />
         </div>
         <p className="mb-3 font-galmuri">최종 생선 판매 가격</p>
         <p className="mb-5 text-2xl">{coin} 냥코인</p>
@@ -56,12 +46,12 @@ const ResultModal = ({
         </p>
         <p className="mb-8 flex items-center justify-center font-galmuri">
           최종 냥코인
-          <Image src="/images/coin.png" alt="코인" width={24} height={24} className="ml-2 mr-2" />
+          <Image src={coinImage} alt="코인" width={24} height={24} className="ml-2 mr-2" />
           {totalCoin}
         </p>
         <div className="mt-4 flex justify-center text-xl">
-          <Button onClick={handleResultButtonClick} disabled={!gameResults} className="mb-8">
-            {gameResults ? '결과 보러가기' : '결과 취합중...'}
+          <Button onClick={handleResultButtonClick} className="mb-8">
+            결과 보러가기
           </Button>
         </div>
       </div>

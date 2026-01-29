@@ -2,13 +2,14 @@
 
 import { useState } from 'react'
 
-import SendIcon from '@mui/icons-material/Send'
-
+import { SendIcon } from '@/components/icons'
 import IconButton from '@/components/ui/icon-button'
-import { socket } from '@/lib/socket'
+import { useSocket } from '@/hooks/socket/core/use-socket'
 
 const ChatInput = ({ gameId, player }) => {
   const [message, setMessage] = useState('')
+
+  const { socket } = useSocket()
 
   const handleInputChange = (event) => {
     const input = event.target.value
@@ -53,6 +54,7 @@ const ChatInput = ({ gameId, player }) => {
         label="전송"
         className="bg-blue-500 bg-white px-4 py-3 text-blue"
         onClick={handleMessageSubmit}
+        size={24}
       />
     </div>
   )

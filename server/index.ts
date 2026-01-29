@@ -1,41 +1,53 @@
+import 'dotenv/config'
 import { createServer } from 'node:http'
 
 import next from 'next'
 
+import { isDev } from '../constants/env.js'
+
+import { startInactivityMonitor } from './game/cleanup.js'
 import {
   handleBackToWaiting,
   handleCheckGameAvailability,
   handleCheckNotReturnedPlayers,
   handleCreateGame,
-  handleDisconnect,
+  handleDisconnecting,
+  handleTabHidden,
+  handleTabVisible,
   handleEndGame,
   handleJoinGame,
   handleLeaveGame,
   handlePlayerReady,
   handleRequestFirstRoundHint,
   handleRequestPlayerInfo,
+  handleRequestSync,
   handleSendMessage,
   handleSendNotice,
   handleStartGame,
   handleTradeFishes,
+  handleUserDisconnect,
 } from './game/handlers.js'
+import { activityTracker } from './game/middleware/activity.js'
 import { createSocketServer } from './socket/config.js'
 
-const dev = process.env.NODE_ENV !== 'production'
 const hostname = 'localhost'
 const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000
 
-const app = next({ dev, hostname, port })
+const app = next({ dev: isDev, hostname, port })
 const handler = app.getRequestHandler()
 
 app.prepare().then(() => {
   const httpServer = createServer(handler)
   const io = createSocketServer(httpServer)
 
+  startInactivityMonitor(io)
+
   io.on('connection', (socket) => {
+    activityTracker(socket)
+
     socket.on('check_game_availability', (data) => handleCheckGameAvailability(socket, data))
     socket.on('create_game', handleCreateGame)
-    socket.on('join_game', (data) => handleJoinGame(socket, data))
+    socket.on('join_game', (data) => handleJoinGame(io, socket, data))
     socket.on('request_player_info', (data) => handleRequestPlayerInfo(socket, data))
 
     socket.on('send_message', (data) => handleSendMessage(io, socket, data))
@@ -50,8 +62,14 @@ app.prepare().then(() => {
     socket.on('back_to_waiting', (data) => handleBackToWaiting(io, socket, data))
     socket.on('check_not_returned_players', (data) => handleCheckNotReturnedPlayers(socket, data))
 
-    socket.on('leave_game', (data) => handleLeaveGame(socket, data))
-    socket.on('disconnect', () => handleDisconnect(socket))
+    socket.on('leave_game', (data) => handleLeaveGame(io, socket, data))
+    socket.on('disconnecting', () => handleDisconnecting(io, socket))
+    socket.on('user_disconnect', (data) => handleUserDisconnect(io, socket, data))
+
+    socket.on('request_sync', (data) => handleRequestSync(io, socket, data))
+
+    socket.on('tab_hidden', (data) => handleTabHidden(io, socket, data))
+    socket.on('tab_visible', () => handleTabVisible(io, socket))
   })
 
   httpServer
@@ -60,6 +78,7 @@ app.prepare().then(() => {
       process.exit(1)
     })
     .listen(port, () => {
+      // eslint-disable-next-line no-console
       console.log(`> Ready on http://${hostname}:${port}`)
     })
 })

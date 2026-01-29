@@ -2,54 +2,53 @@
 
 import { useState, useEffect, useRef } from 'react'
 
-import { ArrowBackIosNew } from '@mui/icons-material'
 import clsx from 'clsx'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
+import { ArrowBackIcon } from '@/components/icons'
 import AvatarSelector from '@/components/ui/avatar-selector'
 import Button from '@/components/ui/button'
 import CountInput from '@/components/ui/count-input'
-import { socket } from '@/lib/socket'
+import { useGameState } from '@/hooks/game/use-game-state'
+import { useSocket } from '@/hooks/socket/core/use-socket'
 import { validateNickname } from '@/lib/utils/nickname-validation'
-import useGameStore from '@/store/game'
 import useToastStore from '@/store/toast'
 
-const UserInfoPage = () => {
-  const AVATAR_COUNT = 6
+const AVATAR_COUNT = 6
 
+const UserInfoPage = () => {
   const router = useRouter()
+  const { socket, isSocketConnected } = useSocket()
+  const { gameId, isLeader, rounds, playerId } = useGameState()
+  const showToast = useToastStore((state) => state.showToast)
 
   const [currentAvatarIndex, setCurrentAvatarIndex] = useState(1)
   const [nickname, setNickname] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
-
-  const showToast = useToastStore((state) => state.showToast)
-
-  const countInputRef = useRef(null)
-
-  const gameId = useGameStore((state) => state.gameId)
-  const isLeader = useGameStore((state) => state.isLeader)
-  const rounds = useGameStore((state) => state.rounds)
+  const countInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    const handleJoinSuccess = (gameId: string) => {
+    if (playerId && gameId) {
       router.push(`/waiting/${gameId}`)
     }
+  }, [playerId, gameId, router])
 
-    const handleJoinFailure = () => {
-      router.replace('/')
-      showToast('이미 게임이 시작되었습니다')
+  useEffect(() => {
+    if (!socket) return
+
+    const handleJoinFailure = ({ message }: { message: string }) => {
+      setErrorMessage(message)
     }
 
-    socket.on('join_success', handleJoinSuccess)
     socket.on('join_failure', handleJoinFailure)
 
     return () => {
-      socket.off('join_success', handleJoinSuccess)
       socket.off('join_failure', handleJoinFailure)
     }
-  }, [router, showToast])
+  }, [socket])
+
+  const isButtonDisabled = !nickname.trim() || !isSocketConnected
 
   const handlePrevClick = () => {
     setCurrentAvatarIndex((prevIndex) => (prevIndex === 1 ? AVATAR_COUNT : prevIndex - 1))
@@ -59,7 +58,21 @@ const UserInfoPage = () => {
     setCurrentAvatarIndex((prevIndex) => (prevIndex === AVATAR_COUNT ? 1 : prevIndex + 1))
   }
 
+  const joinGame = (newGameId: string | null) => {
+    if (!socket) return
+    socket.emit('join_game', {
+      gameId: newGameId,
+      nickname,
+      character: currentAvatarIndex,
+    })
+  }
+
   const handleJoinClick = () => {
+    if (!socket) {
+      showToast('서버 연결 중입니다. 잠시만 기다려주세요.')
+      return
+    }
+
     const error = validateNickname(nickname)
     if (error) {
       setErrorMessage(error)
@@ -82,22 +95,15 @@ const UserInfoPage = () => {
     setErrorMessage('')
   }
 
-  const joinGame = (gameId) => {
-    socket.emit('join_game', {
-      gameId,
-      nickname,
-      character: currentAvatarIndex,
-    })
-  }
-
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center">
       <Link
         href={isLeader ? '/setup/select-rounds' : '/'}
         className="absolute left-0 top-0 mx-4 mt-6"
       >
-        <ArrowBackIosNew className="text-gray-300 hover:text-gray-500" />
+        <ArrowBackIcon className="text-gray-300 hover:text-gray-500" size={24} />
       </Link>
+
       <AvatarSelector
         currentAvatarIndex={currentAvatarIndex}
         onPrevClick={handlePrevClick}
@@ -117,13 +123,13 @@ const UserInfoPage = () => {
       </div>
       <Button
         onClick={handleJoinClick}
-        disabled={!nickname.trim()}
+        disabled={isButtonDisabled}
         className={clsx('mt-20', {
-          '': nickname.trim(),
-          'cursor-not-allowed bg-gray-100 text-gray-200 hover:bg-gray-100': !nickname.trim(),
+          '': !isButtonDisabled,
+          'cursor-not-allowed bg-gray-100 text-gray-200 hover:bg-gray-100': isButtonDisabled,
         })}
       >
-        입장하기
+        {isSocketConnected ? '입장하기' : '연결 중...'}
       </Button>
     </main>
   )

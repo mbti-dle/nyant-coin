@@ -1,1 +1,3 @@
-export type ToastIconType = 'coin' | 'check' // 아이콘 종류
+export type ToastIconType = 'coin' | 'check' | 'connection' | 'warning' | 'offline'
+
+export type SnackBarType = 'reconnecting' | 'error'
