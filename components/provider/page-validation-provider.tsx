@@ -50,7 +50,6 @@ export const PageValidationProvider = ({ children }: PageValidationProviderProps
 
     if (missingFields.length > 0) {
       const config = PAGE_VALIDATION_CONFIG[pageType]
-      console.warn(`[${pageType}] Missing required fields:`, missingFields)
       router.replace(config.redirectPath)
     } else {
       if (!isReady) setIsReady(true)
