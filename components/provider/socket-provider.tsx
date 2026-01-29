@@ -118,17 +118,20 @@ const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
   // 5-2. 게임 정책 (탭 전환)
   useEffect(() => {
-    if (!isInGame) return
+    if (!isInGame) {
+      stopTabSwitchTimers()
+      return
+    }
 
     if (!isTabVisible) {
       startTabSwitchWarning(() => {
         handleTabSwitchExit(forceExitGame)
       })
     } else {
-      handleTabReturn(() => {
+      const exited = handleTabReturn(() => {
         handleTabSwitchExit(forceExitGame)
       })
-      if (socket && socket.connected) {
+      if (!exited && socket && socket.connected) {
         handleGameStateSync(socket, getGameData)
       }
     }

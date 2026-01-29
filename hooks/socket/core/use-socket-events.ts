@@ -54,25 +54,25 @@ export const useSocketEvents = ({
 
     const handleSocketConnect = () => {
       setReconnectionAttempts(0)
-      if (wasEverConnected && !socket.connected) {
-        showToast('서버에 다시 연결되었습니다', 'connection')
+      if (wasEverConnected && socket.connected) {
         const { gameId, playerId } = getGameData()
         if (gameId && playerId) {
-          setTimeout(() => handleGameStateSync(socket, getGameData), 1000)
+          setTimeout(() => {
+            const currentData = getGameData()
+            if (currentData.gameId && currentData.playerId && socket.connected) {
+              handleGameStateSync(socket, getGameData)
+            }
+          }, 1000)
         }
       }
       handleConnect()
     }
 
-    const handlePlayerNotifications = ({
-      nickname,
-      message,
-    }: {
-      nickname?: string
-      message?: string
-    }) => {
-      if (nickname) showToast(`${nickname}님이 재연결되었습니다`, 'connection')
-      else if (message) showToast(message, 'warning')
+    const handlePlayerJoined = ({ nickname }: { nickname: string }) => {
+      showToast(`${nickname}님이 입장했습니다.`, 'connection')
+    }
+    const handlePlayerLeft = ({ nickname, message }: { nickname?: string; message?: string }) => {
+      showToast(message || `${nickname || '플레이어'}님이 퇴장했습니다.`, 'warning')
     }
 
     const handleSyncFailedWrapper = (data: { error: string }) => {
@@ -109,10 +109,10 @@ export const useSocketEvents = ({
       clearGameData()
       showToast(data?.message || '게임이 종료되었습니다.', 'warning')
     })
-    socket.on('player_reconnected', handlePlayerNotifications)
-    socket.on('player_disconnected', handlePlayerNotifications)
-    socket.on('player_removed', handlePlayerNotifications)
-    socket.on('player_left', handlePlayerNotifications)
+    socket.on('player_disconnected', handlePlayerLeft)
+    socket.on('player_removed', handlePlayerLeft)
+    socket.on('player_left', handlePlayerLeft)
+    socket.on('player_joined', handlePlayerJoined)
     socket.on('error', ({ message }: { message: string }) => {
       if (message) showToast(message, 'warning')
     })
@@ -130,10 +130,10 @@ export const useSocketEvents = ({
       socket.off('game_not_found')
       socket.off('player_kicked')
       socket.off('game_ended')
-      socket.off('player_reconnected', handlePlayerNotifications)
-      socket.off('player_disconnected', handlePlayerNotifications)
-      socket.off('player_removed', handlePlayerNotifications)
-      socket.off('player_left', handlePlayerNotifications)
+      socket.off('player_disconnected', handlePlayerLeft)
+      socket.off('player_removed', handlePlayerLeft)
+      socket.off('player_left', handlePlayerLeft)
+      socket.off('player_joined', handlePlayerJoined)
       socket.off('error')
     }
   }, [
