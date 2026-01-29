@@ -47,7 +47,7 @@ app.prepare().then(() => {
 
     socket.on('check_game_availability', (data) => handleCheckGameAvailability(socket, data))
     socket.on('create_game', handleCreateGame)
-    socket.on('join_game', (data) => handleJoinGame(socket, data))
+    socket.on('join_game', (data) => handleJoinGame(io, socket, data))
     socket.on('request_player_info', (data) => handleRequestPlayerInfo(socket, data))
 
     socket.on('send_message', (data) => handleSendMessage(io, socket, data))

@@ -19,6 +19,7 @@ import { finalizeGameResults, createCompleteGameSnapshot } from './ending.js'
 import { getGameHistory } from './history.js'
 import {
   addPlayer,
+  clearGraceTimer,
   getPlayer,
   getPlayerStatus,
   handlePlayerLeave,
@@ -35,12 +36,6 @@ import {
   playersGraceTimers,
 } from './store.js'
 import { startRoundTimer } from './timer.js'
-
-const clearGraceTimer = (playerId: string) => {
-  const timer = playersGraceTimers.get(playerId)
-  if (timer && typeof timer !== 'boolean') clearTimeout(timer)
-  playersGraceTimers.delete(playerId)
-}
 
 const startGraceTimer = (
   io: SocketIOServer,
@@ -73,10 +68,11 @@ const startGraceTimer = (
 
     io.to(gameId).emit('player_left', {
       playerId,
+      nickname: player?.nickname,
       message:
         reason === 'tab_hidden'
-          ? '플레이어가 유예 시간 초과로 게임에서 나갔습니다.'
-          : '플레이어의 연결이 끊겨 게임에서 제거되었습니다.',
+          ? `${player?.nickname || '플레이어'}님이 유예 시간 초과로 퇴장했습니다.`
+          : `${player?.nickname || '플레이어'}님의 연결이 끊겨 퇴장했습니다.`,
     })
 
     playersGraceTimers.delete(playerId)
@@ -132,6 +128,7 @@ export const handleCheckGameAvailability = (
 }
 
 export const handleJoinGame = (
+  io: SocketIOServer,
   socket: Socket,
   { gameId, nickname, character }: { gameId: string; nickname: string; character: string }
 ) => {
@@ -148,14 +145,21 @@ export const handleJoinGame = (
     return
   }
 
-  if (room.players.length >= 6) {
-    socket.emit('join_failure', { message: '방이 가득 찼습니다.' })
-    return
-  }
-
   const existingPlayer = room.players.find((player) => player.nickname === nickname)
   if (existingPlayer) {
-    socket.emit('join_failure', { message: '이미 사용 중인 닉네임입니다.' })
+    const isOnline = getPlayerStatus(existingPlayer.id)
+    const isConnected = existingPlayer.connectionStatus === PeerConnectionStateModel.CONNECTED
+
+    if (isOnline || isConnected) {
+      socket.emit('join_failure', { message: '이미 사용 중인 닉네임입니다.' })
+      return
+    }
+
+    handlePlayerLeave(socket, existingPlayer.id, gameId, io)
+  }
+
+  if (room.players.length >= 6) {
+    socket.emit('join_failure', { message: '방이 가득 찼습니다.' })
     return
   }
 
@@ -180,6 +184,10 @@ export const handleJoinGame = (
     socket.join(gameId)
 
     socket.to(gameId).emit('update_players', room.players)
+    socket.to(gameId).emit('player_joined', {
+      nickname,
+      message: `${nickname}님이 입장했습니다.`,
+    })
     socket.emit('join_success', { gameId, playerId })
   } catch {
     socket.emit('join_failure', { message: '게임 참가 중 오류가 발생했습니다.' })
@@ -194,12 +202,16 @@ export const handleLeaveGame = (
   const playerId = getPlayer(socket.id)
   if (!playerId) return
 
-  clearGraceTimer(playerId)
+  const room = getRoom(gameId)
+  const player = room?.players.find((p) => p.id === playerId)
+  const nickname = player?.nickname
+
   handlePlayerLeave(socket, playerId, gameId, io)
 
   io.to(gameId).emit('player_left', {
     playerId,
-    message: '플레이어가 게임에서 나갔습니다.',
+    nickname,
+    message: `${nickname || '플레이어'}님이 게임에서 나갔습니다.`,
   })
 }
 
@@ -725,6 +737,9 @@ const performPlayerReconnection = (
 
   player.connectionStatus = PeerConnectionStateModel.CONNECTED
   socket.broadcast.to(gameId).emit('update_players', room.players)
+  socket.broadcast.to(gameId).emit('player_reconnected', {
+    nickname: player.nickname,
+  })
 
   const gameHistory = getGameHistory(gameId)
   syncGameState(room, gameHistory)

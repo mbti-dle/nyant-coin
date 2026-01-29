@@ -3,7 +3,15 @@ import { Server as SocketIOServer, Socket } from 'socket.io'
 import { PlayerIdType, SocketIdType, SocketModel } from '../../types/game'
 
 import { getRoom, removeRoom } from './room.js'
-import { gameRooms, playersStatus, playersMap, roomCleanupTimers } from './store.js'
+import {
+  gameRooms,
+  playersStatus,
+  playersMap,
+  roomCleanupTimers,
+  playersReconnecting,
+  playersReconnectingSet,
+  playersGraceTimers,
+} from './store.js'
 import { clearAllGameTimers } from './timer.js'
 
 export const addPlayer = (socketId: SocketIdType, playerId: PlayerIdType) =>
@@ -55,6 +63,26 @@ const removePlayerFromRoom = (
   return true
 }
 
+export const clearGraceTimer = (playerId: string) => {
+  const timer = playersGraceTimers.get(playerId)
+  if (timer && typeof timer !== 'boolean') {
+    clearTimeout(timer)
+  }
+  playersGraceTimers.delete(playerId)
+}
+
+export const clearPlayerState = (playerId: string) => {
+  playersStatus.delete(playerId)
+  playersReconnecting.delete(playerId)
+  playersReconnectingSet.delete(playerId)
+
+  const timer = playersGraceTimers.get(playerId)
+  if (timer && typeof timer !== 'boolean') {
+    clearTimeout(timer)
+  }
+  playersGraceTimers.delete(playerId)
+}
+
 export const handlePlayerLeave = (
   socket: SocketModel,
   playerId: string,
@@ -64,7 +92,11 @@ export const handlePlayerLeave = (
   if (leaveGameId) {
     const isRemoved = removePlayerFromRoom(socket, playerId, leaveGameId, io)
     if (isRemoved) {
-      removePlayer(socket.id)
+      const currentId = getPlayer(socket.id)
+      if (currentId === playerId) {
+        removePlayer(socket.id)
+      }
+      clearPlayerState(playerId)
     }
     return
   }
