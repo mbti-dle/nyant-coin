@@ -4,7 +4,7 @@ import { useState } from 'react'
 
 import { SendIcon } from '@/components/icons'
 import IconButton from '@/components/ui/icon-button'
-import { useSocket } from '@/hooks/use-socket'
+import { useSocket } from '@/hooks/socket/core/use-socket'
 
 const ChatInput = ({ gameId, player }) => {
   const [message, setMessage] = useState('')

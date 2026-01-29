@@ -11,3 +11,7 @@ export interface ChatNoticeModel {
 }
 
 export type ChatType = ChatMessageModel | ChatNoticeModel
+
+export interface ChatSyncModel {
+  chatLogs?: ChatType[]
+}

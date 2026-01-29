@@ -3,29 +3,83 @@ import { v4 as uuid } from 'uuid'
 
 import { ERROR_NOTICE } from '../../constants/chat.js'
 import { gameConfig } from '../../constants/game.js'
+import { TOTAL_GRACE_PERIOD } from '../../constants/socket.js'
 import { loadGameHints } from '../../lib/api/hints.js'
+import { appLogger } from '../../lib/utils/app-logger.js'
 import { generateGameId } from '../../lib/utils/generate-game-id.js'
-import { GameHistoryModel, GameModel, PlayerModel, RoundRecordModel } from '../../types/game.js'
+import {
+  GameHistoryModel,
+  GameModel,
+  PeerConnectionStateModel,
+  PlayerModel,
+  RoundRecordModel,
+} from '../../types/game.js'
 
+import { finalizeGameResults, createCompleteGameSnapshot } from './ending.js'
 import { getGameHistory } from './history.js'
 import {
   addPlayer,
+  clearGraceTimer,
   getPlayer,
   getPlayerStatus,
   handlePlayerLeave,
   updatePlayerStatus,
 } from './player.js'
-import { addRoom, getRoom } from './room.js'
+import { addRoom, getRoom, cancelRoomCleanup } from './room.js'
 import {
-  playersDisconnected,
   gameRooms,
   gameTimers,
   gameTimersState,
   playersMap,
   playersReconnecting,
   playersReconnectingSet,
+  playersGraceTimers,
 } from './store.js'
 import { startRoundTimer } from './timer.js'
+
+const startGraceTimer = (
+  io: SocketIOServer,
+  socket: Socket,
+  playerId: string,
+  gameId: string,
+  reason: 'tab_hidden' | 'disconnect' = 'disconnect'
+) => {
+  if (playersGraceTimers.has(playerId)) return
+
+  const room = getRoom(gameId)
+  const player = room?.players.find((p) => p.id === playerId)
+  if (player && room) {
+    player.connectionStatus = PeerConnectionStateModel.RECONNECTING
+    io.to(gameId).emit('update_players', room.players)
+  }
+
+  const timer = setTimeout(() => {
+    if (!playersGraceTimers.has(playerId)) return
+
+    handlePlayerLeave(socket, playerId, gameId, io)
+
+    if (socket.connected) {
+      socket.emit('player_not_found', {
+        gameId,
+        message: '유예 시간이 초과되어 게임에서 제거되었습니다.',
+        errorCode: 'PLAYER_NOT_FOUND',
+      })
+    }
+
+    io.to(gameId).emit('player_left', {
+      playerId,
+      nickname: player?.nickname,
+      message:
+        reason === 'tab_hidden'
+          ? `${player?.nickname || '플레이어'}님이 유예 시간 초과로 퇴장했습니다.`
+          : `${player?.nickname || '플레이어'}님의 연결이 끊겨 퇴장했습니다.`,
+    })
+
+    playersGraceTimers.delete(playerId)
+  }, TOTAL_GRACE_PERIOD)
+
+  playersGraceTimers.set(playerId, timer)
+}
 
 export const handleCreateGame = async (totalRounds: number, joinGame: (gameId: string) => void) => {
   const gameId = generateGameId(gameRooms)
@@ -44,6 +98,8 @@ export const handleCreateGame = async (totalRounds: number, joinGame: (gameId: s
       nextRoundHint: '',
     },
     gameResults: [],
+    chatLogs: [],
+    gameStartTime: 0,
     readyPlayers: new Set(),
   }
 
@@ -72,9 +128,11 @@ export const handleCheckGameAvailability = (
 }
 
 export const handleJoinGame = (
+  io: SocketIOServer,
   socket: Socket,
   { gameId, nickname, character }: { gameId: string; nickname: string; character: string }
 ) => {
+  cancelRoomCleanup(gameId)
   const room = getRoom(gameId)
 
   if (!room) {
@@ -87,14 +145,21 @@ export const handleJoinGame = (
     return
   }
 
-  if (room.players.length >= 6) {
-    socket.emit('join_failure', { message: '방이 가득 찼습니다.' })
-    return
+  const existingPlayer = room.players.find((player) => player.nickname === nickname)
+  if (existingPlayer) {
+    const isOnline = getPlayerStatus(existingPlayer.id)
+    const isConnected = existingPlayer.connectionStatus === PeerConnectionStateModel.CONNECTED
+
+    if (isOnline || isConnected) {
+      socket.emit('join_failure', { message: '이미 사용 중인 닉네임입니다.' })
+      return
+    }
+
+    handlePlayerLeave(socket, existingPlayer.id, gameId, io)
   }
 
-  const existingPlayer = room.players.find((p) => p.nickname === nickname)
-  if (existingPlayer) {
-    socket.emit('join_failure', { message: '이미 사용 중인 닉네임입니다.' })
+  if (room.players.length >= 6) {
+    socket.emit('join_failure', { message: '방이 가득 찼습니다.' })
     return
   }
 
@@ -108,8 +173,10 @@ export const handleJoinGame = (
       id: playerId,
       nickname,
       character,
-      score: 0,
+      coins: gameConfig.INITIAL_COINS,
+      fish: gameConfig.INITIAL_FISH,
       isInWaitingRoom: true,
+      connectionStatus: PeerConnectionStateModel.CONNECTED,
     }
 
     room.players.push(newPlayer)
@@ -117,18 +184,57 @@ export const handleJoinGame = (
     socket.join(gameId)
 
     socket.to(gameId).emit('update_players', room.players)
+    socket.to(gameId).emit('player_joined', {
+      nickname,
+      message: `${nickname}님이 입장했습니다.`,
+    })
     socket.emit('join_success', { gameId, playerId })
-  } catch (error) {
-    console.error('플레이어 참가 중 오류:', error)
+  } catch {
     socket.emit('join_failure', { message: '게임 참가 중 오류가 발생했습니다.' })
   }
 }
 
-export const handleLeaveGame = (socket: Socket, { gameId }: { gameId: string }) => {
+export const handleLeaveGame = (
+  io: SocketIOServer,
+  socket: Socket,
+  { gameId }: { gameId: string }
+) => {
   const playerId = getPlayer(socket.id)
   if (!playerId) return
 
-  handlePlayerLeave(socket, playerId, gameId)
+  const room = getRoom(gameId)
+  const player = room?.players.find((p) => p.id === playerId)
+  const nickname = player?.nickname
+
+  handlePlayerLeave(socket, playerId, gameId, io)
+
+  io.to(gameId).emit('player_left', {
+    playerId,
+    nickname,
+    message: `${nickname || '플레이어'}님이 게임에서 나갔습니다.`,
+  })
+}
+
+export const handleTabHidden = (io: SocketIOServer, socket: Socket, data?: { gameId?: string }) => {
+  const playerId = getPlayer(socket.id)
+  if (!playerId) return
+
+  let gameId = data?.gameId
+  if (!gameId) {
+    gameId = Array.from(socket.rooms).find((room) => {
+      if (room === socket.id) return false
+      return getRoom(room) !== undefined
+    })
+  }
+
+  if (!gameId) return
+  startGraceTimer(io, socket, playerId, gameId, 'tab_hidden')
+}
+
+export const handleTabVisible = (_io: SocketIOServer, socket: Socket) => {
+  const playerId = getPlayer(socket.id)
+  if (!playerId) return
+  clearGraceTimer(playerId)
 }
 
 export const handleStartGame = async (
@@ -151,11 +257,11 @@ export const handleStartGame = async (
         const socketId = Array.from(playersMap.entries()).find(
           ([_, playerId]) => playerId === player.id
         )?.[0]
-        if (socketId) {
-          const playerSocket = io.sockets.sockets.get(socketId)
-          if (playerSocket) {
-            handlePlayerLeave(playerSocket, player.id, gameId)
-          }
+        if (!socketId) return
+
+        const playerSocket = io.sockets.sockets.get(socketId)
+        if (playerSocket) {
+          handlePlayerLeave(playerSocket, player.id, gameId)
         }
       })
 
@@ -180,9 +286,33 @@ export const handleStartGame = async (
     }
 
     room.state = 'in_progress'
-    io.to(gameId).emit('game_started', { totalRounds: room.totalRounds })
-  } catch (error) {
-    console.error('Game start error:', error)
+    room.gameStartTime = Date.now()
+
+    room.gameResults = []
+    room.readyPlayers.clear()
+
+    room.players.forEach((player) => {
+      delete player.score
+      player.isInWaitingRoom = false
+      player.coins = gameConfig.INITIAL_COINS
+      player.fish = gameConfig.INITIAL_FISH
+
+      if (getPlayerStatus(player.id)) {
+        player.connectionStatus = PeerConnectionStateModel.CONNECTED
+      }
+    })
+
+    io.to(gameId).emit('game_started', {
+      totalRounds: room.totalRounds,
+      serverStatus: room.state,
+      gameStartTime: room.gameStartTime,
+      players: room.players.map((player) => ({
+        ...player,
+        isOnline: getPlayerStatus(player.id),
+      })),
+      results: [],
+    })
+  } catch {
     socket.emit('SERVER_ERROR', { notice: ERROR_NOTICE.server_error })
   }
 }
@@ -201,8 +331,11 @@ export const handlePlayerReady = (
   room.readyPlayers.add(playerId)
 
   if (room.readyPlayers.size === room.players.length) {
-    startRoundTimer(io, gameId, room)
-    io.to(gameId).emit('all_players_ready')
+    const timerState = gameTimersState.get(gameId)
+    if (!timerState?.isRunning) {
+      startRoundTimer(io, gameId, room)
+      io.to(gameId).emit('all_players_ready')
+    }
   }
 }
 
@@ -213,11 +346,18 @@ export const handleEndGame = (
 ) => {
   try {
     const room = getRoom(gameId)
-    if (!room) {
-      console.error('게임룸을 찾을 수 없습니다:', gameId)
+    if (!room) return
+
+    const isActuallyEndable = room.gameInfo.currentDay >= room.totalRounds || room.state === 'ended'
+    if (!isActuallyEndable) {
+      appLogger.warn('[EndGame] invalid end signal ignored', {
+        gameId,
+        currentDay: room.gameInfo.currentDay,
+        totalRounds: room.totalRounds,
+        state: room.state,
+      })
       return
     }
-
     room.readyPlayers.clear()
     room.players.forEach((player) => (player.isInWaitingRoom = false))
 
@@ -227,40 +367,23 @@ export const handleEndGame = (
     }
 
     const updateGameResults = () => {
-      const submittedPlayers = room.players.filter(
-        (player) => typeof player.score === 'number' && player.score >= 0
-      )
-
-      if (submittedPlayers.length > 0) {
-        room.gameResults = submittedPlayers
-          .map((player) => ({
-            id: player.id,
-            nickname: player.nickname,
-            character: player.character,
-            score: player.score || 0,
-          }))
-          .sort((a, b) => b.score - a.score)
-
-        room.state = 'ended'
-        io.to(gameId).emit('game_ended', { results: room.gameResults })
-      }
+      finalizeGameResults(io, gameId, room)
     }
 
     if (!gameTimers.has(gameId)) {
       const timer = setTimeout(() => {
         const currentRoom = getRoom(gameId)
-        if (currentRoom && currentRoom.state !== 'ended') {
-          updateGameResults()
-        }
+        if (currentRoom && currentRoom.state !== 'ended') updateGameResults()
         gameTimers.delete(gameId)
       }, 5000)
 
       gameTimers.set(gameId, timer)
     }
 
+    const onlinePlayers = room.players.filter((player) => getPlayerStatus(player.id))
     const allPlayersSubmitted =
-      room.players.length > 0 &&
-      room.players.every((player) => typeof player.score === 'number' && player.score >= 0)
+      onlinePlayers.length > 0 &&
+      onlinePlayers.every((player) => typeof player.score === 'number' && player.score >= 0)
 
     if (allPlayersSubmitted) {
       const timer = gameTimers.get(gameId)
@@ -272,8 +395,7 @@ export const handleEndGame = (
     } else if (room.state === 'ended') {
       updateGameResults()
     }
-  } catch (error) {
-    console.error('게임 결과 제출 중 오류 발생:', error)
+  } catch {
     socket.emit('error', { message: '게임 결과 제출 중 오류가 발생했습니다.' })
   }
 }
@@ -281,42 +403,90 @@ export const handleEndGame = (
 export const handleBackToWaiting = (
   io: SocketIOServer,
   socket: Socket,
-  { gameId }: { gameId: string }
+  { gameId, playerId: providedPlayerId }: { gameId: string; playerId?: string }
 ) => {
   const room = getRoom(gameId)
-  const playerId = getPlayer(socket.id)
+  const playerId = providedPlayerId || getPlayer(socket.id)
 
   if (!room || !playerId) {
     return
   }
 
-  room.state = 'waiting'
-  room.readyPlayers.add(playerId)
+  if (room.state === 'ended') {
+    room.state = 'waiting'
+    room.gameStartTime = 0
+  }
 
-  const playerIndex = room.players.findIndex((player) => player.id === playerId)
-  if (playerIndex !== -1) {
-    room.players[playerIndex] = {
-      ...room.players[playerIndex],
-      isInWaitingRoom: true,
-    }
+  const player = room.players.find((p) => p.id === playerId)
+  if (player) {
+    player.isInWaitingRoom = true
+    room.readyPlayers.add(playerId)
   }
 
   io.to(gameId).emit('update_players', room.players)
+
+  const gameHistory = getGameHistory(gameId)
+  const snapshot = createCompleteGameSnapshot(room, gameId, gameHistory)
+  socket.emit('sync_complete', snapshot)
 }
 
-export const handleRequestPlayerInfo = (socket: Socket, { gameId }: { gameId: string }) => {
+export const handleRequestPlayerInfo = (
+  socket: Socket,
+  { gameId, playerId: clientPlayerId }: { gameId: string; playerId?: string }
+) => {
   const room = getRoom(gameId)
-  const playerId = getPlayer(socket.id)
+  let playerIdFromSocket = getPlayer(socket.id)
+
+  if (room && clientPlayerId && !playerIdFromSocket) {
+    const player = room.players.find((p) => p.id === clientPlayerId)
+    if (player) {
+      playerIdFromSocket = clientPlayerId
+      clearGraceTimer(playerIdFromSocket)
+      addPlayer(socket.id, playerIdFromSocket)
+      updatePlayerStatus(playerIdFromSocket, true, socket.id)
+      socket.join(gameId)
+
+      player.connectionStatus = PeerConnectionStateModel.CONNECTED
+
+      if (room.state === 'waiting') {
+        player.isInWaitingRoom = true
+        room.readyPlayers.add(playerIdFromSocket)
+      }
+
+      socket.to(gameId).emit('update_players', room.players)
+    }
+  }
+
+  if (room && room.state === 'waiting' && playerIdFromSocket) {
+    const player = room.players.find((p) => p.id === playerIdFromSocket)
+    if (player && !player.isInWaitingRoom) {
+      player.isInWaitingRoom = true
+      room.readyPlayers.add(playerIdFromSocket)
+      socket.to(gameId).emit('update_players', room.players)
+    }
+  }
 
   if (room) {
-    socket.emit('player_info', { players: room.players, playerId })
+    socket.emit('player_info', {
+      players: room.players.map((player) => ({
+        ...player,
+        isOnline: getPlayerStatus(player.id),
+      })),
+      playerId: playerIdFromSocket,
+      playerInfo: room.players.find((p) => p.id === playerIdFromSocket),
+      serverStatus: room.state,
+      chatLogs: room.chatLogs,
+    })
   }
 }
 
 export const handleRequestFirstRoundHint = (socket: Socket, { gameId }: { gameId: string }) => {
   const room = getRoom(gameId)
   if (room) {
-    socket.emit('first_round_hint', room.gameInfo)
+    socket.emit('first_round_hint', {
+      ...room.gameInfo,
+      serverStatus: room.state,
+    })
   }
 }
 
@@ -336,12 +506,11 @@ export const handleRequestSync = (
   const { gameId, playerId } = data
 
   if (!gameId || typeof gameId !== 'string') {
-    socket.emit('sync_failed', {
-      error: 'gameId가 필요합니다.',
-      errorCode: 'INVALID_GAME_ID',
-    })
+    socket.emit('sync_failed', { error: 'gameId가 필요합니다.', errorCode: 'INVALID_GAME_ID' })
     return
   }
+
+  if (playerId) clearGraceTimer(playerId)
 
   if (!playerId || typeof playerId !== 'string') {
     socket.emit('sync_failed', {
@@ -352,16 +521,15 @@ export const handleRequestSync = (
     return
   }
 
+  if (gameId) cancelRoomCleanup(gameId)
+
   const room = getRoom(gameId)
   if (!room) {
-    socket.emit('sync_failed', {
-      error: '게임을 찾을 수 없습니다.',
-      errorCode: 'GAME_NOT_FOUND',
-    })
+    socket.emit('sync_failed', { error: '게임을 찾을 수 없습니다.', errorCode: 'GAME_NOT_FOUND' })
     return
   }
 
-  const player = room.players.find((p) => p.id === playerId)
+  const player = room.players.find((player) => player.id === playerId)
   if (!player) {
     socket.emit('player_not_found', {
       gameId,
@@ -384,16 +552,13 @@ export const handleRequestSync = (
 
   try {
     performPlayerReconnection(io, socket, room, gameId, playerId, player)
-  } catch (error) {
-    console.error('재연결 처리 중 오류:', error)
+  } catch {
     socket.emit('sync_failed', {
       error: '재연결 처리 중 오류가 발생했습니다.',
       errorCode: 'RECONNECTION_ERROR',
     })
   } finally {
-    setTimeout(() => {
-      playersReconnectingSet.delete(reconnectKey)
-    }, 2000)
+    setTimeout(() => playersReconnectingSet.delete(reconnectKey), 2000)
   }
 }
 
@@ -419,59 +584,37 @@ export const handleRoundValidationRequest = (
   }
 }
 
-export const handleDisconnect = (io: SocketIOServer, socket: Socket) => {
+export const handleDisconnecting = (io: SocketIOServer, socket: Socket) => {
   const playerId = getPlayer(socket.id)
   if (!playerId) return
 
-  const gameId = Array.from(socket.rooms).find((room) => {
-    if (room === socket.id) return false
+  const rooms = Array.from(socket.rooms)
 
+  let gameId = rooms.find((room) => {
+    if (room === socket.id) return false
     return getRoom(room) !== undefined
   })
 
-  if (!gameId) return
-
-  if (playersDisconnected.has(playerId)) {
-    const existingTimeout = playersDisconnected.get(playerId)
-    if (existingTimeout) {
-      clearTimeout(existingTimeout)
-    }
+  if (!gameId && playerId) {
+    gameId = Array.from(gameRooms.entries()).find(([_id, room]) =>
+      room.players.some((p) => p.id === playerId)
+    )?.[0]
   }
 
-  updatePlayerStatus(playerId, false, '')
+  if (!gameId) return
 
-  socket.to(gameId).emit('player_disconnected', {
-    playerId,
-    message: '플레이어가 연결이 끊어졌습니다. 60초 후 자동으로 제거됩니다.',
-  })
-
-  const timeoutId = setTimeout(() => {
-    const currentStatus = getPlayerStatus(playerId)
-    if (!currentStatus) {
-      handlePlayerLeave(socket, playerId, gameId)
-
-      io.to(gameId).emit('player_removed', {
-        playerId,
-        message: '플레이어가 게임에서 나갔습니다.',
-      })
-    }
-
-    playersDisconnected.delete(playerId)
-  }, 60000)
-
-  playersDisconnected.set(playerId, timeoutId)
+  startGraceTimer(io, socket, playerId, gameId, 'disconnect')
 }
 
-export const handleUserDisconnect = (io, socket, { gameId }) => {
+export const handleUserDisconnect = (
+  io: SocketIOServer,
+  socket: Socket,
+  { gameId }: { gameId: string }
+) => {
   const playerId = getPlayer(socket.id)
   if (!playerId) return
 
-  handlePlayerLeave(socket, playerId, gameId)
-
-  socket.to(gameId).emit('player_left', {
-    playerId,
-    message: '플레이어가 게임에서 나갔습니다.',
-  })
+  startGraceTimer(io, socket, playerId, gameId, 'disconnect')
 }
 
 export const handleTradeFishes = (
@@ -479,13 +622,46 @@ export const handleTradeFishes = (
   socket: Socket,
   { gameId, action, amount }: { gameId: string; action: 'buy' | 'sell'; amount: number }
 ) => {
-  const playerId = getPlayer(socket.id)
-  const message = `${amount}마리 ${action === 'buy' ? '사요!' : '팔아요!'}`
+  const room = getRoom(gameId)
+  if (!room) return
 
-  io.to(gameId).emit('trade_message', {
-    playerId,
-    message,
+  const playerId = getPlayer(socket.id)
+  if (!playerId) return
+
+  const player = room.players.find((p) => p.id === playerId)
+  if (!player) return
+
+  const message = `${amount}마리 ${action === 'buy' ? '사요!' : '팔아요!'}`
+  io.to(gameId).emit('trade_message', { playerId, message })
+
+  const currentPrice = room.gameInfo.currentFishPrice
+  const totalValue = amount * currentPrice
+
+  if (action === 'buy') {
+    if ((player.coins || 0) < totalValue) {
+      socket.emit('error', { message: '보유 코인이 부족합니다.' })
+      return
+    }
+    player.coins = (player.coins || 0) - totalValue
+    player.fish = (player.fish || 0) + amount
+  } else {
+    if ((player.fish || 0) < amount) {
+      socket.emit('error', { message: '보유 생선이 부족합니다.' })
+      return
+    }
+    player.fish = (player.fish || 0) - amount
+    player.coins = (player.coins || 0) + totalValue
+  }
+
+  socket.emit('inventory_update', {
+    coins: player.coins,
+    fish: player.fish,
+    action,
+    amount,
+    totalValue,
   })
+
+  socket.broadcast.to(gameId).emit('update_players', room.players)
 }
 
 export const handleSendMessage = (
@@ -507,20 +683,24 @@ export const handleSendMessage = (
 ) => {
   const senderId = getPlayer(socket.id)
   const room = getRoom(gameId)
-
   if (!senderId || !room) return
 
   const player = room.players.find((player) => player.id === playerId)
   if (!player) return
 
-  const chatMessage = {
-    type: 'message',
+  const chatData = {
+    type: 'message' as const,
     nickname,
     imageUrl: `/images/cat-${character}.png`,
     message,
   }
 
-  io.to(gameId).emit('new_chat_message', chatMessage)
+  room.chatLogs.push(chatData)
+  if (room.chatLogs.length > 50) {
+    room.chatLogs.shift()
+  }
+
+  io.to(gameId).emit('new_chat_message', chatData)
 }
 
 export const handleSendNotice = (
@@ -529,6 +709,15 @@ export const handleSendNotice = (
 ) => {
   const room = getRoom(gameId)
   if (!room) return
+  const chatData = {
+    type: 'notice' as const,
+    notice,
+  }
+
+  room.chatLogs.push(chatData)
+  if (room.chatLogs.length > 50) {
+    room.chatLogs.shift()
+  }
 
   io.to(gameId).emit('new_chat_notice', { notice })
 }
@@ -541,18 +730,16 @@ const performPlayerReconnection = (
   playerId: string,
   player: PlayerModel
 ) => {
-  if (playersDisconnected.has(playerId)) {
-    const existingTimeout = playersDisconnected.get(playerId)
-    if (existingTimeout) {
-      clearTimeout(existingTimeout)
-    }
-    playersDisconnected.delete(playerId)
-  }
-
   addPlayer(socket.id, playerId)
   socket.join(gameId)
   updatePlayerStatus(playerId, true, socket.id)
   room.readyPlayers.add(playerId)
+
+  player.connectionStatus = PeerConnectionStateModel.CONNECTED
+  socket.broadcast.to(gameId).emit('update_players', room.players)
+  socket.broadcast.to(gameId).emit('player_reconnected', {
+    nickname: player.nickname,
+  })
 
   const gameHistory = getGameHistory(gameId)
   syncGameState(room, gameHistory)
@@ -563,21 +750,13 @@ const performPlayerReconnection = (
       room.totalRounds
     )
     room.gameInfo.currentDay = safeRound
-
-    if (gameHistory) {
-      gameHistory.currentRound = safeRound
-    }
+    gameHistory.currentRound = safeRound
   }
 
   const completeGameSnapshot = createCompleteGameSnapshot(room, gameId, gameHistory)
   socket.emit('sync_complete', completeGameSnapshot)
 
   sendStateSpecificUpdates(io, socket, room, gameId, gameHistory)
-
-  socket.to(gameId).emit('player_reconnected', {
-    playerId,
-    nickname: player.nickname,
-  })
 }
 
 const syncGameState = (
@@ -592,11 +771,10 @@ const syncGameState = (
 
   if (room.gameInfo.currentDay !== safeCurrentRound) {
     const expectedNextRound = room.gameInfo.currentDay + 1
-    if (safeCurrentRound > expectedNextRound && safeCurrentRound - expectedNextRound > 1) {
-      room.gameInfo.currentDay = Math.min(expectedNextRound, room.totalRounds)
-    } else {
-      room.gameInfo.currentDay = safeCurrentRound
-    }
+    room.gameInfo.currentDay =
+      safeCurrentRound > expectedNextRound && safeCurrentRound - expectedNextRound > 1
+        ? Math.min(expectedNextRound, room.totalRounds)
+        : safeCurrentRound
 
     const currentRoundData = gameHistory.rounds.find(
       (round: RoundRecordModel) => round.roundNumber === room.gameInfo.currentDay
@@ -621,70 +799,36 @@ const sendStateSpecificUpdates = (
 
   if (room.state === 'waiting') {
     io.to(gameId).emit('update_players', room.players)
-  } else if (room.state === 'in_progress') {
-    socket.emit('complete_round_sync', {
-      currentRound: actualCurrentRound,
-      prevFishPrice: room.gameInfo.prevFishPrice,
-      currentFishPrice: room.gameInfo.currentFishPrice,
-      hint: room.gameInfo.nextRoundHint,
-      lastRoundResult: room.gameInfo.lastRoundHintResult,
-      roundHistory: gameHistory?.rounds || [],
-      totalRounds: room.totalRounds,
-      gameState: room.state,
-    })
-
-    const timerState = gameTimersState.get(gameId)
-    if (timerState?.isRunning) {
-      const remainingTime = Math.max(0, timerState.duration - (Date.now() - timerState.startTime))
-      socket.emit('timer_started', {
-        startTime: timerState.startTime,
-        duration: timerState.duration,
-        remainingTime,
-      })
-    }
+    return
   }
-}
 
-const createCompleteGameSnapshot = (
-  room: GameModel & { readyPlayers: Set<string> },
-  gameId: string,
-  gameHistory: GameHistoryModel
-) => {
   const timerState = gameTimersState.get(gameId)
-  const actualCurrentRound = gameHistory?.currentRound || room.gameInfo.currentDay
 
-  return {
-    gameId: room.gameId,
-    gameState: room.state,
+  const payload = {
+    currentRound: actualCurrentRound,
+    prevFishPrice: room.gameInfo.prevFishPrice,
+    currentFishPrice: room.gameInfo.currentFishPrice,
+    hint: room.gameInfo.nextRoundHint,
+    lastRoundResult: room.gameInfo.lastRoundHintResult,
+    roundHistory: gameHistory?.rounds || [],
+    totalRounds: room.totalRounds,
+    serverStatus: room.state,
     players: room.players.map((player) => ({
       ...player,
       isOnline: getPlayerStatus(player.id),
     })),
-    gameInfo: {
-      ...room.gameInfo,
-      currentDay: actualCurrentRound,
-    },
-    totalRounds: room.totalRounds,
-    currentRound: actualCurrentRound,
-    prevFishPrice: room.gameInfo.prevFishPrice,
-    currentFishPrice: room.gameInfo.currentFishPrice,
-    readyPlayersCount: room.readyPlayers.size,
-    roundHistory: gameHistory?.rounds || [],
-    timerState: timerState
-      ? {
-          startTime: timerState.startTime,
-          duration: timerState.duration,
-          isRunning: timerState.isRunning,
-          remainingTime: timerState.isRunning
-            ? Math.max(0, timerState.duration - (Date.now() - timerState.startTime))
-            : 0,
-        }
-      : null,
-    timestamp: Date.now(),
-    debugInfo: {
-      serverTime: new Date().toISOString(),
-      gameStartTime: room.gameStartTime || null,
-    },
+    serverNow: Date.now(),
+    gameEndAt: timerState?.isRunning ? timerState.startTime + timerState.duration : null,
+    results: room.gameResults,
+  }
+
+  socket.emit('complete_round_sync', payload)
+
+  if (timerState?.isRunning) {
+    socket.emit('timer_started', {
+      serverNow: Date.now(),
+      gameEndAt: timerState.startTime + timerState.duration,
+    })
   }
 }
 
@@ -720,7 +864,7 @@ export const forceSync = (io: SocketIOServer, gameId: string, playerId: string) 
   const room = getRoom(gameId)
   if (!room) return false
 
-  const player = room.players.find((p) => p.id === playerId)
+  const player = room.players.find((player) => player.id === playerId)
   if (!player) return false
 
   const socketId = Array.from(playersMap.entries()).find(([_, id]) => id === playerId)?.[0]
@@ -738,16 +882,8 @@ export const forceSync = (io: SocketIOServer, gameId: string, playerId: string) 
 
 export const validateRoundBeforeTimerStart = (gameId: string, expectedRound: number) => {
   const history = getGameHistory(gameId)
-
-  if (!history) {
-    return expectedRound
-  }
+  if (!history) return expectedRound
 
   const { currentRound } = history
-
-  if (expectedRound > currentRound + 1) {
-    return currentRound + 1
-  }
-
-  return expectedRound
+  return expectedRound > currentRound + 1 ? currentRound + 1 : expectedRound
 }

@@ -25,7 +25,7 @@
  * console.error('네트워크 연결 불가', error);
  */
 
-import { isDev } from '@/constants/env'
+import { isDev } from '../../constants/env'
 
 export const appLogger = {
   log: (...args: unknown[]) => {

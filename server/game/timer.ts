@@ -4,7 +4,9 @@ import { gameConfig, PRICE_THRESHOLD } from '../../constants/game.js'
 import { generateNewFishPrice, isPriceChangeHigh, shouldHintMatch } from '../../lib/utils/game.js'
 import { GameModel } from '../../types/game.js'
 
+import { finalizeGameResults } from './ending.js'
 import { updateRoundHistory, cleanupGameHistory } from './history.js'
+import { getPlayerStatus } from './player.js'
 import { getRoom } from './room.js'
 import { gameTimers, roundTimers, gameTimersState } from './store.js'
 
@@ -13,11 +15,22 @@ export const startRoundTimer = (
   gameId: string,
   room: GameModel & { readyPlayers: Set<string> }
 ) => {
+  const timerState = gameTimersState.get(gameId)
+
+  // 동일 라운드 중복 타이머 방지
+  if (timerState?.isRunning && timerState.round === room.gameInfo.currentDay) {
+    console.warn(
+      `[Timer Guard] Timer for round ${room.gameInfo.currentDay} is already running in room ${gameId}. Skipping.`
+    )
+    return
+  }
+
   if (!room || room.state !== 'in_progress') {
     console.error('게임을 시작할 수 없는 상태입니다')
     return
   }
 
+  // 라운드 범위 검증
   if (room.gameInfo.currentDay < 1 || room.gameInfo.currentDay > room.totalRounds) {
     console.error('유효하지 않은 라운드입니다')
     room.gameInfo.currentDay = Math.max(1, Math.min(room.totalRounds, room.gameInfo.currentDay))
@@ -36,15 +49,17 @@ export const startRoundTimer = (
     startTime,
     duration,
     isRunning: true,
+    round: room.gameInfo.currentDay,
   })
 
+  const gameEndAt = startTime + duration
+
   io.to(gameId).emit('timer_started', {
-    startTime,
-    duration,
+    serverNow: Date.now(),
+    gameEndAt,
     currentRound: room.gameInfo.currentDay,
   })
 
-  let timer = gameConfig.INITIAL_TIMER
   const intervalId = setInterval(() => {
     const currentRoom = getRoom(gameId)
     if (!currentRoom || currentRoom.state !== 'in_progress') {
@@ -54,10 +69,13 @@ export const startRoundTimer = (
       return
     }
 
-    timer -= 1
-    io.to(gameId).emit('timer_update', timer)
+    const serverNow = Date.now()
+    io.to(gameId).emit('timer_update', {
+      serverNow,
+      gameEndAt,
+    })
 
-    if (timer === 0) {
+    if (serverNow >= gameEndAt) {
       processRoundEnd(io, gameId, currentRoom)
       clearInterval(intervalId)
       roundTimers.delete(gameId)
@@ -186,6 +204,13 @@ const calculateAndUpdateGameInfo = (
     hint: currentRoom.gameInfo.nextRoundHint,
     lastRoundResult: outcomeMessage,
     timestamp: Date.now(),
+    serverStatus: currentRoom.state,
+    gameStartTime: currentRoom.gameStartTime,
+    players: currentRoom.players.map((player) => ({
+      ...player,
+      isOnline: getPlayerStatus(player.id),
+    })),
+    results: currentRoom.gameResults,
   })
 }
 
@@ -195,13 +220,19 @@ const processGameEnd = (
   currentRoom: GameModel & { readyPlayers: Set<string> }
 ) => {
   try {
-    const prevHint = currentRoom.hints[currentRoom.gameInfo.currentDay - 2]
-    if (!prevHint) return
+    const lastHint = currentRoom.hints[currentRoom.gameInfo.currentDay - 1]
+    if (!lastHint) {
+      console.error('[processGameEnd] 마지막 힌트를 찾을 수 없습니다.', {
+        currentDay: currentRoom.gameInfo.currentDay,
+        hintsLength: currentRoom.hints.length,
+      })
+      return
+    }
 
     const isHintMatched = shouldHintMatch()
     const priceChangeDirection = isHintMatched
-      ? prevHint.expectedChange
-      : prevHint.expectedChange === 'up'
+      ? lastHint.expectedChange
+      : lastHint.expectedChange === 'up'
         ? 'down'
         : 'up'
 
@@ -216,11 +247,30 @@ const processGameEnd = (
       '마지막 라운드 완료'
     )
 
+    currentRoom.gameInfo.currentFishPrice = newPrice
+
+    // 서버에서 최종 점수 계산
+    currentRoom.players.forEach((player) => {
+      const coins = player.coins || 0
+      const fish = player.fish || 0
+      player.score = coins + fish * newPrice
+    })
+
     io.to(gameId).emit('last_fish_price', newPrice)
+
+    finalizeGameResults(io, gameId, currentRoom)
+
+    // 백업 집계 (혹시 모를 누락 방지)
+    setTimeout(() => {
+      const room = getRoom(gameId)
+      if (room && room.state !== 'ended') {
+        finalizeGameResults(io, gameId, room)
+      }
+    }, 3000)
 
     setTimeout(() => {
       cleanupGameHistory(gameId)
-    }, 5000)
+    }, 10000)
   } catch (error) {
     console.error('마지막 라운드의 생선 가격을 계산하는데 실패하였습니다.', error)
   }

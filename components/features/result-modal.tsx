@@ -1,24 +1,19 @@
 'use client'
 
-import { useEffect } from 'react'
-
 import Image from 'next/image'
-import { useRouter } from 'next/navigation'
+import { useRouter, useParams } from 'next/navigation'
 
 import Button from '@/components/ui/button'
 import Modal from '@/components/ui/modal'
 import coinImage from '@/public/images/coin.png'
 import fishImage from '@/public/images/fish.png'
-import { GameResultModel } from '@/types/game'
 
 interface ResultModalProps {
   coin: number
   totalCoin: number
   isOpen: boolean
   onModalClose: () => void
-  onGameEnd: () => void
-  gameId: string
-  gameResults: GameResultModel[] | null
+  gameId?: string
 }
 
 const ResultModal = ({
@@ -26,22 +21,15 @@ const ResultModal = ({
   totalCoin,
   isOpen,
   onModalClose,
-  onGameEnd,
-  gameId,
-  gameResults,
+  gameId: propGameId,
 }: ResultModalProps) => {
   const router = useRouter()
-
-  useEffect(() => {
-    if (isOpen && !gameResults) {
-      onGameEnd()
-    }
-  }, [isOpen, onGameEnd, gameResults])
+  const params = useParams()
+  const gameId = propGameId || (params?.gameId as string)
 
   const handleResultButtonClick = () => {
-    if (gameResults && gameId) {
-      router.push(`/result/${gameId}`)
-    }
+    const targetPath = `/result/${gameId}`
+    router.push(targetPath)
   }
 
   return (
@@ -62,8 +50,8 @@ const ResultModal = ({
           {totalCoin}
         </p>
         <div className="mt-4 flex justify-center text-xl">
-          <Button onClick={handleResultButtonClick} disabled={!gameResults} className="mb-8">
-            {gameResults ? '결과 보러가기' : '결과 취합중...'}
+          <Button onClick={handleResultButtonClick} className="mb-8">
+            결과 보러가기
           </Button>
         </div>
       </div>
