@@ -32,10 +32,9 @@ const HomePage = () => {
   const handleCreateRoomClick = () => {
     appLogger.log('방 만들기 버튼 클릭됨')
     resetGameState()
-    if (!router) {
-      console.error('Next.js Router is not initialized')
-      return
-    }
+
+    document.cookie = 'nav_pass=1; Path=/; Max-Age=10; SameSite=Lax'
+
     router.push('/setup/select-rounds')
   }
 
