@@ -29,9 +29,21 @@ const UserInfoPage = () => {
   const countInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    if (playerId && gameId) {
+    if (!playerId || !gameId) return
+
+    const startSession = async () => {
+      await fetch('/api/session/start', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ gameId }),
+      })
+
       router.push(`/waiting/${gameId}`)
     }
+
+    startSession()
   }, [playerId, gameId, router])
 
   useEffect(() => {

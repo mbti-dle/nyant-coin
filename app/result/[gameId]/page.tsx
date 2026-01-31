@@ -3,9 +3,8 @@
 import { useEffect, useState } from 'react'
 
 import Image from 'next/image'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 
-import LoadingPage from '@/app/loading'
 import LinkButton from '@/components/ui/link-button'
 import { SITE_URL } from '@/constants/config'
 import { useSocket } from '@/hooks/socket/core/use-socket'
@@ -19,6 +18,7 @@ import { GameResultModel } from '@/types/game'
 const EMPTY_RESULTS: GameResultModel[] = []
 
 const ResultPage = () => {
+  const router = useRouter()
   const params = useParams()
   const gameId = params.gameId as string
 
@@ -43,6 +43,26 @@ const ResultPage = () => {
     const currentPlayer = gameResults.find((result) => result.id === playerId) || null
     setCurrentUser(currentPlayer)
   }, [gameId, gameResults, playerId])
+
+  useEffect(() => {
+    if (!socket) return
+
+    const handlePlayerInfo = ({ players, playerId: serverPlayerId }) => {
+      const me = players?.find((p) => p.id === serverPlayerId)
+
+      if (!serverPlayerId || !me) {
+        router.replace('/')
+        showToast('잘못된 접근입니다')
+      }
+    }
+
+    socket.on('player_info', handlePlayerInfo)
+    socket.emit('request_player_info', { gameId, playerId })
+
+    return () => {
+      socket.off('player_info', handlePlayerInfo)
+    }
+  }, [socket, gameId, playerId])
 
   const handleButtonClick = () => {
     if (!gameResults.length) return

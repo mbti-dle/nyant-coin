@@ -33,7 +33,7 @@ const HomePage = () => {
     appLogger.log('방 만들기 버튼 클릭됨')
     resetGameState()
 
-    document.cookie = 'nav_pass=1; Path=/; Max-Age=10; SameSite=Lax'
+    document.cookie = 'nav_pass=1; Path=/; Max-Age=300; SameSite=Lax'
 
     router.push('/setup/select-rounds')
   }

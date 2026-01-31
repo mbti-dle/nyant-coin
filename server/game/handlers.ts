@@ -188,7 +188,11 @@ export const handleJoinGame = (
       nickname,
       message: `${nickname}님이 입장했습니다.`,
     })
-    socket.emit('join_success', { gameId, playerId })
+    socket.emit('join_success', {
+      gameId,
+      playerId,
+      setSession: true,
+    })
   } catch {
     socket.emit('join_failure', { message: '게임 참가 중 오류가 발생했습니다.' })
   }
