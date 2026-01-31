@@ -12,7 +12,7 @@ export const middleware = (request: NextRequest) => {
   const referer = request.headers.get('referer')
   const hasSession = request.cookies.has('nyant_session')
 
-  const isInternalNavigation = referer?.includes(request.nextUrl.origin)
+  const isInternalNavigation = referer?.includes(request.nextUrl.hostname)
 
   if (isInternalNavigation || hasSession) {
     return NextResponse.next()
