@@ -5,27 +5,48 @@ import type { NextRequest } from 'next/server'
 export const middleware = (request: NextRequest) => {
   const { pathname } = request.nextUrl
 
+  // 홈은 항상 허용
   if (pathname === '/') {
     return NextResponse.next()
   }
 
-  const hasSession = request.cookies.has('nyant_session')
   const hasNavPass = request.cookies.has('nav_pass')
+  const sessionGameId = request.cookies.get('nyant_session')?.value
 
-  if (hasSession || hasNavPass) {
-    const res = NextResponse.next()
-
-    // 일회용 → 즉시 제거
-    if (hasNavPass) {
-      res.cookies.delete('nav_pass')
+  /**
+   * setup 단계
+   * - 새로고침 ❌ / 직접 접근 ❌
+   * - nav_pass 필수
+   */
+  if (pathname.startsWith('/setup')) {
+    if (!hasNavPass) {
+      return NextResponse.redirect(new URL('/', request.url))
     }
-
-    return res
+    return NextResponse.next()
   }
 
-  return NextResponse.redirect(new URL('/', request.url))
+  /**
+   * waiting / game / result
+   * - 새로고침 ⭕ / 직접 접근 ❌
+   * - sessionGameId === pathGameId 필수
+   */
+  if (
+    pathname.startsWith('/waiting') ||
+    pathname.startsWith('/game') ||
+    pathname.startsWith('/result')
+  ) {
+    const pathGameId = pathname.split('/')[2]
+
+    if (sessionGameId && sessionGameId === pathGameId) {
+      return NextResponse.next()
+    }
+
+    return NextResponse.redirect(new URL('/', request.url))
+  }
+
+  return NextResponse.next()
 }
 
 export const config = {
-  matcher: ['/waiting/:path*', '/game/:path*', '/result/:path*', '/setup/:path*'],
+  matcher: ['/setup/:path*', '/waiting/:path*', '/game/:path*', '/result/:path*'],
 }
