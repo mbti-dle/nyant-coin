@@ -9,13 +9,18 @@ export const middleware = (request: NextRequest) => {
     return NextResponse.next()
   }
 
-  const referer = request.headers.get('referer')
   const hasSession = request.cookies.has('nyant_session')
+  const hasNavPass = request.cookies.has('nav_pass')
 
-  const isInternalNavigation = referer?.includes(request.nextUrl.hostname)
+  if (hasSession || hasNavPass) {
+    const res = NextResponse.next()
 
-  if (isInternalNavigation || hasSession) {
-    return NextResponse.next()
+    // 일회용 → 즉시 제거
+    if (hasNavPass) {
+      res.cookies.delete('nav_pass')
+    }
+
+    return res
   }
 
   return NextResponse.redirect(new URL('/', request.url))
