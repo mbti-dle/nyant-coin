@@ -12,6 +12,7 @@ import Background from '@/components/ui/background'
 import Button from '@/components/ui/button'
 import Input from '@/components/ui/input'
 import { useSocket } from '@/hooks/socket/core/use-socket'
+import { startSetupSession } from '@/lib/actions/session'
 import { appLogger } from '@/lib/utils/app-logger'
 import { isValidId } from '@/lib/utils/generate-game-id'
 import backgroundDesktopImage from '@/public/images/background-desktop-1.png'
@@ -29,11 +30,11 @@ const HomePage = () => {
   const { socket } = useSocket()
   const { setGameId, setIsLeader, resetGameState } = useGameStore()
 
-  const handleCreateRoomClick = () => {
+  const handleCreateRoomClick = async () => {
     appLogger.log('방 만들기 버튼 클릭됨')
     resetGameState()
 
-    document.cookie = 'nav_pass=1; Path=/; Max-Age=300; SameSite=Lax'
+    await startSetupSession()
 
     router.push('/setup/select-rounds')
   }

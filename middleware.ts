@@ -10,16 +10,16 @@ export const middleware = (request: NextRequest) => {
     return NextResponse.next()
   }
 
-  const hasNavPass = request.cookies.has('nav_pass')
-  const sessionGameId = request.cookies.get('nyant_session')?.value
+  const hasSetupSession = request.cookies.has('nyant_setup_session')
+  const gameSessionId = request.cookies.get('nyant_game_session')?.value
 
   /**
    * setup 단계
    * - 새로고침 ❌ / 직접 접근 ❌
-   * - nav_pass 필수
+   * - setup_session 필수
    */
   if (pathname.startsWith('/setup')) {
-    if (!hasNavPass) {
+    if (!hasSetupSession) {
       return NextResponse.redirect(new URL('/', request.url))
     }
     return NextResponse.next()
@@ -28,7 +28,7 @@ export const middleware = (request: NextRequest) => {
   /**
    * waiting / game / result
    * - 새로고침 ⭕ / 직접 접근 ❌
-   * - sessionGameId === pathGameId 필수
+   * - gameSessionId === pathGameId 필수
    */
   if (
     pathname.startsWith('/waiting') ||
@@ -37,7 +37,7 @@ export const middleware = (request: NextRequest) => {
   ) {
     const pathGameId = pathname.split('/')[2]
 
-    if (sessionGameId && sessionGameId === pathGameId) {
+    if (gameSessionId && gameSessionId === pathGameId) {
       return NextResponse.next()
     }
 
