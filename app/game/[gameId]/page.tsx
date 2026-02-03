@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 
 import ChatContainer from '@/components/features/chat/chat-container'
 import FishCoinsAssets from '@/components/features/game/fish-coins-assets'
@@ -44,6 +44,7 @@ const INITIAL_GAME_STATE: GameStateModel = {
 }
 
 const GamePage = () => {
+  const router = useRouter()
   const params = useParams()
   const gameId = params.gameId as string
   const { socket } = useSocket()
@@ -156,6 +157,26 @@ const GamePage = () => {
       setFinalResultState(finalFishPrice)
     }
   }, [serverState, gameResults, finalFishPrice, isResultModalOpen, setFinalResultState])
+
+  useEffect(() => {
+    if (!socket) return
+
+    const handlePlayerInfo = ({ players, playerId: serverPlayerId }) => {
+      const me = players?.find((p) => p.id === serverPlayerId)
+
+      if (!serverPlayerId || !me) {
+        router.replace('/')
+        showToast('잘못된 접근입니다')
+      }
+    }
+
+    socket.on('player_info', handlePlayerInfo)
+    socket.emit('request_player_info', { gameId, playerId })
+
+    return () => {
+      socket.off('player_info', handlePlayerInfo)
+    }
+  }, [socket, gameId, playerId])
 
   const handlePlayerInitialize = ({
     players,
