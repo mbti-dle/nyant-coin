@@ -12,6 +12,7 @@ import Button from '@/components/ui/button'
 import CountInput from '@/components/ui/count-input'
 import { useGameState } from '@/hooks/game/use-game-state'
 import { useSocket } from '@/hooks/socket/core/use-socket'
+import { startGameSession } from '@/lib/actions/session'
 import { validateNickname } from '@/lib/utils/nickname-validation'
 import useToastStore from '@/store/toast'
 
@@ -29,9 +30,15 @@ const UserInfoPage = () => {
   const countInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    if (playerId && gameId) {
+    if (!playerId || !gameId) return
+
+    const startSession = async () => {
+      await startGameSession(gameId)
+
       router.push(`/waiting/${gameId}`)
     }
+
+    startSession()
   }, [playerId, gameId, router])
 
   useEffect(() => {
